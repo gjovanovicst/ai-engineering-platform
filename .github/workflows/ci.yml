@@ -55,7 +55,7 @@ jobs:
       - name: lint
         uses: golangci/golangci-lint-action@v7
         with:
-          version: v2.13
+          version: v2.15.0
           working-directory: apps/api
       - name: install codegen
         run: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.8.0
