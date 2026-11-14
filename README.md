@@ -31,14 +31,12 @@ merge and deploy, with a human at the checkpoints and a full audit trail.
 | 18 | [CHANGELOG.md](CHANGELOG.md) | Release notes and known gaps | everyone |
 | 19 | [docs/54-status.md](docs/54-status.md) | Verified status, topology and blockers | everyone |
 | 20 | [site/](site/) | GitHub Pages site: overview, workflow, quickstart, architecture, status | everyone |
-| 18 | [docs/20-completion-checklist.md](docs/20-completion-checklist.md) | Story-by-story completion status (29 ✅ / 20 🟡 / 3 ⬜) and the gap list | everyone |
 | 20 | [docs/21-real-github-test.md](docs/21-real-github-test.md) | End-to-end test with a real GitHub repository, from zero to a merged PR | everyone |
 | 21 | [docs/22-deepseek-github.md](docs/22-deepseek-github.md) | Real setup with DeepSeek as the provider + GitHub, incl. pricing and troubleshooting | everyone |
 | 12 | [docs/11-agent-runtime.md](docs/11-agent-runtime.md) | Tool schemas, prompt layers, context assembly, sandbox image | backend |
 | 13 | [docs/12-auth.md](docs/12-auth.md) | Accounts, registration, invite, reset, tokens, CSRF | backend + frontend |
 | 14 | [docs/13-setup.md](docs/13-setup.md) | Environments, env, secrets, backlog, checklist for the first commit | everyone |
 | 15 | [docs/07-testing.md](docs/07-testing.md) | Test strategy, fixtures, replay harness | everyone |
-| 16 | [docs/08-gaps.md](docs/08-gaps.md) | Gap register (coverage status) | everyone |
 | 17 | [design/mockups/](design/mockups/) | 18 screens as HTML + PNG (visual reference) | frontend |
 | 18 | [docs/roadmap-later.md](docs/roadmap-later.md) | P2 plan (mobile, PWA, GitLab, billing…) + **seams the MVP preserves** | everyone |
 | 19 | [docs/usecase.md](docs/usecase.md) | How a company uses the platform: day 0, a task from plan to prod, the weekly rhythm | everyone |

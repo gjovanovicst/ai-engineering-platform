@@ -1,6 +1,6 @@
 # Production Postgres HA — design
 
-Status: **design only**. The isolated drill in `docs/37-ha-failover-drill.md`
+Status: **design only**. The isolated failover drill is kept in the private operations repository.
 proved manual promotion (RTO 1s, RPO 0 for the seeded row). This document defines
 what "production HA" would require; none of it is deployed.
 

@@ -1,12 +1,12 @@
 # Patroni host fencing
 
-Status: **design/runbook only; preflight blocked on this host** (docs/56). No
+Status: **design/runbook only; preflight blocked on this host**. No
 watchdog or STONITH is available and nothing here is claimed as implemented.
 
 ## Why
 
 Patroni demotes a leader that loses the DCS (verified in
-`docs/43-patroni-partition.md`: `/primary` 503, writes rejected). That is
+A partition drill is kept in the private operations repository. That is
 *self-fencing by the database process*. It does not cover:
 
 - a host that is alive enough to keep serving stale reads but too broken to run

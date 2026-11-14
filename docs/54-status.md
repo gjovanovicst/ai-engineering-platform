@@ -22,7 +22,7 @@ policy, BYOK, SSO/SCIM, HA Postgres and custom agents.
 | data | 12 orgs / 12 projects / 330 tasks / 374 runs |
 | HA drills | failover 5s (direct) / 13s (HAProxy), etcd 3→2→0→3, quorum-loss/partition, replica rejoin |
 | backups | logical 12/12/330/374; cold volume backup booted standalone and read the same counts |
-| PITR/restore | durable MinIO WAL + base backup; restore request API/UI + runner succeeded (12/12/330); WAL/base + restore SLO health in `/dr`; restore heartbeat metric and 30-day alert; worker-driven restore (docs/66); offsite MinIO mirror + restore from it (docs/67/68); WAL scripts survive recreate (docs/60–68) |
+| PITR/restore | durable MinIO WAL + base backup; restore request API/UI + runner succeeded (12/12/330); WAL/base + restore SLO health in `/dr`; restore heartbeat metric and 30-day alert; worker-driven restore; offsite MinIO mirror + restore drill (details in the private operations repository); WAL scripts survive recreate |
 | SAML | SP metadata, SP-initiated login, ACS, signed AuthnRequests, encrypted assertions, SLO and replay cache; `scripts/saml-drill.js` logged in and rendered `/projects` |
 | BYOK | org_crypto + v4 envelope, encrypted KMS token, UI, revoke drill 400 |
 | custom agents | registry, digest allowlist, cosign verifier, signed 201 / unsigned 400, UI, e2e execution |
@@ -31,7 +31,7 @@ policy, BYOK, SSO/SCIM, HA Postgres and custom agents.
 | success metrics | first-pass merge, proof validity, dev runs/task, escaped-defect proxy (docs/16 §8) |
 | egress | `AIP_SANDBOX_EGRESS_ALLOW` is fail-closed; no domain allowlist (docs/73) |
 | sandbox | K8s live drill: Job, read-only root, writable workspace, MCP `cat` stdio (`docs/72`); K8s Job hardening + MCP StartProcess implemented and unit-tested (not cluster-drilled, docs/71); Docker hardening drill: no caps/mounts/network, read-only root, writable tmpfs workspace (docs/55) |
-| fencing | preflight blocked: no `/dev/watchdog`, systemd offline, no cloud STONITH (docs/56) |
+| fencing | preflight blocked: no `/dev/watchdog`, systemd offline, no cloud STONITH |
 
 ## Not done / blocked
 

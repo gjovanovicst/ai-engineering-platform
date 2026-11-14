@@ -7,9 +7,9 @@ Status: **passed** on 2026-11-05.
 - bucket `s3://aip-wal` (MinIO), `wal-g wal-push` with lz4
 - `/home/postgres/pgdata/archive-wal.sh` sources `/home/postgres/pgdata/walg.env` (data volume, survives container recreate) (0600, `set -a`) and calls wal-g; no credentials in the command
 - PostgreSQL `archive_command` is set both in Patroni DCS and `ALTER SYSTEM`
-  (the DCS-only patch previously did not apply; docs/58)
+ 
 - observed: `last_archived_wal=...26`, `archived_count=41`; `failed_count=3` is historical (the first env file did not export variables; fixed with `set -a`)
-- MinIO lifecycle: `wal_005/` **30 days**, `basebackups_005/` 30 days (docs/63)
+- MinIO lifecycle: `wal_005/` **30 days**, `basebackups_005/` 30 days
 
 ## PITR restore from MinIO
 
