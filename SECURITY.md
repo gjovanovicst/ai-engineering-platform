@@ -53,6 +53,17 @@ Out of scope:
 We will not pursue legal action for good-faith research that follows this policy,
 avoids privacy violations and does not degrade service for others.
 
+## Known dependency exceptions
+
+- **GO-2026-6909** (`github.com/crewjam/saml`, no upstream fix as of 2026-11-14):
+  nil-pointer panic on a signed assertion without `<Issuer>`, and namespace-blind
+  `Subject.NameID`. The SAML ACS handler recovers parser panics and returns a
+  login error; assertions are only accepted from the configured trusted IdP.
+  The residual namespace ambiguity is tracked upstream. Remove this exception
+  as soon as a fixed release exists.
+
+`make security` accepts only this ID; any new vulnerability fails the scan.
+
 ## Security documentation
 
 - threat model: [docs/31-threat-model.md](docs/31-threat-model.md)

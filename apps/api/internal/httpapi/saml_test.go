@@ -17,8 +17,9 @@ import (
 )
 
 type fakeSAMLSP struct {
-	assertion *crewsaml.Assertion
-	parseErr  error
+	assertion  *crewsaml.Assertion
+	parseErr   error
+	panicValue any
 }
 
 func (f fakeSAMLSP) Metadata() ([]byte, error) { return []byte("<xml/>"), nil }
@@ -26,6 +27,9 @@ func (f fakeSAMLSP) LoginURL() (string, string, error) {
 	return "https://idp.example/sso", "req-1", nil
 }
 func (f fakeSAMLSP) Parse(*http.Request, string) (*crewsaml.Assertion, error) {
+	if f.panicValue != nil {
+		panic(f.panicValue)
+	}
 	return f.assertion, f.parseErr
 }
 func (f fakeSAMLSP) WebURL() string { return "http://web.test" }
@@ -118,5 +122,14 @@ func TestSAMLHandlerRoleFor(t *testing.T) {
 	}
 	if got := h.roleFor([]string{"unknown"}); got != "" {
 		t.Fatalf("got %q", got)
+	}
+}
+
+func TestSAMLAcsRecoversParserPanic(t *testing.T) {
+	h := newSAMLTest(fakeSAMLSP{panicValue: "bad assertion"}, &fakeSAMLAccounts{})
+	rec := httptest.NewRecorder()
+	h.acs(rec, acsRequest("req-1"))
+	if rec.Code != http.StatusFound || !strings.Contains(rec.Header().Get("Location"), "/login?error=saml") {
+		t.Fatalf("status=%d location=%q", rec.Code, rec.Header().Get("Location"))
 	}
 }

@@ -67,6 +67,14 @@ func (h *samlHandlers) login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *samlHandlers) acs(w http.ResponseWriter, r *http.Request) {
+	// crewjam/saml can panic on a signed assertion without <Issuer> (GO-2026-6909).
+	// Recover here so a malformed IdP response cannot crash the API process.
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			h.log.Error("saml.acs panic", slog.Any("panic", recovered))
+			h.fail(w, r, "invalid assertion")
+		}
+	}()
 	requestID := r.FormValue("RelayState")
 	if requestID == "" {
 		h.fail(w, r, "missing RelayState")

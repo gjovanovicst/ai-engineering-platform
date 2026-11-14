@@ -111,7 +111,7 @@ tools-check: ## verify the tools are available
 	done
 
 security: ## dependency scans (govulncheck in apps/api, pnpm audit in apps/web)
-	cd apps/api && govulncheck ./...
+	bash scripts/govulncheck.sh
 	cd apps/web && pnpm audit --prod
 	node scripts/check-js-licenses.mjs
 
