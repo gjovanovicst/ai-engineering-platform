@@ -15,10 +15,10 @@ import (
 )
 
 const (
-	orgA  = "11111111-1111-1111-1111-111111111111"
-	orgB  = "22222222-2222-2222-2222-222222222222"
-	userA = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-	userB = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+	orgA  = "33333333-3333-3333-3333-333333333333"
+	orgB  = "44444444-4444-4444-4444-444444444444"
+	userA = "cccccccc-cccc-cccc-cccc-cccccccccccc"
+	userB = "dddddddd-dddd-dddd-dddd-dddddddddddd"
 )
 
 // TestTenantIsolation proves the second line of defence: even if the
