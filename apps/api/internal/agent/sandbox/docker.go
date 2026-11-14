@@ -37,6 +37,7 @@ func (d *Docker) Create(ctx context.Context, spec Spec) (Handle, error) {
 	args := []string{
 		"run", "-d", "--rm", "--name", name,
 		"--pids-limit", "512",
+		"--user", "10001:10001",
 		"--cap-drop", "ALL",
 		"--security-opt", "no-new-privileges",
 		"--read-only",
