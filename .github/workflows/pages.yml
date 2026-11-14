@@ -23,6 +23,9 @@ concurrency:
 
 jobs:
   build:
+    # Enable Pages in repository settings and set the PAGES_ENABLED=true
+    # repository variable; until then the workflow is skipped instead of red.
+    if: vars.PAGES_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

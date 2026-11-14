@@ -31,7 +31,10 @@ hand.
 
 1. Push to `main`.
 2. Repository **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-3. The `pages` workflow builds the docs, uploads `site/` and deploys it.
+3. Set the repository variable `PAGES_ENABLED=true`.
+4. The `pages` workflow builds the docs, uploads `site/` and deploys it.
+   Without the variable the workflow is skipped; Pages must also be enabled in
+   Settings → Pages with source GitHub Actions.
 
 The workflow also runs when `docs/user/`, `api/openapi.yaml`, `api/events.md` or
 the builder changes.
