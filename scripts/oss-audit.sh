@@ -44,6 +44,7 @@ if [ -n "$internal" ]; then
 fi
 
 large=$(git ls-files -z | while IFS= read -r -d '' f; do
+  [ -f "$f" ] || continue
   size=$(wc -c < "$f" 2>/dev/null || echo 0)
   [ "$size" -gt 2097152 ] && printf '%s (%s bytes)\n' "$f" "$size"
 done || true)
