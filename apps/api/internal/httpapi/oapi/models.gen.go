@@ -1653,6 +1653,7 @@ type Task struct {
 	AssigneeId    *openapi_types.UUID    `json:"assignee_id,omitempty"`
 	BlockedReason *string                `json:"blocked_reason,omitempty"`
 	CreatedAt     *time.Time             `json:"created_at,omitempty"`
+	DependsOn     *[]string              `json:"depends_on,omitempty"`
 	Description   *string                `json:"description,omitempty"`
 	DoneAt        *time.Time             `json:"done_at,omitempty"`
 	Id            *openapi_types.UUID    `json:"id,omitempty"`
@@ -1669,8 +1670,8 @@ type Task struct {
 // TaskInput defines model for TaskInput.
 type TaskInput struct {
 	Acceptance  *[]AcceptanceCriterion `json:"acceptance,omitempty"`
-	DependsOn   *[]string              `json:"depends_on,omitempty"`
 	AssigneeId  *openapi_types.UUID    `json:"assignee_id,omitempty"`
+	DependsOn   *[]string              `json:"depends_on,omitempty"`
 	Description *string                `json:"description,omitempty"`
 	Priority    *TaskPriority          `json:"priority,omitempty"`
 	Tags        *[]string              `json:"tags,omitempty"`

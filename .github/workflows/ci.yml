@@ -34,7 +34,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: apps/api/go.mod
-          cache: true
+          cache-dependency-path: apps/api/go.sum
       - name: build
         working-directory: apps/api
         run: go build ./...
@@ -75,7 +75,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: apps/api/go.mod
-          cache: true
+          cache-dependency-path: apps/api/go.sum
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
