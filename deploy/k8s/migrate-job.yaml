@@ -1,0 +1,17 @@
+# Run before rolling out a new API/worker image. Migrations are forward-only.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: aip-migrate
+  namespace: aip
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: ghcr.io/example/aip-api:latest
+          command: ["/usr/local/bin/aipctl", "migrate", "up"]
+          envFrom:
+            - secretRef: { name: aip-secrets }

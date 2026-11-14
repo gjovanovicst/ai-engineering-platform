@@ -1,0 +1,4 @@
+# sql_exporter collects the run/approval signals the runbook alerts on.
+# Mount next to sql_exporter with a DSN that can read the aip database.
+collector_files:
+  - queries.yml

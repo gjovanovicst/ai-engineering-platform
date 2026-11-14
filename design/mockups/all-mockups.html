@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Platform · All Mockups</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+--bg-canvas:#F8FAFC;--bg-surface:#FFF;--bg-elevated:#FFF;--bg-hover:#F1F5F9;--bg-selected:#EEF2FF;
+--border:#E2E8F0;--border-strong:#CBD5E1;
+--text-primary:#0F172A;--text-secondary:#475569;--text-muted:#94A3B8;--text-inverse:#FFF;
+--brand:#6366F1;--brand-hover:#4F46E5;--brand-subtle:#EEF2FF;
+--ai:#8B5CF6;--ai-subtle:#F5F3FF;
+--success:#10B981;--warning:#F59E0B;--danger:#EF4444;--info:#3B82F6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg-canvas);color:var(--text-primary);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+/* SCREEN SWITCHER */
+.screen-tabs{position:sticky;top:0;z-index:100;display:flex;gap:2px;padding:8px 12px;background:#0F172A;overflow-x:auto;flex-wrap:nowrap}
+.screen-tab{padding:6px 12px;border-radius:6px;color:#94A3B8;font-size:12px;font-weight:500;white-space:nowrap;background:transparent;border:none}
+.screen-tab.active{background:#1E293B;color:#F1F5F9}
+.screen-tab:hover{background:#1E293B;color:#F1F5F9}
+.screen{display:none}
+.screen.active{display:block}
+/* APP SHELL */
+.app{display:grid;grid-template-columns:240px 1fr;grid-template-rows:56px 1fr;height:calc(100vh - 44px)}
+.topbar{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:0 20px;background:var(--bg-surface);border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;min-width:200px}
+.logo-mark{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.switcher{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg-surface)}
+.switcher .tag{font-size:11px;color:var(--text-muted)}
+.search{flex:1;max-width:400px;display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg-canvas);border:1px solid var(--border);border-radius:6px;color:var(--text-muted);font-size:13px}
+.search .kbd{margin-left:auto;padding:2px 6px;border-radius:4px;background:#fff;border:1px solid var(--border);font-size:11px;font-family:monospace}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.icon-btn{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);cursor:pointer;position:relative}
+.badge-dot{position:absolute;top:6px;right:6px;width:6px;height:6px;background:var(--danger);border-radius:50%;border:1.5px solid #fff}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px}
+.sidebar{background:var(--bg-surface);border-right:1px solid var(--border);padding:12px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;color:var(--text-secondary);font-size:13px;font-weight:500;margin-bottom:2px;cursor:pointer}
+.nav-item:hover{background:var(--bg-hover);color:var(--text-primary)}
+.nav-item.active{background:var(--brand-subtle);color:var(--brand)}
+.nav-icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+.main{overflow-y:auto;padding:24px 32px}
+/* COMPONENTS */
+.btn{padding:7px 14px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid var(--border);background:var(--bg-surface);color:var(--text-primary)}
+.btn:hover{background:var(--bg-hover)}
+.btn-primary{background:var(--brand);color:var(--text-inverse);border-color:var(--brand)}
+.btn-primary:hover{background:var(--brand-hover)}
+.btn-danger{border-color:rgba(239,68,68,.3);color:var(--danger);background:rgba(239,68,68,.08)}
+.btn-ghost{background:transparent;border:none;color:var(--text-secondary)}
+.btn-ghost:hover{background:var(--bg-hover);color:var(--text-primary)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.card{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:16px}
+.card-interactive:hover{box-shadow:0 4px 12px rgba(15,23,42,.06);border-color:var(--border-strong);cursor:pointer}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600}
+.badge-dot-sm{width:5px;height:5px;border-radius:50%}
+.badge.gray{background:var(--bg-hover);color:var(--text-muted)}
+.badge.gray .badge-dot-sm{background:var(--text-muted)}
+.badge.amber{background:#FEF3C7;color:#92400E}
+.badge.amber .badge-dot-sm{background:var(--warning)}
+.badge.green{background:#D1FAE5;color:#065F46}
+.badge.green .badge-dot-sm{background:var(--success)}
+.badge.red{background:#FEE2E2;color:#991B1B}
+.badge.red .badge-dot-sm{background:var(--danger)}
+.badge.blue{background:#DBEAFE;color:#1E40AF}
+.badge.blue .badge-dot-sm{background:var(--info)}
+.badge.violet{background:var(--ai-subtle);color:var(--ai)}
+.badge.violet .badge-dot-sm{background:var(--ai)}
+.badge.pulse .badge-dot-sm{animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.page-header{padding:0 0 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--border)}
+.breadcrumb{font-size:12px;color:var(--text-muted);margin-bottom:4px}
+.page-title h1{font-size:22px;font-weight:600}
+.page-desc{font-size:13px;color:var(--text-secondary);margin-top:4px}
+.page-actions{display:flex;gap:8px;align-items:center}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-left:none;border-right:none;border-top:none}
+.tab.active{color:var(--brand);border-bottom-color:var(--brand)}
+.panel{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.panel-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:13px}
+.panel-header .link{color:var(--brand);font-size:12px;font-weight:500;cursor:pointer}
+.panel-body{padding:16px}
+.panel-list{padding:0}
+.row{display:flex;gap:16px;align-items:center}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.col-2-1{grid-template-columns:2fr 1fr}
+.form-field{margin-bottom:16px}
+.form-label{display:block;font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:6px}
+.form-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg-surface);font-family:inherit;font-size:13px;color:var(--text-primary)}
+.form-input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.form-hint{font-size:11px;color:var(--text-muted);margin-top:4px}
+/* TABLES */
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{text-align:left;padding:10px 16px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text-muted);background:var(--bg-hover);border-bottom:1px solid var(--border)}
+.data-table td{padding:12px 16px;border-bottom:1px solid var(--border)}
+.data-table tr:hover td{background:var(--bg-hover);cursor:pointer}
+.data-table tr:last-child td{border-bottom:none}
+/* PROJECT CARDS */
+.project-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer}
+.project-card:hover{box-shadow:0 4px 12px rgba(15,23,42,.06);border-color:var(--border-strong)}
+.project-card h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.project-card .tech{font-size:12px;color:var(--text-muted);margin-bottom:12px}
+.project-card .meta-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);padding-top:12px;border-top:1px solid var(--border);margin-top:12px}
+.project-card-new{background:transparent;border:1px dashed var(--border);color:var(--text-muted);display:flex;align-items:center;justify-content:center;min-height:160px;flex-direction:column;gap:8px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:500}
+.project-card-new:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-subtle)}
+/* TASK CARD */
+.task{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer}
+.task:hover{box-shadow:0 4px 12px rgba(15,23,42,.06);border-color:var(--border-strong)}
+.task-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.task-id{font-size:11px;font-weight:600;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.task-title{font-size:13px;font-weight:500;line-height:1.4;margin-bottom:8px}
+.task-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.task-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--bg-hover);color:var(--text-secondary);font-weight:500}
+.task-footer{display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--bg-hover)}
+.avatar-mini{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600}
+.priority{padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase}
+.priority.high{background:#FEE2E2;color:#B91C1C}
+.priority.med{background:#FEF3C7;color:#92400E}
+.priority.low{background:#E0E7FF;color:#3730A3}
+/* DRAWER */
+.drawer-overlay{position:absolute;inset:0;background:rgba(15,23,42,.5);z-index:50}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:560px;background:var(--bg-surface);border-left:1px solid var(--border);box-shadow:-8px 0 32px rgba(0,0,0,.1);display:flex;flex-direction:column;z-index:51}
+.drawer-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.drawer-body{flex:1;overflow-y:auto;padding:20px}
+.drawer-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+/* WIZARD */
+.wizard-steps{display:flex;align-items:center;gap:8px;margin-bottom:32px}
+.wizard-step{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted)}
+.wizard-step-num{width:24px;height:24px;border-radius:50%;background:var(--bg-hover);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.wizard-step.active{color:var(--text-primary);font-weight:600}
+.wizard-step.active .wizard-step-num{background:var(--brand);color:#fff}
+.wizard-step.done .wizard-step-num{background:var(--success);color:#fff}
+.wizard-line{flex:1;height:1px;background:var(--border);min-width:20px}
+/* TOKEN SWATCHES */
+.swatch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.swatch{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.swatch-color{height:60px}
+.swatch-label{padding:8px 10px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-secondary);background:var(--bg-surface);border-top:1px solid var(--border)}
+.swatch-label strong{display:block;color:var(--text-primary);font-family:Inter,sans-serif;font-size:12px;font-weight:600;margin-bottom:2px}
+/* MODAL */
+.modal-overlay{position:absolute;inset:0;background:rgba(15,23,42,.5);z-index:60;display:flex;align-items:center;justify-content:center;padding:24px}
+.modal{background:var(--bg-surface);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-width:480px;width:100%;max-height:90vh;overflow:auto}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-weight:600}
+.modal-body{padding:20px}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+/* TOAST */
+.toast-container{position:absolute;top:70px;right:20px;z-index:70;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 16px;border-radius:8px;background:var(--bg-elevated);border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.12);font-size:13px;display:flex;align-items:center;gap:10px;min-width:280px}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid var(--danger)}
+.toast.warning{border-left:3px solid var(--warning)}
+.toast.info{border-left:3px solid var(--info)}
+/* EMPTY STATE */
+.empty{text-align:center;padding:60px 20px}
+.empty-icon{width:56px;height:56px;border-radius:12px;background:var(--bg-hover);color:var(--text-muted);display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
+.empty h3{font-size:15px;font-weight:600;margin-bottom:6px}
+.empty p{font-size:13px;color:var(--text-secondary);max-width:400px;margin:0 auto 20px}
+/* CODE */
+.code{font-family:'JetBrains Mono',monospace;font-size:12px;background:#0F172A;color:#E2E8F0;padding:12px 16px;border-radius:8px;overflow-x:auto;line-height:1.7}
+.code .k{color:#818CF8}
+.code .s{color:#34D399}
+.code .c{color:#64748B;font-style:italic}
+/* SIDEBAR SECONDARY (settings) */
+.settings-layout{display:grid;grid-template-columns:220px 1fr;gap:24px}
+.settings-nav .nav-item{padding:8px 12px}
+/* TWO-COL DETAIL */
+.detail-row{display:flex;justify-content:space-between;padding:10px 0;font-size:13px;border-bottom:1px solid var(--border)}
+.detail-row:last-child{border-bottom:none}
+.detail-row .label{color:var(--text-secondary)}
+.detail-row .value{font-weight:500}
+/* LOGIN */
+.login-screen{display:flex;align-items:center;justify-content:center;height:calc(100vh - 44px);background:linear-gradient(135deg,#F8FAFC 0%,#EEF2FF 100%)}
+.login-box{background:#fff;border:1px solid var(--border);border-radius:16px;padding:32px;max-width:400px;width:100%;box-shadow:0 10px 40px rgba(15,23,42,.08)}
+.login-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:24px}
+.login-logo .mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.login-logo span{font-size:18px;font-weight:700}
+.login-divider{display:flex;align-items:center;gap:12px;color:var(--text-muted);font-size:12px;margin:20px 0}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.sso-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+/* HELPERS */
+.mono{font-family:'JetBrains Mono',monospace}
+.muted{color:var(--text-muted)}
+.secondary{color:var(--text-secondary)}
+.mt-3{margin-top:12px}
+.mt-4{margin-top:16px}
+.mb-3{margin-bottom:12px}
+.mb-4{margin-bottom:16px}
+.text-sm{font-size:13px}
+.text-xs{font-size:12px}
+.text-lg{font-size:18px}
+.font-semibold{font-weight:600}
+.flex{display:flex}
+.flex-col{flex-direction:column}
+.items-center{align-items:center}
+.justify-between{justify-content:space-between}
+.gap-2{gap:8px}
+.gap-3{gap:12px}
+.gap-4{gap:16px}
+</style>
+</head>
+<body>
+
+<!-- ============ SCREEN SWITCHER ============ -->
+<nav class="screen-tabs">
+<button class="screen-tab active" data-target="s-projects">1. Projects</button>
+<button class="screen-tab" data-target="s-overview">2. Project Overview</button>
+<button class="screen-tab" data-target="s-task">3. Task Detail</button>
+<button class="screen-tab" data-target="s-templates">4. Templates</button>
+<button class="screen-tab" data-target="s-builder">5. Template Builder</button>
+<button class="screen-tab" data-target="s-designsys">6. Design System</button>
+<button class="screen-tab" data-target="s-components">7. Components</button>
+<button class="screen-tab" data-target="s-component-detail">8. Component Detail</button>
+<button class="screen-tab" data-target="s-repos">9. Repositories</button>
+<button class="screen-tab" data-target="s-pr">10. PR Detail</button>
+<button class="screen-tab" data-target="s-envs">11. Environments</button>
+<button class="screen-tab" data-target="s-analytics">12. Analytics</button>
+<button class="screen-tab" data-target="s-settings">13. Settings</button>
+<button class="screen-tab" data-target="s-login">14. Login</button>
+<button class="screen-tab" data-target="s-states">15. Empty & Modals</button>
+</nav>
+
+<!-- ============ 1. PROJECTS LIST ============ -->
+<section class="screen active" id="s-projects">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>All projects</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search projects…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔<div class="badge-dot"></div></div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item active">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main">
+<div class="page-header">
+<div><div class="breadcrumb">Acme Inc.</div><div class="page-title"><h1>Projects</h1></div><div class="page-desc">4 active projects across the organization</div></div>
+<div class="page-actions"><button class="btn">↑ Import</button><button class="btn btn-primary">＋ New project</button></div>
+</div>
+<div class="row mb-4" style="gap:8px;flex-wrap:wrap">
+<div class="search" style="flex:0 0 260px"><span>🔍</span><span>Search…</span></div>
+<button class="btn btn-sm">Status ▾</button>
+<button class="btn btn-sm">Tech ▾</button>
+<button class="btn btn-sm">Owner ▾</button>
+<div style="margin-left:auto;display:flex;padding:2px;background:var(--bg-hover);border-radius:6px">
+<button class="btn btn-sm" style="background:transparent;border:none">☰</button>
+<button class="btn btn-sm" style="background:#fff;border:none;box-shadow:0 1px 2px rgba(0,0,0,.05)">▦</button>
+</div>
+</div>
+<div class="grid g3">
+<div class="project-card">
+<div class="row justify-between items-center mb-3"><h3>CRM Platform</h3><span class="badge green"><span class="badge-dot-sm"></span>Active</span></div>
+<div class="tech">Angular · Go · PostgreSQL · Enterprise Blueprint v1.2</div>
+<div class="row gap-2 text-xs secondary"><span>📋 12 tasks</span><span>◈ 2 agents</span><span>✓ 92% tests</span></div>
+<div class="meta-row"><span>Marko Petrović</span><span>2h ago</span></div>
+</div>
+<div class="project-card">
+<div class="row justify-between items-center mb-3"><h3>Customer Portal</h3><span class="badge green"><span class="badge-dot-sm"></span>Active</span></div>
+<div class="tech">Angular · TypeScript · MongoDB · Portal Blueprint v1.0</div>
+<div class="row gap-2 text-xs secondary"><span>📋 8 tasks</span><span>◈ 1 agent</span><span>✓ 78% tests</span></div>
+<div class="meta-row"><span>Ana Kovač</span><span>6h ago</span></div>
+</div>
+<div class="project-card">
+<div class="row justify-between items-center mb-3"><h3>Internal HR</h3><span class="badge amber"><span class="badge-dot-sm"></span>Paused</span></div>
+<div class="tech">React · Node · PostgreSQL · Admin Blueprint v2.1</div>
+<div class="row gap-2 text-xs secondary"><span>📋 3 tasks</span><span>◈ 0 agents</span><span class="muted">No tests</span></div>
+<div class="meta-row"><span>Jovan Radić</span><span>3d ago</span></div>
+</div>
+<div class="project-card">
+<div class="row justify-between items-center mb-3"><h3>Billing Service</h3><span class="badge green"><span class="badge-dot-sm"></span>Active</span></div>
+<div class="tech">Go · PostgreSQL · Stripe · API Blueprint v1.1</div>
+<div class="row gap-2 text-xs secondary"><span>📋 5 tasks</span><span>◈ 1 agent</span><span>✓ 86% tests</span></div>
+<div class="meta-row"><span>Ana Kovač</span><span>1d ago</span></div>
+</div>
+<div class="project-card-new">＋<span>New project</span></div>
+</div>
+</main>
+</div>
+</section>
+
+<!-- ============ 2. PROJECT OVERVIEW ============ -->
+<section class="screen" id="s-overview">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>CRM Platform</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item active">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main">
+<div class="page-header">
+<div><div class="breadcrumb">Projects › CRM Platform</div><div class="page-title"><h1>CRM Platform</h1></div><div class="page-desc"><span class="badge green"><span class="badge-dot-sm"></span>Active</span> &nbsp; Angular + Go · Blueprint: Enterprise v1.2</div></div>
+<div class="page-actions"><button class="btn">⚙ Settings</button><button class="btn btn-primary">＋ New task</button></div>
+</div>
+<div class="tabs">
+<button class="tab active">Overview</button>
+<button class="tab">Backlog</button>
+<button class="tab">Agents</button>
+<button class="tab">Tests</button>
+<button class="tab">Repos</button>
+<button class="tab">Settings</button>
+</div>
+<div class="grid col-2-1">
+<div>
+<div class="panel"><div class="panel-header">Product description</div><div class="panel-body">
+<p class="text-sm secondary" style="line-height:1.7">Internal CRM for the sales team. Manages leads, deals, contacts, and customer interactions. Must support SSO authentication, role-based access, and CSV import/export. Runs on Angular 18 + Go 1.23, deployed via GitHub Actions to AWS ECS.</p>
+</div></div>
+<div class="panel"><div class="panel-header"><span>Recent changes</span><span class="link">View all →</span></div><div class="panel-list">
+<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start">
+<span class="badge blue" style="flex-shrink:0">PR</span>
+<div><div class="text-sm"><strong>PR #142</strong> — SSO login flow</div><div class="text-xs muted">opened by AI agent · 12 min ago · awaiting review</div></div>
+</div>
+<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start">
+<span class="badge red" style="flex-shrink:0">FAIL</span>
+<div><div class="text-sm"><strong>Build #233</strong> failed on staging</div><div class="text-xs muted">2 tests failed · 2h ago</div></div>
+</div>
+<div style="padding:12px 16px;display:flex;gap:10px;align-items:flex-start">
+<span class="badge green" style="flex-shrink:0">MERGED</span>
+<div><div class="text-sm"><strong>PR #141</strong> — cache layer for sessions</div><div class="text-xs muted">merged by Ana K. · 3h ago</div></div>
+</div>
+</div></div>
+<div class="panel"><div class="panel-header">Backlog snapshot</div><div class="panel-body">
+<div class="grid g4" style="gap:12px">
+<div class="card" style="padding:12px;text-align:center"><div class="text-xs muted mb-3">To Do</div><div class="text-lg font-semibold">8</div></div>
+<div class="card" style="padding:12px;text-align:center"><div class="text-xs muted mb-3">Planning</div><div class="text-lg font-semibold" style="color:var(--ai)">2</div></div>
+<div class="card" style="padding:12px;text-align:center"><div class="text-xs muted mb-3">In Progress</div><div class="text-lg font-semibold" style="color:var(--brand)">3</div></div>
+<div class="card" style="padding:12px;text-align:center"><div class="text-xs muted mb-3">Review</div><div class="text-lg font-semibold" style="color:var(--warning)">1</div></div>
+</div>
+</div></div>
+</div>
+<div>
+<div class="panel"><div class="panel-header">Active agents</div><div class="panel-body">
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+<div style="width:32px;height:32px;border-radius:8px;background:var(--brand-subtle);color:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px">DEV</div>
+<div style="flex:1"><div class="text-sm" style="font-weight:500;display:flex;align-items:center;gap:6px"><span class="badge-dot-sm" style="background:var(--brand);width:5px;height:5px;border-radius:50%;animation:pulse 1.5s infinite"></span>Task-88 · 62%</div><div class="text-xs muted">GPT-4o · 03:12 · $0.42</div></div>
+</div>
+<div style="display:flex;gap:10px;align-items:center">
+<div style="width:32px;height:32px;border-radius:8px;background:#DBEAFE;color:#0EA5E9;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px">QA</div>
+<div style="flex:1"><div class="text-sm" style="font-weight:500;display:flex;align-items:center;gap:6px"><span class="badge-dot-sm" style="background:#0EA5E9;width:5px;height:5px;border-radius:50%;animation:pulse 1.5s infinite"></span>Task-91 · 30%</div><div class="text-xs muted">GPT-4o-mini · 01:04 · $0.08</div></div>
+</div>
+</div></div>
+<div class="panel"><div class="panel-header">Tests & builds</div><div class="panel-body">
+<div class="detail-row"><span class="label">Unit tests</span><span class="value" style="color:var(--success)">92% ✓</span></div>
+<div class="detail-row"><span class="label">E2E tests</span><span class="value" style="color:var(--warning)">14/16 ⚠</span></div>
+<div class="detail-row"><span class="label">Build</span><span class="value"><span class="badge green"><span class="badge-dot-sm"></span>#233 pass</span></span></div>
+<div class="detail-row"><span class="label">Coverage</span><span class="value mono">87.4%</span></div>
+</div></div>
+<div class="panel"><div class="panel-header">Configuration</div><div class="panel-body">
+<div class="detail-row"><span class="label">AI model</span><span class="value mono text-xs">gpt-4o</span></div>
+<div class="detail-row"><span class="label">Git</span><span class="value">GitHub</span></div>
+<div class="detail-row"><span class="label">Environment</span><span class="value"><span class="badge green">staging OK</span></span></div>
+<div class="detail-row"><span class="label">Blueprint</span><span class="value">Enterprise v1.2</span></div>
+</div></div>
+</div>
+</div>
+</main>
+</div>
+</section>
+
+<!-- ============ 3. TASK DETAIL DRAWER ============ -->
+<section class="screen" id="s-task">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>CRM Platform</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item active">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main" style="position:relative">
+<div class="page-header"><div><div class="breadcrumb">CRM Platform › Backlog</div><div class="page-title"><h1>Backlog</h1></div></div><div class="page-actions"><button class="btn">☰ List</button><button class="btn btn-primary">＋ New task</button></div></div>
+<div class="grid g4" style="align-items:start">
+<div><div class="text-sm font-semibold mb-3">To Do <span class="badge gray">8</span></div>
+<div class="task"><div class="task-top"><span class="task-id">T-89</span><span class="priority med">Med</span></div><div class="task-title">Add caching layer for user sessions</div></div>
+<div class="task"><div class="task-top"><span class="task-id">T-90</span><span class="priority low">Low</span></div><div class="task-title">Update footer to v2.3</div></div>
+</div>
+<div><div class="text-sm font-semibold mb-3">Planning <span class="badge gray">2</span></div>
+<div class="task"><div class="task-top"><span class="task-id">T-91</span><span class="priority med">Med</span></div><div class="task-title">Role-based permissions</div></div>
+</div>
+<div><div class="text-sm font-semibold mb-3">In Progress <span class="badge gray">3</span></div>
+<div class="task" style="border-color:var(--brand);box-shadow:0 0 0 2px rgba(99,102,241,.15)"><div class="task-top"><span class="task-id">T-88</span><span class="priority high">High</span></div><div class="task-title">Login with SSO</div><div class="task-footer" style="border-top:none;padding-top:6px;margin-top:6px"><span class="text-xs muted">Marko P.</span><span class="badge violet pulse text-xs"><span class="badge-dot-sm"></span>DEV · 62%</span></div></div>
+</div>
+<div><div class="text-sm font-semibold mb-3">Review <span class="badge gray">1</span></div>
+<div class="task"><div class="task-top"><span class="task-id">T-87</span><span class="priority high">High</span></div><div class="task-title">Bulk import contacts</div></div>
+</div>
+</div>
+<!-- drawer -->
+<div class="drawer-overlay"></div>
+<div class="drawer">
+<div class="drawer-header">
+<div><div class="mono text-xs muted">T-88</div><h2 style="font-size:16px;font-weight:600;margin-top:2px">Login with SSO</h2></div>
+<button class="icon-btn" style="background:transparent;border:none">✕</button>
+</div>
+<div class="drawer-body">
+<div class="row gap-3 mb-4" style="flex-wrap:wrap">
+<span class="badge violet pulse"><span class="badge-dot-sm"></span>In Progress</span>
+<span class="badge red">High priority</span>
+<span class="badge gray">👤 Marko P.</span>
+</div>
+<div class="mb-4">
+<div class="text-xs muted mb-3" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600">Description</div>
+<p class="text-sm secondary" style="line-height:1.6">Users must be able to log in via SSO (SAML) using their company identity provider. The flow should redirect to the IdP, handle the callback, and establish a session.</p>
+</div>
+<div class="mb-4">
+<div class="text-xs muted mb-3" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600">Acceptance criteria</div>
+<div class="text-sm" style="line-height:2">
+<div>☑ Redirect to IdP on "Login with SSO"</div>
+<div>☐ Handle SAML callback and create session</div>
+<div>☐ Session persistence across page reloads</div>
+</div>
+</div>
+<div class="mb-4">
+<div class="text-xs muted mb-3" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600">Related</div>
+<div class="text-sm" style="line-height:1.9">→ Requirement R-12<br>→ PR #142 (in review)<br>→ 3 tests linked</div>
+</div>
+<div class="panel" style="border-color:var(--ai);background:var(--ai-subtle)">
+<div class="panel-header" style="border-color:rgba(139,92,246,.2);background:transparent">
+<span style="color:var(--ai)">◈ AI plan</span>
+<span class="text-xs muted" style="font-weight:400">Generated by Planning Agent · 5 steps</span>
+</div>
+<div class="panel-body" style="background:#fff">
+<div class="text-sm" style="line-height:1.9">1. Add SAML provider config to auth module<br>2. Implement callback endpoint<br>3. Add SSO button to login page<br>4. Write E2E test for login flow<br>5. Update auth documentation</div>
+<div class="row gap-2 mt-4"><button class="btn btn-sm btn-primary">Approve plan</button><button class="btn btn-sm">Edit</button><button class="btn btn-sm">Reject</button></div>
+</div>
+</div>
+<div class="text-xs muted mb-3 mt-4" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600">Activity</div>
+<div class="text-sm secondary" style="line-height:2">
+<div>• <strong>marko</strong> started development agent · 10m ago</div>
+<div>• Plan generated by AI · 12m ago</div>
+<div>• Task created · 2h ago</div>
+</div>
+</div>
+<div class="drawer-footer">
+<button class="btn">Cancel</button>
+<button class="btn btn-primary">▶ Run development agent</button>
+</div>
+</div>
+</main>
+</div>
+</section>
+
+<!-- ============ 4. TEMPLATES LIST ============ -->
+<section class="screen" id="s-templates">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>Templates</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search templates…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item active">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main">
+<div class="page-header">
+<div><div class="breadcrumb">Acme Inc.</div><div class="page-title"><h1>Application Blueprints</h1></div><div class="page-desc">Standardized starting points for new projects</div></div>
+<div class="page-actions"><button class="btn">Version ▾</button><button class="btn btn-primary">＋ New blueprint</button></div>
+</div>
+<div class="grid g3">
+<div class="project-card">
+<div class="row justify-between items-center mb-3"><h3>Enterprise Business App</h3><span class="badge green">v1.2</span></div>
+<div class="tech">Angular 18 · Go 1.23 · PostgreSQL · CI/CD · E2E tests</div>
+<p class="text-xs secondary mb-3" style="line-height:1.6">Multi-tenant enterprise application with SSO, RBAC, audit log, design system, and pre-configured test strategy.</p>
+<div class="row gap-2 text-xs secondary" style="flex-wrap:wrap"><span class="badge gray">12 components</span><span class="badge gray">47 files</span></div>
+<div class="meta-row"><span class="muted">Published 2d ago</span><button class="btn btn-sm btn-primary">Use →</button></div>
+</div>
+<div class="project-card">
+<div class="row justify-between items-center mb-3"><h3>SaaS Multi-tenant</h3><span class="badge green">v1.0</span></div>
+<div class="tech">Angular · TypeScript · PostgreSQL · Docker</div>
+<p class="text-xs secondary mb-3" style="line-height:1.6">SaaS skeleton with tenant isolation, billing hooks, and row-level security.</p>
+<div class="row gap-2 text-xs secondary" style="flex-wrap:wrap"><span class="badge gray">9 components</span><span class="badge gray">38 files</span></div>
+<div class="meta-row"><span class="muted">Published 1w ago</span><button class="btn btn-sm btn-primary">Use →</button></div>
+</div>
+<div class="project-card">
+<div class="row justify-between items-center mb-3"><h3>Admin Dashboard</h3><span class="badge green">v2.1</span></div>
+<div class="tech">Angular · Go · PostgreSQL · Playwright</div>
+<p class="text-xs secondary mb-3" style="line-height:1.6">CRUD-heavy admin interface with data tables, forms, and full validation layer.</p>
+<div class="row gap-2 text-xs secondary" style="flex-wrap:wrap"><span class="badge gray">15 components</span><span class="badge gray">52 files</span></div>
+<div class="meta-row"><span class="muted">Published 5d ago</span><button class="btn btn-sm btn-primary">Use →</button></div>
+</div>
+<div class="project-card">
+<div class="row justify-between items-center mb-3"><h3>Customer Portal</h3><span class="badge amber">v1.0</span></div>
+<div class="tech">Angular · TypeScript · Auth0</div>
+<p class="text-xs secondary mb-3" style="line-height:1.6">Public-facing customer portal with self-service login and support tickets.</p>
+<div class="row gap-2 text-xs secondary" style="flex-wrap:wrap"><span class="badge gray">8 components</span><span class="badge gray">31 files</span></div>
+<div class="meta-row"><span class="muted">Draft</span><button class="btn btn-sm">Edit</button></div>
+</div>
+</div>
+</main>
+</div>
+</section>
+
+<!-- ============ 5. TEMPLATE BUILDER ============ -->
+<section class="screen" id="s-builder">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>Templates</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item active">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main" style="max-width:960px;margin:0 auto">
+<div class="page-header"><div><div class="breadcrumb">Templates › New blueprint</div><div class="page-title"><h1>Create Blueprint</h1></div></div></div>
+<div class="wizard-steps">
+<div class="wizard-step done"><div class="wizard-step-num">✓</div><span>Basics</span></div><div class="wizard-line"></div>
+<div class="wizard-step done"><div class="wizard-step-num">✓</div><span>Technologies</span></div><div class="wizard-line"></div>
+<div class="wizard-step active"><div class="wizard-step-num">3</div><span>Design System</span></div><div class="wizard-line"></div>
+<div class="wizard-step"><div class="wizard-step-num">4</div><span>Test Strategy</span></div><div class="wizard-line"></div>
+<div class="wizard-step"><div class="wizard-step-num">5</div><span>Rules & AI</span></div>
+</div>
+<div class="panel"><div class="panel-header">Step 3 of 5 · Design System & Components</div><div class="panel-body">
+<div class="form-field"><label class="form-label">Design system</label><select class="form-input"><option>Acme Design System v2.4</option><option>Minimal v1.0</option></select><div class="form-hint">Applied to all generated projects from this blueprint</div></div>
+<div class="form-field"><label class="form-label">Default theme</label><div class="row gap-3"><label style="display:flex;gap:6px;align-items:center"><input type="radio" name="theme" checked> Light</label><label style="display:flex;gap:6px;align-items:center"><input type="radio" name="theme"> Dark</label><label style="display:flex;gap:6px;align-items:center"><input type="radio" name="theme"> System</label></div></div>
+<div class="form-field"><label class="form-label">Component set</label>
+<div style="border:1px solid var(--border);border-radius:8px;padding:12px;max-height:240px;overflow-y:auto">
+<div class="row justify-between items-center" style="padding:6px 0;border-bottom:1px solid var(--bg-hover)"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked><span class="text-sm">Button v2.4</span></label><span class="badge green text-xs">stable</span></div>
+<div class="row justify-between items-center" style="padding:6px 0;border-bottom:1px solid var(--bg-hover)"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked><span class="text-sm">Input v1.8</span></label><span class="badge green text-xs">stable</span></div>
+<div class="row justify-between items-center" style="padding:6px 0;border-bottom:1px solid var(--bg-hover)"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked><span class="text-sm">DataTable v3.1</span></label><span class="badge green text-xs">stable</span></div>
+<div class="row justify-between items-center" style="padding:6px 0;border-bottom:1px solid var(--bg-hover)"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked><span class="text-sm">Modal v1.2</span></label><span class="badge amber text-xs">beta</span></div>
+<div class="row justify-between items-center" style="padding:6px 0"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox"><span class="text-sm">Chart v0.9</span></label><span class="badge amber text-xs">beta</span></div>
+</div>
+</div>
+</div></div>
+<div class="panel"><div class="panel-header">Preview — project structure</div><div class="panel-body">
+<div class="code"><span class="c"># Generated structure</span>
+src/
+├── app/
+│   ├── features/          <span class="c">// feature modules</span>
+│   ├── shared/
+│   │   ├── components/    <span class="k">// DS components</span>
+│   │   └── directives/
+│   └── core/
+├── styles/
+│   └── tokens.css         <span class="k">// design tokens</span>
+└── tests/
+    └── e2e/</div>
+</div></div>
+<div class="row justify-between mt-4">
+<button class="btn">← Back</button>
+<div class="row gap-2"><button class="btn btn-ghost">Save draft</button><button class="btn btn-primary">Next →</button></div>
+</div>
+</main>
+</div>
+</section>
+
+<!-- ============ 6. DESIGN SYSTEM ============ -->
+<section class="screen" id="s-designsys">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>Design System</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search tokens…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item">▦ Templates</div>
+<div class="nav-item active">◐ Design System</div>
+<div class="nav-item">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main">
+<div class="page-header">
+<div><div class="breadcrumb">Acme Inc.</div><div class="page-title"><h1>Design System</h1></div><div class="page-desc">Acme DS v2.4 · Light & Dark themes</div></div>
+<div class="page-actions"><button class="btn">v2.4 ▾</button><button class="btn">🌓 Theme</button></div>
+</div>
+<div class="tabs"><button class="tab active">Tokens</button><button class="tab">Components</button><button class="tab">Themes</button><button class="tab">Guidelines</button></div>
+
+<div class="mb-4"><h2 class="text-lg font-semibold mb-3">Colors</h2>
+<div class="swatch-grid">
+<div class="swatch"><div class="swatch-color" style="background:#F8FAFC"></div><div class="swatch-label"><strong>bg-canvas</strong>#F8FAFC</div></div>
+<div class="swatch"><div class="swatch-color" style="background:#FFFFFF;border-bottom:1px solid var(--border)"></div><div class="swatch-label"><strong>bg-surface</strong>#FFFFFF</div></div>
+<div class="swatch"><div class="swatch-color" style="background:#6366F1"></div><div class="swatch-label"><strong>brand</strong>#6366F1</div></div>
+<div class="swatch"><div class="swatch-color" style="background:#8B5CF6"></div><div class="swatch-label"><strong>ai-accent</strong>#8B5CF6</div></div>
+<div class="swatch"><div class="swatch-color" style="background:#10B981"></div><div class="swatch-label"><strong>success</strong>#10B981</div></div>
+<div class="swatch"><div class="swatch-color" style="background:#F59E0B"></div><div class="swatch-label"><strong>warning</strong>#F59E0B</div></div>
+<div class="swatch"><div class="swatch-color" style="background:#EF4444"></div><div class="swatch-label"><strong>danger</strong>#EF4444</div></div>
+<div class="swatch"><div class="swatch-color" style="background:#3B82F6"></div><div class="swatch-label"><strong>info</strong>#3B82F6</div></div>
+</div></div>
+
+<div class="mb-4"><h2 class="text-lg font-semibold mb-3">Typography</h2>
+<div class="panel"><div class="panel-body">
+<div style="font-size:30px;font-weight:700;margin-bottom:4px">Heading 1 · 30/700</div><div class="text-xs muted mb-4 mono">font-size: 30px · line-height: 1.25</div>
+<div style="font-size:24px;font-weight:600;margin-bottom:4px">Heading 2 · 24/600</div><div class="text-xs muted mb-4 mono">font-size: 24px · line-height: 1.3</div>
+<div style="font-size:18px;font-weight:600;margin-bottom:4px">Heading 3 · 18/600</div><div class="text-xs muted mb-4 mono">font-size: 18px · line-height: 1.4</div>
+<div style="font-size:14px;font-weight:500;margin-bottom:4px">Body · 14/500</div><div class="text-xs muted mb-4 mono">font-size: 14px · line-height: 1.5</div>
+<div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Caption · 12/400</div><div class="text-xs muted mono">font-size: 12px · line-height: 1.5</div>
+</div></div></div>
+
+<div class="grid g2">
+<div><h2 class="text-lg font-semibold mb-3">Spacing scale</h2>
+<div class="panel"><div class="panel-body">
+<div class="row gap-3 items-center mb-3"><div style="width:4px;height:4px;background:var(--brand)"></div><span class="text-sm mono">4px</span><span class="text-xs muted">space.1</span></div>
+<div class="row gap-3 items-center mb-3"><div style="width:8px;height:8px;background:var(--brand)"></div><span class="text-sm mono">8px</span><span class="text-xs muted">space.2</span></div>
+<div class="row gap-3 items-center mb-3"><div style="width:12px;height:12px;background:var(--brand)"></div><span class="text-sm mono">12px</span><span class="text-xs muted">space.3</span></div>
+<div class="row gap-3 items-center mb-3"><div style="width:16px;height:16px;background:var(--brand)"></div><span class="text-sm mono">16px</span><span class="text-xs muted">space.4</span></div>
+<div class="row gap-3 items-center mb-3"><div style="width:24px;height:24px;background:var(--brand)"></div><span class="text-sm mono">24px</span><span class="text-xs muted">space.6</span></div>
+<div class="row gap-3 items-center"><div style="width:32px;height:32px;background:var(--brand)"></div><span class="text-sm mono">32px</span><span class="text-xs muted">space.8</span></div>
+</div></div></div>
+<div><h2 class="text-lg font-semibold mb-3">Radius & shadow</h2>
+<div class="panel"><div class="panel-body">
+<div class="row gap-3 items-center mb-3"><div style="width:40px;height:40px;background:var(--brand-subtle);border:1px solid var(--brand);border-radius:6px"></div><span class="text-sm mono">6px</span><span class="text-xs muted">radius.sm</span></div>
+<div class="row gap-3 items-center mb-3"><div style="width:40px;height:40px;background:var(--brand-subtle);border:1px solid var(--brand);border-radius:8px"></div><span class="text-sm mono">8px</span><span class="text-xs muted">radius.md</span></div>
+<div class="row gap-3 items-center mb-3"><div style="width:40px;height:40px;background:var(--brand-subtle);border:1px solid var(--brand);border-radius:12px"></div><span class="text-sm mono">12px</span><span class="text-xs muted">radius.lg</span></div>
+<div class="row gap-3 items-center mb-3"><div style="width:40px;height:40px;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(15,23,42,.06)"></div><span class="text-sm mono">shadow.md</span></div>
+<div class="row gap-3 items-center"><div style="width:40px;height:40px;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 24px rgba(15,23,42,.1)"></div><span class="text-sm mono">shadow.lg</span></div>
+</div></div></div>
+</div>
+</main>
+</div>
+</section>
+
+<!-- ============ 7. COMPONENTS REGISTRY ============ -->
+<section class="screen" id="s-components">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>Components</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search components…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item active">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main">
+<div class="page-header">
+<div><div class="breadcrumb">Design System</div><div class="page-title"><h1>Components</h1></div><div class="page-desc">24 registered components across 5 categories</div></div>
+<div class="page-actions"><button class="btn btn-primary">＋ Register component</button></div>
+</div>
+<div class="row gap-2 mb-4" style="flex-wrap:wrap">
+<button class="badge blue" style="padding:5px 12px">All (24)</button>
+<button class="btn btn-sm">Form (8)</button>
+<button class="btn btn-sm">Layout (4)</button>
+<button class="btn btn-sm">Data (5)</button>
+<button class="btn btn-sm">Feedback (4)</button>
+<button class="btn btn-sm">Navigation (3)</button>
+</div>
+<div class="grid g4">
+<div class="card card-interactive" style="padding:0;overflow:hidden"><div style="padding:32px;background:var(--bg-canvas);display:flex;align-items:center;justify-content:center"><button class="btn btn-primary">Primary</button></div><div style="padding:12px;border-top:1px solid var(--border)"><div class="text-sm font-semibold">Button</div><div class="text-xs muted">v2.4 · <span style="color:var(--success)">stable</span></div></div></div>
+<div class="card card-interactive" style="padding:0;overflow:hidden"><div style="padding:32px;background:var(--bg-canvas);display:flex;align-items:center;justify-content:center"><input class="form-input" placeholder="Enter text" style="max-width:180px"></div><div style="padding:12px;border-top:1px solid var(--border)"><div class="text-sm font-semibold">Input</div><div class="text-xs muted">v1.8 · <span style="color:var(--success)">stable</span></div></div></div>
+<div class="card card-interactive" style="padding:0;overflow:hidden"><div style="padding:32px;background:var(--bg-canvas);display:flex;align-items:center;justify-content:center"><div class="badge green"><span class="badge-dot-sm"></span>Active</div></div><div style="padding:12px;border-top:1px solid var(--border)"><div class="text-sm font-semibold">Badge</div><div class="text-xs muted">v1.3 · <span style="color:var(--success)">stable</span></div></div></div>
+<div class="card card-interactive" style="padding:0;overflow:hidden"><div style="padding:32px;background:var(--bg-canvas);display:flex;align-items:center;justify-content:center"><div style="width:60px;height:32px;background:var(--brand);border-radius:16px;position:relative"><div style="position:absolute;right:2px;top:2px;width:28px;height:28px;background:#fff;border-radius:50%;box-shadow:0 2px 4px rgba(0,0,0,.1)"></div></div></div><div style="padding:12px;border-top:1px solid var(--border)"><div class="text-sm font-semibold">Toggle</div><div class="text-xs muted">v2.0 · <span style="color:var(--success)">stable</span></div></div></div>
+<div class="card card-interactive" style="padding:0;overflow:hidden"><div style="padding:32px;background:var(--bg-canvas);display:flex;align-items:center;justify-content:center"><div style="width:180px;border:1px solid var(--border);border-radius:8px;padding:8px;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.08)"><div class="text-sm font-semibold">Modal</div><div class="text-xs muted">v1.2 · <span style="color:var(--warning)">beta</span></div></div></div><div style="padding:12px;border-top:1px solid var(--border)"><div class="text-sm font-semibold">Modal</div><div class="text-xs muted">v1.2 · <span style="color:var(--warning)">beta</span></div></div></div>
+<div class="card card-interactive" style="padding:0;overflow:hidden"><div style="padding:32px;background:var(--bg-canvas);display:flex;align-items:center;justify-content:center"><div style="width:200px;background:#fff;border:1px solid var(--border);border-radius:6px"><div style="padding:6px 10px;font-size:10px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);background:var(--bg-hover)">HEADER</div><div style="padding:8px 10px;font-size:11px">Data row</div></div></div><div style="padding:12px;border-top:1px solid var(--border)"><div class="text-sm font-semibold">DataTable</div><div class="text-xs muted">v3.1 · <span style="color:var(--success)">stable</span></div></div></div>
+<div class="card card-interactive" style="padding:0;overflow:hidden"><div style="padding:32px;background:var(--bg-canvas);display:flex;align-items:center;justify-content:center"><div style="width:100px;height:6px;background:var(--bg-hover);border-radius:3px;overflow:hidden"><div style="width:65%;height:100%;background:var(--brand);border-radius:3px"></div></div></div><div style="padding:12px;border-top:1px solid var(--border)"><div class="text-sm font-semibold">ProgressBar</div><div class="text-xs muted">v1.5 · <span style="color:var(--success)">stable</span></div></div></div>
+<div class="card card-interactive" style="padding:0;overflow:hidden"><div style="padding:32px;background:var(--bg-canvas);display:flex;align-items:center;justify-content:center"><div class="badge amber"><span class="badge-dot-sm"></span>Warning</div></div><div style="padding:12px;border-top:1px solid var(--border)"><div class="text-sm font-semibold">Alert</div><div class="text-xs muted">v1.1 · <span style="color:var(--success)">stable</span></div></div></div>
+</div>
+</main>
+</div>
+</section>
+
+<!-- ============ 8. COMPONENT DETAIL ============ -->
+<section class="screen" id="s-component-detail">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>Components</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item active">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main">
+<div class="page-header"><div><div class="breadcrumb">Components › Button</div><div class="page-title"><h1>Button</h1></div><div class="page-desc">Primary action trigger. <span class="badge green">v2.4 · stable</span></div></div>
+<div class="page-actions"><button class="btn">Edit</button><button class="btn">Copy usage</button></div>
+</div>
+<div class="grid col-2-1">
+<div>
+<div class="panel"><div class="panel-header">Live preview</div><div class="panel-body">
+<div style="padding:32px;background:var(--bg-canvas);border-radius:8px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+<button class="btn btn-primary">Primary</button>
+<button class="btn">Secondary</button>
+<button class="btn btn-ghost">Ghost</button>
+<button class="btn btn-danger">Danger</button>
+<button class="btn btn-primary" disabled style="opacity:.5">Disabled</button>
+</div>
+<div class="row gap-2 mt-4"><button class="btn btn-sm">Light</button><button class="btn btn-sm active" style="background:var(--brand);color:#fff;border-color:var(--brand)">Dark</button><button class="btn btn-sm">Mobile</button></div>
+</div></div>
+<div class="panel"><div class="panel-header">Props</div><div class="panel-body" style="padding:0">
+<table class="data-table">
+<thead><tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="mono text-xs">variant</td><td class="mono text-xs">'primary'|'secondary'|'ghost'|'danger'</td><td class="mono text-xs">'secondary'</td><td class="text-xs">Visual style</td></tr>
+<tr><td class="mono text-xs">size</td><td class="mono text-xs">'sm'|'md'|'lg'</td><td class="mono text-xs">'md'</td><td class="text-xs">Button size</td></tr>
+<tr><td class="mono text-xs">loading</td><td class="mono text-xs">boolean</td><td class="mono text-xs">false</td><td class="text-xs">Shows spinner</td></tr>
+<tr><td class="mono text-xs">disabled</td><td class="mono text-xs">boolean</td><td class="mono text-xs">false</td><td class="text-xs">Disables interactions</td></tr>
+</tbody>
+</table>
+</div></div>
+<div class="panel"><div class="panel-header">Usage</div><div class="panel-body">
+<div class="code">&lt;<span class="k">Button</span> variant=<span class="s">"primary"</span> size=<span class="s">"md"</span>&gt;<br>  Save changes<br>&lt;/<span class="k">Button</span>&gt;</div>
+</div></div>
+</div>
+<div>
+<div class="panel" style="border-color:var(--ai)"><div class="panel-header" style="background:var(--ai-subtle);color:var(--ai);border-bottom-color:rgba(139,92,246,.2)">◈ AI usage notes</div><div class="panel-body text-sm secondary" style="line-height:1.7">
+<p class="mb-3"><strong>Use when:</strong> triggering an action (submit, save, delete, navigate).</p>
+<p class="mb-3"><strong>Avoid when:</strong> navigation between sections — use Link instead.</p>
+<p class="mb-3"><strong>Prefer:</strong> primary for the single main action per screen; secondary for everything else; danger only for destructive actions.</p>
+<p><strong>Never:</strong> more than one primary button in a single section.</p>
+</div></div>
+<div class="panel"><div class="panel-header">Version history</div><div class="panel-body">
+<div class="text-sm mb-3" style="line-height:1.9"><strong>v2.4</strong> <span class="text-xs muted">· current · 3d ago</span><br><span class="text-xs secondary">Added ghost variant</span></div>
+<div class="text-sm mb-3" style="line-height:1.9"><strong>v2.3</strong> <span class="text-xs muted">· 2w ago</span><br><span class="text-xs secondary">New size prop</span></div>
+<div class="text-sm" style="line-height:1.9"><strong>v2.0</strong> <span class="text-xs muted">· 1mo ago</span><br><span class="text-xs secondary">Breaking: variant renamed</span></div>
+</div></div>
+<div class="panel"><div class="panel-header">Accessibility</div><div class="panel-body text-sm secondary" style="line-height:1.8">
+<div>✓ Focus ring on focus-visible</div>
+<div>✓ aria-busy when loading</div>
+<div>✓ Keyboard accessible (Space/Enter)</div>
+<div>⚠ Do not place icon-only without aria-label</div>
+</div></div>
+</div>
+</div>
+</main>
+</div>
+</section>
+
+<!-- ============ 9. REPOSITORIES ============ -->
+<section class="screen" id="s-repos">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>CRM Platform</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item active">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main">
+<div class="page-header"><div><div class="breadcrumb">CRM Platform</div><div class="page-title"><h1>Repositories</h1></div><div class="page-desc">2 repositories connected via GitHub</div></div>
+<div class="page-actions"><button class="btn btn-primary">＋ Connect repository</button></div>
+</div>
+<div class="panel mb-4"><div class="panel-header"><span>⎇ crm-frontend</span><span class="badge green">connected</span></div><div class="panel-body">
+<div class="row justify-between mb-3">
+<div class="text-sm muted">github.com/acme/crm-frontend</div>
+<div class="row gap-2"><button class="btn btn-sm">Open on GitHub ↗</button></div>
+</div>
+<div class="grid g3" style="gap:12px">
+<div class="card" style="padding:12px"><div class="text-xs muted mb-3">Branches</div><div class="text-lg font-semibold">3</div></div>
+<div class="card" style="padding:12px"><div class="text-xs muted mb-3">Open PRs</div><div class="text-lg font-semibold">12</div></div>
+<div class="card" style="padding:12px"><div class="text-xs muted mb-3">Protected</div><div class="text-sm" style="color:var(--success)">main ✓</div></div>
+</div>
+<div class="mt-4 mb-3 text-xs muted" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600">Recent pull requests</div>
+<div style="border:1px solid var(--border);border-radius:8px">
+<div style="padding:12px;border-bottom:1px solid var(--border)"><div class="row justify-between mb-3"><div><span class="mono text-xs muted">#142</span> <strong class="text-sm">SSO login flow</strong></div><span class="badge amber"><span class="badge-dot-sm"></span>Awaiting review</span></div><div class="text-xs muted">ai/T-88-sso-login → main · opened by Agent · 12m ago</div></div>
+<div style="padding:12px;border-bottom:1px solid var(--border)"><div class="row justify-between mb-3"><div><span class="mono text-xs muted">#141</span> <strong class="text-sm">Cache layer for sessions</strong></div><span class="badge green"><span class="badge-dot-sm"></span>Merged</span></div><div class="text-xs muted">cache/sessions → main · merged by Ana K. · 3h ago</div></div>
+<div style="padding:12px"><div class="row justify-between mb-3"><div><span class="mono text-xs muted">#140</span> <strong class="text-sm">Update footer v2.3</strong></div><span class="badge green"><span class="badge-dot-sm"></span>Merged</span></div><div class="text-xs muted">deps/footer → main · merged by Marko P. · 1d ago</div></div>
+</div>
+</div></div>
+<div class="panel"><div class="panel-header"><span>⎇ crm-backend</span><span class="badge green">connected</span></div><div class="panel-body">
+<div class="text-sm muted mb-3">github.com/acme/crm-backend</div>
+<div class="grid g3" style="gap:12px">
+<div class="card" style="padding:12px"><div class="text-xs muted mb-3">Branches</div><div class="text-lg font-semibold">5</div></div>
+<div class="card" style="padding:12px"><div class="text-xs muted mb-3">Open PRs</div><div class="text-lg font-semibold">4</div></div>
+<div class="card" style="padding:12px"><div class="text-xs muted mb-3">Protected</div><div class="text-sm" style="color:var(--success)">main ✓</div></div>
+</div>
+</div></div>
+</main>
+</div>
+</section>
+
+<!-- ============ 10. PR DETAIL ============ -->
+<section class="screen" id="s-pr">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>CRM Platform</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item active">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main">
+<div class="page-header">
+<div><div class="breadcrumb">crm-frontend › #142</div><div class="page-title"><h1>SSO login flow <span class="badge amber"><span class="badge-dot-sm"></span>Awaiting review</span></h1></div><div class="page-desc mono text-xs">ai/T-88-sso-login → main · opened by Development Agent · 12m ago</div></div>
+<div class="page-actions"><button class="btn">View on GitHub ↗</button><button class="btn btn-primary" disabled style="opacity:.5">Merge (checks running)</button></div>
+</div>
+<div class="grid col-2-1">
+<div>
+<div class="panel"><div class="panel-header">Checks</div><div class="panel-body">
+<div class="detail-row"><span class="label">✓ Build</span><span class="value text-xs muted">#234 · 2m 14s</span></div>
+<div class="detail-row"><span class="label">✓ Unit tests</span><span class="value text-xs muted">184/184 passed · 45s</span></div>
+<div class="detail-row"><span class="label">⏳ E2E tests</span><span class="value text-xs muted" style="color:var(--warning)">running · 8/16</span></div>
+<div class="detail-row"><span class="label">✓ Lint</span><span class="value text-xs muted">no issues</span></div>
+<div class="detail-row"><span class="label">✓ Type check</span><span class="value text-xs muted">clean</span></div>
+<div class="detail-row"><span class="label">✓ Review agent</span><span class="value text-xs muted">3 issues found · <a style="color:var(--brand)">view report</a></span></div>
+</div></div>
+<div class="panel"><div class="panel-header">Files changed (2) <span class="text-xs muted" style="font-weight:400">+131 −1</span></div><div class="panel-body" style="padding:0">
+<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px"><span class="badge green" style="padding:1px 5px">M</span><span style="flex:1">src/auth/index.ts</span><span style="color:var(--success)">+3</span><span style="color:var(--danger)">−1</span></div>
+<div style="padding:10px 16px;display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:12px"><span class="badge green" style="padding:1px 5px;background:#D1FAE5;color:#065F46">A</span><span style="flex:1">src/auth/sso-provider.ts</span><span style="color:var(--success)">+128</span><span style="color:var(--danger)">−0</span></div>
+</div></div>
+<div class="panel"><div class="panel-header">Diff preview</div><div class="panel-body" style="padding:0">
+<div class="code" style="border-radius:0;max-height:300px;overflow:auto"><span class="c">// src/auth/sso-provider.ts (new)</span>
+<span class="k">export class</span> SSOProvider {
+  <span class="k">constructor</span>(<span class="k">private</span> config: SSOConfig) {}
+  
+  <span class="k">async</span> redirectToIdP(returnUrl: <span class="k">string</span>) {
+    <span class="c">// validate returnUrl</span>
+    <span class="k">return</span> this.buildAuthUrl(returnUrl);
+  }
+  
+  <span class="k">async</span> handleCallback(samlResponse: <span class="k">string</span>) {
+    <span class="c">// validate & create session</span>
+  }
+}</div>
+</div></div>
+</div>
+<div>
+<div class="panel"><div class="panel-header">Review agent</div><div class="panel-body">
+<div class="text-sm mb-3" style="color:var(--warning)">⚠ 3 issues found</div>
+<div class="text-xs secondary mb-3" style="line-height:1.7">1. Missing returnUrl validation (XSS risk)<br>2. Session timeout not enforced<br>3. Callback missing error handling</div>
+<div class="text-xs muted">Reviewed in 1m 44s · $0.18</div>
+</div></div>
+<div class="panel"><div class="panel-header">Reviewers</div><div class="panel-body">
+<div class="detail-row"><span class="label">👤 Marko P.</span><span class="value badge amber text-xs">requested</span></div>
+<div class="detail-row"><span class="label">🤖 Review Agent</span><span class="value badge green text-xs">done</span></div>
+</div></div>
+<div class="panel"><div class="panel-header">Linked</div><div class="panel-body">
+<div class="text-sm" style="line-height:1.9">→ Task-88: Login with SSO<br>→ Requirement R-12<br>→ 3 linked tests</div>
+</div></div>
+</div>
+</div>
+</main>
+</div>
+</section>
+
+<!-- ============ 11. ENVIRONMENTS ============ -->
+<section class="screen" id="s-envs">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>CRM Platform</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item">▢ Components</div>
+<div class="nav-item active">⚙ Environments</div>
+<div class="nav-item">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main">
+<div class="page-header"><div><div class="breadcrumb">CRM Platform</div><div class="page-title"><h1>Environments</h1></div><div class="page-desc">Deployments across development, staging, production</div></div></div>
+<div class="panel mb-4" style="border-color:rgba(245,158,11,.3);background:#FFFBEB"><div class="panel-body" style="display:flex;align-items:center;gap:12px">
+<div style="width:24px;height:24px;border-radius:50%;background:#FEF3C7;color:var(--warning);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">!</div>
+<div style="flex:1"><div class="text-sm font-semibold">Production deployment awaiting approval</div><div class="text-xs secondary">PR #142 (SSO login) is ready to deploy to production</div></div>
+<button class="btn btn-sm btn-primary">Review</button>
+</div></div>
+<div class="panel mb-4"><div class="panel-body" style="padding:0">
+<table class="data-table">
+<thead><tr><th>Environment</th><th>Status</th><th>Last build</th><th>Last deploy</th><th>Version</th><th></th></tr></thead>
+<tbody>
+<tr><td><strong>● Development</strong></td><td><span class="badge green"><span class="badge-dot-sm"></span>OK</span></td><td class="mono text-xs">#233 · 2h ago</td><td class="text-xs">2h ago</td><td class="mono text-xs">1.4.0</td><td class="text-right"><button class="btn btn-sm">Logs</button></td></tr>
+<tr><td><strong>● Staging</strong></td><td><span class="badge green"><span class="badge-dot-sm"></span>OK</span></td><td class="mono text-xs">#231 · 6h ago</td><td class="text-xs">6h ago</td><td class="mono text-xs">1.3.2</td><td class="text-right"><button class="btn btn-sm">Logs</button></td></tr>
+<tr><td><strong>● Production</strong></td><td><span class="badge green"><span class="badge-dot-sm"></span>OK</span></td><td class="mono text-xs">#228 · 2d ago</td><td class="text-xs">2d ago</td><td class="mono text-xs">1.2.1</td><td class="text-right"><button class="btn btn-sm">Logs</button></td></tr>
+</tbody>
+</table>
+</div></div>
+<div class="panel"><div class="panel-header">Release history</div><div class="panel-body" style="padding:0">
+<div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+<span class="mono text-sm font-semibold" style="min-width:50px">1.4.0</span>
+<div style="flex:1"><div class="text-sm">Deployed to staging</div><div class="text-xs muted">2025-10-18 · 2h ago</div></div>
+<span class="badge green">✓</span>
+</div>
+<div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+<span class="mono text-sm font-semibold" style="min-width:50px">1.3.2</span>
+<div style="flex:1"><div class="text-sm">Deployed to staging + production</div><div class="text-xs muted">2025-10-12 · 6d ago</div></div>
+<span class="badge green">✓</span>
+</div>
+<div style="padding:14px 16px;display:flex;align-items:center;gap:12px">
+<span class="mono text-sm font-semibold" style="min-width:50px">1.2.1</span>
+<div style="flex:1"><div class="text-sm">Deployed to production</div><div class="text-xs muted">2025-10-05 · 13d ago</div></div>
+<span class="badge amber">⚠ rollback</span>
+</div>
+</div></div>
+</main>
+</div>
+</section>
+
+<!-- ============ 12. ANALYTICS ============ -->
+<section class="screen" id="s-analytics">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>All projects</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item">⎇ Repositories</div>
+<div class="nav-item active">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main">
+<div class="page-header"><div><div class="breadcrumb">Acme Inc.</div><div class="page-title"><h1>Analytics</h1></div><div class="page-desc">Engineering insights · last 30 days</div></div>
+<div class="page-actions"><button class="btn">Last 30 days ▾</button><button class="btn">↑ Export</button></div>
+</div>
+<div class="grid g3 mb-4">
+<div class="card"><div class="text-xs muted" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">AI runs</div><div class="text-lg font-semibold" style="font-size:26px">1,284</div><div class="text-xs" style="color:var(--success)">▲ 18% vs previous</div><div style="display:flex;align-items:flex-end;gap:2px;height:24px;margin-top:8px"><div style="width:6px;height:30%;background:var(--brand);border-radius:2px;opacity:.6"></div><div style="width:6px;height:50%;background:var(--brand);border-radius:2px;opacity:.6"></div><div style="width:6px;height:45%;background:var(--brand);border-radius:2px;opacity:.6"></div><div style="width:6px;height:70%;background:var(--brand);border-radius:2px;opacity:.6"></div><div style="width:6px;height:65%;background:var(--brand);border-radius:2px;opacity:.6"></div><div style="width:6px;height:85%;background:var(--brand);border-radius:2px;opacity:.6"></div><div style="width:6px;height:100%;background:var(--brand);border-radius:2px"></div></div></div>
+<div class="card"><div class="text-xs muted" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Test success</div><div class="text-lg font-semibold" style="font-size:26px">84<span style="font-size:16px;color:var(--text-muted)">%</span></div><div class="text-xs" style="color:var(--success)">▲ 3% vs previous</div><div style="display:flex;align-items:flex-end;gap:2px;height:24px;margin-top:8px"><div style="width:6px;height:75%;background:var(--success);border-radius:2px;opacity:.6"></div><div style="width:6px;height:78%;background:var(--success);border-radius:2px;opacity:.6"></div><div style="width:6px;height:82%;background:var(--success);border-radius:2px;opacity:.6"></div><div style="width:6px;height:80%;background:var(--success);border-radius:2px;opacity:.6"></div><div style="width:6px;height:85%;background:var(--success);border-radius:2px;opacity:.6"></div><div style="width:6px;height:82%;background:var(--success);border-radius:2px;opacity:.6"></div><div style="width:6px;height:84%;background:var(--success);border-radius:2px"></div></div></div>
+<div class="card"><div class="text-xs muted" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Lead time</div><div class="text-lg font-semibold" style="font-size:26px">2.4<span style="font-size:16px;color:var(--text-muted)"> days</span></div><div class="text-xs" style="color:var(--success)">▼ 0.3 days faster</div><div style="display:flex;align-items:flex-end;gap:2px;height:24px;margin-top:8px"><div style="width:6px;height:90%;background:var(--info);border-radius:2px;opacity:.6"></div><div style="width:6px;height:80%;background:var(--info);border-radius:2px;opacity:.6"></div><div style="width:6px;height:75%;background:var(--info);border-radius:2px;opacity:.6"></div><div style="width:6px;height:70%;background:var(--info);border-radius:2px;opacity:.6"></div><div style="width:6px;height:65%;background:var(--info);border-radius:2px;opacity:.6"></div><div style="width:6px;height:60%;background:var(--info);border-radius:2px;opacity:.6"></div><div style="width:6px;height:55%;background:var(--info);border-radius:2px"></div></div></div>
+<div class="card"><div class="text-xs muted" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">AI cost (30d)</div><div class="text-lg font-semibold" style="font-size:26px">$1,240</div><div class="text-xs muted">of $2,000 budget</div><div style="height:6px;background:var(--bg-hover);border-radius:3px;overflow:hidden;margin-top:12px"><div style="width:62%;height:100%;background:linear-gradient(90deg,#6366F1,#8B5CF6)"></div></div></div>
+<div class="card"><div class="text-xs muted" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Task reopen rate</div><div class="text-lg font-semibold" style="font-size:26px">11<span style="font-size:16px;color:var(--text-muted)">%</span></div><div class="text-xs" style="color:var(--danger)">▲ 2% vs previous</div></div>
+<div class="card"><div class="text-xs muted" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:8px">Build failure</div><div class="text-lg font-semibold" style="font-size:26px">6.4<span style="font-size:16px;color:var(--text-muted)">%</span></div><div class="text-xs" style="color:var(--success)">▼ 1.2% vs previous</div></div>
+</div>
+<div class="grid col-2-1">
+<div class="panel"><div class="panel-header"><span>Quality trend</span><span class="text-xs muted" style="font-weight:400">Test pass rate over time</span></div><div class="panel-body">
+<div style="height:180px;position:relative;border-left:1px solid var(--border);border-bottom:1px solid var(--border);padding:16px 0 0 16px">
+<svg viewBox="0 0 400 140" style="width:100%;height:100%" preserveAspectRatio="none"><polyline points="0,60 50,55 100,50 150,45 200,40 250,42 300,35 350,30 400,28" fill="none" stroke="#10B981" stroke-width="2"/><polyline points="0,60 50,55 100,50 150,45 200,40 250,42 300,35 350,30 400,28 L400,140 L0,140 Z" fill="rgba(16,185,129,0.1)"/></svg>
+</div>
+<div class="row justify-between text-xs muted mt-3"><span>30d ago</span><span>20d ago</span><span>10d ago</span><span>Today</span></div>
+</div></div>
+<div class="panel"><div class="panel-header">Component usage</div><div class="panel-body" style="padding:0">
+<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span class="text-sm">Button</span><span class="badge gray">12 projects</span></div>
+<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span class="text-sm">DataTable</span><span class="badge gray">8 projects</span></div>
+<div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span class="text-sm">Input</span><span class="badge gray">10 projects</span></div>
+<div style="padding:12px 16px;display:flex;justify-content:space-between"><span class="text-sm">Enterprise Blueprint</span><span class="badge gray">5 projects</span></div>
+</div></div>
+</div>
+</main>
+</div>
+</section>
+
+<!-- ============ 13. SETTINGS ============ -->
+<section class="screen" id="s-settings">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>Settings</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item active">☰ Settings</div>
+</aside>
+<main class="main">
+<div class="page-header"><div><div class="breadcrumb">Acme Inc.</div><div class="page-title"><h1>Settings</h1></div></div></div>
+<div class="settings-layout">
+<div>
+<div class="settings-nav">
+<div class="nav-item active">👥 Members & Roles</div>
+<div class="nav-item">◈ AI Providers</div>
+<div class="nav-item">⎇ Git Integrations</div>
+<div class="nav-item">📜 Org Rules</div>
+<div class="nav-item">🔒 Security & Audit</div>
+<div class="nav-item">💳 Billing</div>
+<div class="nav-item">🔔 Notifications</div>
+</div>
+</div>
+<div>
+<div class="panel"><div class="panel-header"><span>Members</span><button class="btn btn-sm btn-primary">＋ Invite</button></div><div class="panel-body" style="padding:0">
+<table class="data-table">
+<thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Projects</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><strong>Marko Petrović</strong></td><td class="text-sm">marko@acme.io</td><td><span class="badge blue">Tech Lead</span></td><td class="text-sm">All</td><td><span class="badge green"><span class="badge-dot-sm"></span>Active</span></td></tr>
+<tr><td><strong>Ana Kovač</strong></td><td class="text-sm">ana@acme.io</td><td><span class="badge gray">Developer</span></td><td class="text-sm">CRM, Portal</td><td><span class="badge green"><span class="badge-dot-sm"></span>Active</span></td></tr>
+<tr><td><strong>Jovan Radić</strong></td><td class="text-sm">jovan@acme.io</td><td><span class="badge violet">QA</span></td><td class="text-sm">CRM</td><td><span class="badge amber"><span class="badge-dot-sm"></span>Pending</span></td></tr>
+</tbody>
+</table>
+</div></div>
+
+<div class="panel"><div class="panel-header">AI Providers</div><div class="panel-body">
+<div class="detail-row"><span class="label">◈ OpenAI</span><span class="value"><span class="badge green">✓ connected</span> <span class="text-xs muted mono">key …aB3 · 3 models</span></span></div>
+<div class="detail-row"><span class="label">◈ Anthropic</span><span class="value"><span class="badge green">✓ connected</span> <span class="text-xs muted mono">key …xY7 · 2 models</span></span></div>
+<div class="detail-row"><span class="label">◈ Azure OpenAI</span><span class="value"><span class="badge gray">○ not connected</span></span></div>
+<div class="mt-4"><button class="btn btn-sm btn-primary">＋ Add provider</button></div>
+</div></div>
+
+<div class="panel" style="border-color:var(--ai)"><div class="panel-header" style="background:var(--ai-subtle);color:var(--ai);border-bottom-color:rgba(139,92,246,.2)">◈ Organization Rules <span class="badge violet" style="margin-left:8px">v4 · current</span></div><div class="panel-body">
+<div class="text-xs muted mb-3" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600">Hierarchy</div>
+<div class="text-sm mb-4" style="line-height:1.9;color:var(--text-secondary)">Organization Rules <span class="muted">›</span> Project Rules <span class="muted">›</span> Module Rules <span class="muted">›</span> Task Context <span class="muted">›</span> Tool Instructions</div>
+<div class="text-xs muted mb-3" style="text-transform:uppercase;letter-spacing:.5px;font-weight:600">Current rules</div>
+<div class="code" style="background:#F8FAFC;color:var(--text-primary);border:1px solid var(--border)"><span class="c"># Allowed frameworks</span>
+- Angular 18, React 19, Vue 3
+- Go 1.23, TypeScript/Node 20
+
+<span class="c"># Security</span>
+- No eval() or Function() constructor
+- Agents run in isolated sandbox
+- No production secrets accessible
+
+<span class="c"># Testing</span>
+- Minimum 80% coverage for new modules
+- All PRs require passing E2E suite
+
+<span class="c"># Style</span>
+- ESLint (Airbnb variant) + Prettier</div>
+<div class="row gap-2 mt-4"><button class="btn btn-sm">Edit</button><button class="btn btn-sm btn-primary">Publish v5</button><span class="text-xs muted" style="margin-left:auto">Last updated 2h ago by Marko P.</span></div>
+</div></div>
+
+<div class="panel"><div class="panel-header">Audit log</div><div class="panel-body" style="padding:0">
+<table class="data-table">
+<thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Resource</th></tr></thead>
+<tbody>
+<tr><td class="mono text-xs muted">14:02:11</td><td class="text-sm">marko</td><td class="mono text-xs">agent.run.started</td><td class="mono text-xs muted">T-88</td></tr>
+<tr><td class="mono text-xs muted">14:05:30</td><td class="text-sm">marko</td><td class="mono text-xs">pr.created</td><td class="mono text-xs muted">#142</td></tr>
+<tr><td class="mono text-xs muted">13:40:02</td><td class="text-sm">ana</td><td class="mono text-xs">rule.published</td><td class="mono text-xs muted">Org Rules v4</td></tr>
+<tr><td class="mono text-xs muted">12:18:44</td><td class="text-sm">jovan</td><td class="mono text-xs">member.invited</td><td class="mono text-xs muted">jovan@acme.io</td></tr>
+</tbody>
+</table>
+</div></div>
+</div>
+</div>
+</main>
+</div>
+</section>
+
+<!-- ============ 14. LOGIN ============ -->
+<section class="screen" id="s-login">
+<div class="login-screen">
+<div class="login-box">
+<div class="login-logo"><div class="mark">AI</div><span>AI Platform</span></div>
+<h1 style="text-align:center;font-size:20px;font-weight:600;margin-bottom:4px">Welcome back</h1>
+<p style="text-align:center;color:var(--text-secondary);font-size:13px;margin-bottom:24px">Sign in to your account</p>
+<div class="form-field"><label class="form-label">Email</label><input class="form-input" placeholder="you@company.com"></div>
+<div class="form-field"><label class="form-label">Password</label><input class="form-input" type="password" placeholder="••••••••"></div>
+<div class="row justify-between mb-4" style="font-size:12px"><label style="display:flex;gap:6px;align-items:center"><input type="checkbox"> Remember me</label><a style="color:var(--brand)">Forgot password?</a></div>
+<button class="btn btn-primary" style="width:100%;padding:10px">Sign in</button>
+<div class="login-divider">or continue with</div>
+<div class="sso-buttons"><button class="btn">⎇ GitHub</button><button class="btn">G Google</button></div>
+<p style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:24px">New here? <a style="color:var(--brand)">Create an account</a></p>
+</div>
+</div>
+</section>
+
+<!-- ============ 15. EMPTY STATES & MODALS ============ -->
+<section class="screen" id="s-states">
+<div class="app">
+<header class="topbar"><div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span class="tag">▾</span></div>
+<div class="switcher"><span>States</span><span class="tag">▾</span></div>
+<div class="search"><span>🔍</span><span>Search…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right"><div class="icon-btn">🔔</div><div class="icon-btn">🌓</div><div class="avatar">MP</div></div></header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item active">◈ States</div>
+</aside>
+<main class="main">
+<div class="page-header"><div><div class="page-title"><h1>Empty states, modals & toasts</h1></div><div class="page-desc">Sva tranziciona stanja koja svaki ekran mora imati</div></div></div>
+<div class="grid g2">
+<div class="panel"><div class="panel-header">Empty — no data</div><div class="panel-body">
+<div class="empty"><div class="empty-icon">📋</div><h3>No tasks yet</h3><p>Create your first task to get started with AI-assisted development.</p><button class="btn btn-primary">＋ New task</button></div>
+</div></div>
+<div class="panel"><div class="panel-header">Empty — no search results</div><div class="panel-body">
+<div class="empty"><div class="empty-icon">🔍</div><h3>No results for "sso login"</h3><p>Try a different search or clear filters.</p><button class="btn">Clear filters</button></div>
+</div></div>
+<div class="panel"><div class="panel-header">Loading skeleton</div><div class="panel-body">
+<div style="background:var(--bg-hover);height:12px;border-radius:4px;margin-bottom:8px;width:40%;animation:pulse 1.5s infinite"></div>
+<div style="background:var(--bg-hover);height:12px;border-radius:4px;margin-bottom:8px;width:100%;animation:pulse 1.5s infinite"></div>
+<div style="background:var(--bg-hover);height:12px;border-radius:4px;width:85%;animation:pulse 1.5s infinite"></div>
+</div></div>
+<div class="panel"><div class="panel-header">Error state</div><div class="panel-body">
+<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:16px">
+<div class="row gap-3 mb-3"><div style="width:20px;height:20px;border-radius:50%;background:#FECACA;color:var(--danger);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">!</div><strong class="text-sm" style="color:#991B1B">Failed to load agents</strong></div>
+<p class="text-sm" style="color:#7F1D1D;margin-bottom:12px">Network request timed out. Check your connection.</p>
+<button class="btn btn-sm">Retry</button>
+</div>
+</div></div>
+</div>
+<div class="grid g2 mt-4">
+<div class="panel"><div class="panel-header">Modal — confirmation</div><div class="panel-body">
+<div style="border:1px solid var(--border);border-radius:8px;padding:0;max-width:400px">
+<div class="modal-header"><span>Stop agent run?</span><span class="text-muted">✕</span></div>
+<div class="modal-body text-sm secondary" style="line-height:1.6">The development agent is currently at 62%. Stopping now will discard 2 minutes of work. You can resume later from the task detail.</div>
+<div class="modal-footer"><button class="btn">Cancel</button><button class="btn btn-danger">Stop agent</button></div>
+</div>
+</div></div>
+<div class="panel"><div class="panel-header">Modal — destructive</div><div class="panel-body">
+<div style="border:1px solid var(--border);border-radius:8px;padding:0;max-width:400px">
+<div class="modal-header"><span>Delete project?</span><span class="text-muted">✕</span></div>
+<div class="modal-body text-sm secondary" style="line-height:1.6">This will permanently delete <strong>CRM Platform</strong> and all its tasks, tests, and AI run history. This cannot be undone.</div>
+<div class="modal-footer"><button class="btn">Cancel</button><button class="btn" style="background:var(--danger);color:#fff;border-color:var(--danger)">Delete project</button></div>
+</div>
+</div></div>
+</div>
+<div class="panel mt-4"><div class="panel-header">Toasts</div><div class="panel-body">
+<div class="toast success mb-3"><span style="color:var(--success);font-weight:700">✓</span><span>Blueprint v1.3 published</span></div>
+<div class="toast error mb-3"><span style="color:var(--danger);font-weight:700">✕</span><span>Failed to merge PR #142 — checks failing</span></div>
+<div class="toast warning mb-3"><span style="color:var(--warning);font-weight:700">⚠</span><span>Agent run exceeded $1.00 budget</span></div>
+<div class="toast info"><span style="color:var(--info);font-weight:700">i</span><span>2 new tasks awaiting your approval</span></div>
+</div></div>
+</main>
+</div>
+</section>
+
+<script>
+document.querySelectorAll('.screen-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.screen-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.target).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

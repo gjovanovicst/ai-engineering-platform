@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Platform · Backlog</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg-canvas:#F8FAFC;--bg-surface:#FFF;--border:#E2E8F0;--text-primary:#0F172A;--text-secondary:#475569;--text-muted:#94A3B8;--brand:#6366F1;--ai-accent:#8B5CF6;--success:#10B981;--warning:#F59E0B;--danger:#EF4444;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg-canvas);color:var(--text-primary);font-size:14px;line-height:1.5;height:100vh;display:grid;grid-template-columns:240px 1fr;grid-template-rows:56px 1fr}
+.topbar{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:0 20px;background:var(--bg-surface);border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;min-width:200px}
+.logo-mark{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.switcher{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px}
+.search{flex:1;max-width:400px;display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg-canvas);border:1px solid var(--border);border-radius:6px;color:var(--text-muted);font-size:13px}
+.search .kbd{margin-left:auto;padding:2px 6px;border-radius:4px;background:#fff;border:1px solid var(--border);font-size:11px;font-family:monospace}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.icon-btn{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);cursor:pointer}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px}
+.sidebar{background:var(--bg-surface);border-right:1px solid var(--border);padding:12px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;color:var(--text-secondary);font-size:13px;font-weight:500;margin-bottom:2px}
+.nav-item.active{background:#EEF2FF;color:var(--brand)}
+.main{overflow-y:auto;display:flex;flex-direction:column}
+.page-header{padding:20px 32px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:var(--bg-surface)}
+.breadcrumb{font-size:12px;color:var(--text-muted);margin-bottom:4px}
+.page-title h1{font-size:20px;font-weight:600}
+.page-actions{display:flex;gap:8px;align-items:center}
+.btn{padding:7px 14px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid var(--border);background:var(--bg-surface);color:var(--text-primary);cursor:pointer}
+.view-toggle{display:flex;padding:2px;background:#F1F5F9;border-radius:6px}
+.view-btn{padding:5px 10px;font-size:12px;border-radius:4px;color:var(--text-muted);cursor:pointer;font-weight:500}
+.view-btn.active{background:#fff;color:var(--text-primary);box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.filters{padding:12px 32px;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border);background:var(--bg-surface);font-size:12px}
+.filter-chip{padding:5px 12px;border:1px solid var(--border);border-radius:20px;background:var(--bg-surface);color:var(--text-secondary);font-weight:500;cursor:pointer}
+.filter-chip.active{background:#EEF2FF;border-color:#C7D2FE;color:var(--brand)}
+.filter-search{padding:5px 12px;border:1px solid var(--border);border-radius:6px;flex:0 0 240px;display:flex;align-items:center;gap:6px;color:var(--text-muted)}
+.board{flex:1;padding:20px 32px;display:grid;grid-template-columns:repeat(4,minmax(280px,1fr));gap:16px;overflow-x:auto;align-items:start}
+.column{background:#F1F5F9;border-radius:12px;padding:12px;min-height:400px}
+.column-header{display:flex;justify-content:space-between;align-items:center;padding:4px 4px 12px;font-size:13px;font-weight:600}
+.col-title{display:flex;align-items:center;gap:8px}
+.col-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;background:#fff;border-radius:10px;font-size:11px;font-weight:600;color:var(--text-secondary)}
+.col-dot{width:8px;height:8px;border-radius:50%}
+.col-dot.todo{background:var(--text-muted)}
+.col-dot.planning{background:var(--ai-accent)}
+.col-dot.doing{background:var(--brand)}
+.col-dot.review{background:var(--warning)}
+.col-add{width:22px;height:22px;border-radius:6px;border:1px dashed var(--border);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--text-muted);cursor:pointer;font-size:14px}
+.task{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s}
+.task:hover{box-shadow:0 4px 12px rgba(15,23,42,.06);border-color:#CBD5E1}
+.task-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.task-id{font-size:11px;font-weight:600;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.priority{padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.priority.high{background:#FEE2E2;color:#B91C1C}
+.priority.med{background:#FEF3C7;color:#92400E}
+.priority.low{background:#E0E7FF;color:#3730A3}
+.task-title{font-size:13px;font-weight:500;line-height:1.4;margin-bottom:10px;color:var(--text-primary)}
+.task-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.task-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:#F1F5F9;color:var(--text-secondary);font-weight:500}
+.task-footer{display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid #F1F5F9}
+.task-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-muted)}
+.avatar-mini{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600}
+.agent-running{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:12px;background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(99,102,241,.1));color:var(--ai-accent);font-size:10px;font-weight:600}
+.pulse-dot{width:5px;height:5px;border-radius:50%;background:var(--ai-accent);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.progress-mini{height:3px;background:#F1F5F9;border-radius:2px;overflow:hidden;margin-top:6px}
+.progress-mini-fill{height:100%;background:linear-gradient(90deg,#6366F1,#8B5CF6);border-radius:2px}
+</style>
+</head>
+<body>
+<header class="topbar">
+<div class="logo"><div class="logo-mark">AI</div><span>Platform</span></div>
+<div class="switcher"><span>Acme Inc.</span><span>▾</span></div>
+<div class="switcher"><span>CRM Platform</span><span>▾</span></div>
+<div class="search"><span>🔍</span><span>Search…</span><span class="kbd">⌘K</span></div>
+<div class="topbar-right">
+<div class="icon-btn">🔔</div>
+<div class="icon-btn">🌓</div>
+<div class="avatar">MP</div>
+</div>
+</header>
+<aside class="sidebar">
+<div class="nav-item">⌂ Home</div>
+<div class="nav-item active">▤ Projects</div>
+<div class="nav-item">◈ AI Agents</div>
+<div class="nav-item">▦ Templates</div>
+<div class="nav-item">◐ Design System</div>
+<div class="nav-item">▢ Components</div>
+<div class="nav-item">⚙ Environments</div>
+<div class="nav-item">⎇ Repositories</div>
+<div class="nav-item">◔ Analytics</div>
+<div class="nav-item">☰ Settings</div>
+</aside>
+<main class="main">
+<div class="page-header">
+<div>
+<div class="breadcrumb">CRM Platform › Backlog</div>
+<div class="page-title"><h1>Backlog</h1></div>
+</div>
+<div class="page-actions">
+<div class="view-toggle"><div class="view-btn">☰ List</div><div class="view-btn active">▦ Board</div></div>
+<button class="btn">＋ New task</button>
+</div>
+</div>
+<div class="filters">
+<div class="filter-search"><span>🔍</span><span>Search tasks…</span></div>
+<div class="filter-chip">Assignee ▾</div>
+<div class="filter-chip">Priority ▾</div>
+<div class="filter-chip active">In sprint</div>
+<div class="filter-chip">+ Add filter</div>
+</div>
+<div class="board">
+<div class="column">
+<div class="column-header">
+<div class="col-title"><span class="col-dot todo"></span>To Do<span class="col-count">8</span></div>
+<div class="col-add">+</div>
+</div>
+<div class="task">
+<div class="task-top"><span class="task-id">T-89</span><span class="priority med">Med</span></div>
+<div class="task-title">Add caching layer for user sessions</div>
+<div class="task-tags"><span class="task-tag">backend</span><span class="task-tag">perf</span></div>
+<div class="task-footer"><div class="task-meta"><div class="avatar-mini">AK</div><span>Ana K.</span></div></div>
+</div>
+<div class="task">
+<div class="task-top"><span class="task-id">T-90</span><span class="priority low">Low</span></div>
+<div class="task-title">Update footer component to v2.3</div>
+<div class="task-tags"><span class="task-tag">frontend</span></div>
+<div class="task-footer"><div class="task-meta"><div class="avatar-mini">MP</div><span>Marko P.</span></div></div>
+</div>
+<div class="task">
+<div class="task-top"><span class="task-id">T-93</span><span class="priority low">Low</span></div>
+<div class="task-title">Improve error messages for login failures</div>
+<div class="task-tags"><span class="task-tag">frontend</span><span class="task-tag">ux</span></div>
+<div class="task-footer"><div class="task-meta"><div class="avatar-mini">JR</div><span>Jovan R.</span></div></div>
+</div>
+</div>
+<div class="column">
+<div class="column-header">
+<div class="col-title"><span class="col-dot planning"></span>Planning<span class="col-count">2</span></div>
+<div class="col-add">+</div>
+</div>
+<div class="task">
+<div class="task-top"><span class="task-id">T-91</span><span class="priority med">Med</span></div>
+<div class="task-title">Role-based permission system</div>
+<div class="task-tags"><span class="task-tag">backend</span><span class="task-tag">security</span></div>
+<div class="task-footer">
+<div class="task-meta"><div class="avatar-mini">AK</div><span>Ana K.</span></div>
+<div class="agent-running"><span class="pulse-dot"></span>Plan ready</div>
+</div>
+</div>
+<div class="task">
+<div class="task-top"><span class="task-id">T-94</span><span class="priority high">High</span></div>
+<div class="task-title">Audit log retention policy</div>
+<div class="task-tags"><span class="task-tag">backend</span><span class="task-tag">compliance</span></div>
+<div class="task-footer"><div class="task-meta"><div class="avatar-mini">MP</div><span>Marko P.</span></div></div>
+</div>
+</div>
+<div class="column">
+<div class="column-header">
+<div class="col-title"><span class="col-dot doing"></span>In Progress<span class="col-count">3</span></div>
+<div class="col-add">+</div>
+</div>
+<div class="task">
+<div class="task-top"><span class="task-id">T-88</span><span class="priority high">High</span></div>
+<div class="task-title">Login with SSO</div>
+<div class="task-tags"><span class="task-tag">auth</span><span class="task-tag">frontend</span><span class="task-tag">backend</span></div>
+<div class="progress-mini"><div class="progress-mini-fill" style="width:62%"></div></div>
+<div class="task-footer" style="border-top:none;padding-top:8px;margin-top:4px">
+<div class="task-meta"><div class="avatar-mini">MP</div><span>Marko P.</span></div>
+<div class="agent-running"><span class="pulse-dot"></span>DEV · 62%</div>
+</div>
+</div>
+<div class="task">
+<div class="task-top"><span class="task-id">T-92</span><span class="priority med">Med</span></div>
+<div class="task-title">Export to CSV for reports</div>
+<div class="task-tags"><span class="task-tag">backend</span></div>
+<div class="progress-mini"><div class="progress-mini-fill" style="width:35%"></div></div>
+<div class="task-footer" style="border-top:none;padding-top:8px;margin-top:4px">
+<div class="task-meta"><div class="avatar-mini">AK</div><span>Ana K.</span></div>
+<div class="agent-running"><span class="pulse-dot"></span>QA · 35%</div>
+</div>
+</div>
+</div>
+<div class="column">
+<div class="column-header">
+<div class="col-title"><span class="col-dot review"></span>Review<span class="col-count">1</span></div>
+<div class="col-add">+</div>
+</div>
+<div class="task">
+<div class="task-top"><span class="task-id">T-87</span><span class="priority high">High</span></div>
+<div class="task-title">Bulk import contacts from CSV</div>
+<div class="task-tags"><span class="task-tag">frontend</span><span class="task-tag">backend</span></div>
+<div class="task-footer">
+<div class="task-meta"><div class="avatar-mini">JR</div><span>Jovan R.</span></div>
+<div class="agent-running" style="background:#FEF3C7;color:#92400E">⚠ Awaiting review</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body>
+</html>

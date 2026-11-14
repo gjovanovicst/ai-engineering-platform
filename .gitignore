@@ -1,0 +1,49 @@
+# ── secrets & env
+.env
+.env.*
+!.env.example
+
+# ── Go
+/bin/
+/dist/
+*.test
+*.out
+coverage.out
+coverage.html
+
+# ── Node / Next.js
+apps/web/node_modules/
+apps/web/.next/
+apps/web/out/
+apps/web/coverage/
+apps/web/.turbo/
+*.tsbuildinfo
+
+# ── editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# ── local
+*.log
+/tmp/
+
+# ── lokalni build cache (sandbox)
+.cache/
+
+# ── pnpm store (local cache)
+.pnpm-store/
+
+# k8s secrets are created with kubectl, never committed
+deploy/k8s/secret.yaml
+
+# never commit keys
+jwt.pem
+
+# local source snapshots
+/aip-source-*.zip
+
+# local screenshot bundles
+/aip-ui-screenshots-*.zip
+backups/

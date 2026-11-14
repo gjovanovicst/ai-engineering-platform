@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quickstart · AI Engineering Platform</title>
+<meta name="description" content="This guide runs the platform on one machine with Docker Compose. It is the fastest path to a first approved, merged task." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group" open><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="active" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Getting started</p>
+<article class="prose">
+<h1 id="quickstart">Quickstart</h1>
+<p>This guide runs the platform on one machine with Docker Compose. It is the fastest path to a first approved, merged task.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul><li>Docker 27+ with Compose v2</li><li><code>make</code>, <code>git</code>, <code>go</code> and <code>node</code> for development commands</li><li>8 GB RAM available to Docker (16 GB recommended for the full stack)</li></ul>
+<h2 id="1-start-the-local-stack">1. Start the local stack</h2>
+<pre><code class="language-bash">cp .env.example .env
+make keygen
+docker compose up -d postgres redis minio mailhog
+make dev</code></pre>
+<p>The API starts on <code>http://localhost:18080</code>, the web app on <code>http://localhost:3000</code>, and MinIO on <code>http://localhost:9001</code>.</p>
+<p>Check the health endpoints:</p>
+<pre><code class="language-bash">curl -sf http://localhost:18080/readyz
+curl -sf http://localhost:3000/login &gt;/dev/null &amp;&amp; echo web-ok</code></pre>
+<h2 id="2-sign-in">2. Sign in</h2>
+<p>Open <code>http://localhost:3000</code>, sign in with the demo account seeded by the local environment, and select your workspace.</p>
+<p>If you are starting from an empty database, create an account from the register screen and follow the setup checklist on the overview.</p>
+<h2 id="3-create-a-project-from-a-blueprint">3. Create a project from a blueprint</h2>
+<ol><li>Open <strong>Blueprints</strong>.</li><li>Pick a template or create a blueprint version.</li><li>Publish the version.</li><li>Open <strong>Projects → New project</strong> and instantiate the blueprint.</li><li>Connect the repository and choose the agent/model allowed for the project.</li></ol>
+<p>A project created from a blueprint already has the stack, test strategy, design rules, agents and starter tasks.</p>
+<h2 id="4-create-a-task">4. Create a task</h2>
+<ol><li>Open the project and choose <strong>Board</strong>.</li><li>Select <strong>+ New task</strong>.</li><li>Write the outcome, context and at least one acceptance criterion in Given/When/Then form.</li><li>Move the task from <strong>Draft</strong> to <strong>Ready</strong> once the definition of ready is satisfied.</li></ol>
+<p><img src="../../assets/product-new-task.png" alt="New task drawer" /></p>
+<p><em>The task drawer: context, acceptance criteria and design references before an agent starts.</em></p>
+<h2 id="5-run-the-planning-agent">5. Run the planning agent</h2>
+<p>On a ready task, choose <strong>Run agent → planning</strong>. The run view shows the context snapshot, the plan and every event. The run stops at <strong>awaiting approval</strong>.</p>
+<p>Approve the plan if it is correct; request changes or reject it otherwise. Nothing is implemented before this gate.</p>
+<h2 id="6-build-test-and-review">6. Build, test and review</h2>
+<p>Approve the plan, then start the development run. The agent works in a sandbox; the platform records the diff, tests, design checks and acceptance evidence. A pull request is opened when the work is ready.</p>
+<p>Review the diff and the checks, then approve the PR. The merge queue serialises the landing; no agent can merge its own change.</p>
+<h2 id="7-read-the-outcome">7. Read the outcome</h2>
+<p>Open <strong>Analytics</strong> to see lead time, approval time, first-pass merge, proof validity and rework for the period. Open the run or the audit log to inspect the evidence behind a number.</p>
+<p><img src="../../assets/product-analytics.png" alt="Analytics" /></p>
+<p><em>Delivery and outcome metrics are recorded from real runs, not estimated.</em></p>
+<h2 id="stop-and-reset">Stop and reset</h2>
+<pre><code class="language-bash">make down
+# remove local state only when you mean it:
+docker compose down -v</code></pre>
+<h2 id="next">Next</h2>
+<ul><li><a href="concepts.html">Key concepts</a></li><li><a href="runs-and-approvals.html">Runs and approvals</a></li><li><a href="api-basics.html">API basics</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#prerequisites" class="toc-l2">Prerequisites</a><a href="#1-start-the-local-stack" class="toc-l2">1. Start the local stack</a><a href="#2-sign-in" class="toc-l2">2. Sign in</a><a href="#3-create-a-project-from-a-blueprint" class="toc-l2">3. Create a project from a blueprint</a><a href="#4-create-a-task" class="toc-l2">4. Create a task</a><a href="#5-run-the-planning-agent" class="toc-l2">5. Run the planning agent</a><a href="#6-build-test-and-review" class="toc-l2">6. Build, test and review</a><a href="#7-read-the-outcome" class="toc-l2">7. Read the outcome</a><a href="#stop-and-reset" class="toc-l2">Stop and reset</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

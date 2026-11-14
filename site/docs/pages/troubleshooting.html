@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Troubleshooting · AI Engineering Platform</title>
+<meta name="description" content="Start with the run view and the event stream. Most failures have a specific event before the generic error." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group" open><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="active" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Administration</p>
+<article class="prose">
+<h1 id="troubleshooting">Troubleshooting</h1>
+<p>Start with the run view and the event stream. Most failures have a specific event before the generic error.</p>
+<h2 id="sign-in">Sign-in</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Symptom</th><th style="text-align:left">Check</th></tr></thead><tbody><tr><td style="text-align:left">Redirect loop</td><td style="text-align:left">Cookies blocked, wrong <code>AIP_WEB_URL</code>, or clock skew</td></tr><tr><td style="text-align:left">SSO button missing</td><td style="text-align:left">OIDC/SAML not configured or enabled for the workspace</td></tr><tr><td style="text-align:left">401 after login</td><td style="text-align:left">Session expired or the API JWT key changed</td></tr><tr><td style="text-align:left">403 on a project</td><td style="text-align:left">Workspace role is insufficient or project access is narrower</td></tr></tbody></table></div>
+<h2 id="a-run-will-not-start">A run will not start</h2>
+<ul><li>The task is still <strong>Draft</strong>; complete the definition of ready.</li><li>The repository is unreachable; check the GitHub App installation or GitLab connection.</li><li>The project has no allowed agent/model.</li><li>A previous active run exists for the task.</li></ul>
+<h2 id="a-run-failed">A run failed</h2>
+<p>Open the run and read the last events:</p>
+<ul><li><strong>clone failed</strong> — repository access or branch name</li><li><strong>provider error</strong> — credential, quota or model name</li><li><strong>budget exceeded</strong> — raise the budget or split the task</li><li><strong>missing proof</strong> — acceptance evidence does not map to a real test</li><li><strong>check failed</strong> — read the failing test/check output, do not retry blindly</li></ul>
+<p>Retry creates a new run; it does not erase the failed one.</p>
+<h2 id="a-pr-is-blocked">A PR is blocked</h2>
+<ul><li>A required check is red. Open the check, not just the badge.</li><li>The approval count is not met. Approvals must be distinct users.</li><li>The merge window is closed.</li><li>The merge queue found a conflict or a failed re-check.</li></ul>
+<h2 id="a-restore-failed">A restore failed</h2>
+<ul><li>The target is before the base backup or after the last archived WAL.</li><li>The object store credential expired.</li><li>The scratch volume still contains data; the runner cleans it before fetch.</li></ul>
+<p>The request keeps the failure reason; do not delete it before recording the incident.</p>
+<h2 id="getting-help">Getting help</h2>
+<p>Include the workspace, project, task or run ID, the timestamp and the exact error. Never include provider keys, tokens or customer data.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="runs-and-approvals.html">Runs and approvals</a></li><li><a href="backups-recovery.html">Backups and recovery</a></li><li><a href="../api.html">API reference</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#sign-in" class="toc-l2">Sign-in</a><a href="#a-run-will-not-start" class="toc-l2">A run will not start</a><a href="#a-run-failed" class="toc-l2">A run failed</a><a href="#a-pr-is-blocked" class="toc-l2">A PR is blocked</a><a href="#a-restore-failed" class="toc-l2">A restore failed</a><a href="#getting-help" class="toc-l2">Getting help</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

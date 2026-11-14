@@ -1,0 +1,20 @@
+# Generated from scripts/backup.sh so the CronJob runs the same code as a host.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aip-backup-scripts
+  namespace: aip
+data:
+  backup.sh: |
+    #!/bin/sh
+    set -eu
+    DSN=${AIP_DB_DSN:?AIP_DB_DSN is required}
+    OUT_DIR=${BACKUP_DIR:-/backups}
+    RETENTION_DAYS=${RETENTION_DAYS:-14}
+    STAMP=$(date -u +%Y%m%dT%H%M%SZ)
+    FILE="$OUT_DIR/aip-$STAMP.dump"
+    mkdir -p "$OUT_DIR"
+    pg_dump --format=custom --no-owner --no-privileges --file="$FILE" "$DSN"
+    sha256sum "$FILE" > "$FILE.sha256"
+    find "$OUT_DIR" -name 'aip-*.dump' -type f -mtime +"$RETENTION_DAYS" -delete
+    find "$OUT_DIR" -name 'aip-*.dump.sha256' -type f -mtime +"$RETENTION_DAYS" -delete

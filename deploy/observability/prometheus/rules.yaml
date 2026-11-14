@@ -1,0 +1,64 @@
+groups:
+  - name: aip-slo
+    interval: 30s
+    rules:
+      - alert: AipRunQueueStuck
+        expr: aip_run_queued_oldest_seconds > 300
+        for: 5m
+        labels: { severity: critical, team: platform }
+        annotations:
+          summary: "Agent runs are not leaving the queue"
+          description: "Oldest queued run is {{ $value }}s old. Check the worker and River queue (docs/14-runbook.md §2)."
+          runbook: "https://github.com/gjovanovicst/ai-engineering-platform/blob/main/docs/14-runbook.md"
+
+      - alert: AipRunFailureRateHigh
+        expr: aip_run_failed_ratio_15m > 0.10
+        for: 15m
+        labels: { severity: critical, team: platform }
+        annotations:
+          summary: "More than 10% of runs fail"
+          description: "Failure ratio {{ $value | humanizePercentage }} over 15m. Check runs.failure_code (runbook §7)."
+
+      - alert: AipApprovalPendingTooLong
+        expr: aip_approval_pending_oldest_seconds > 86400
+        for: 1h
+        labels: { severity: warning, team: platform }
+        annotations:
+          summary: "A human approval has been waiting more than 24h"
+          description: "Oldest pending approval is {{ $value }}s old. Nudge the owner or check notifications."
+
+      - alert: AipApi5xxRate
+        expr: |
+          sum(rate(calls_total{service_name="aipd", status_code=~"5.."}[5m]))
+          /
+          sum(rate(calls_total{service_name="aipd"}[5m])) > 0.01
+        for: 5m
+        labels: { severity: critical, team: platform }
+        annotations:
+          summary: "API 5xx above 1%"
+          description: "Requires the OTel collector spanmetrics exporter (see deploy/observability/README.md)."
+
+      - alert: AipWorkerDown
+        expr: up{job="aip-worker"} == 0
+        for: 2m
+        labels: { severity: critical, team: platform }
+        annotations:
+          summary: "The worker is not scraping"
+          description: "Runs will stay queued. Check the worker pod/process."
+
+      - alert: AipDbUnreachable
+        expr: aip_db_reachable == 0
+        for: 1m
+        labels: { severity: critical, team: platform }
+        annotations:
+          summary: "sql_exporter cannot read the database"
+          description: "Check the DSN and Postgres health before trusting any other alert."
+
+  - name: aip-slo-recording
+    interval: 30s
+    rules:
+      - record: aip:run_failure_ratio_1h
+        expr: |
+          sum(rate(runs_finished_total{status="failed"}[1h]))
+          /
+          sum(rate(runs_finished_total[1h]))

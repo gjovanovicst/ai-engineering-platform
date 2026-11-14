@@ -1,0 +1,71 @@
+# Public example: replace 172.28.0.18/.17 with static addresses from your network.
+name: aip-patroni
+networks:
+  aip_default:
+    external: true
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.15
+    command:
+      - /usr/local/bin/etcd
+      - --name=etcd
+      - --enable-v2=true
+      - --advertise-client-urls=http://etcd:2379
+      - --listen-client-urls=http://0.0.0.0:2379
+      - --initial-advertise-peer-urls=http://etcd:2380
+      - --listen-peer-urls=http://0.0.0.0:2380
+      - --initial-cluster=etcd=http://etcd:2380
+      - --initial-cluster-state=new
+    volumes:
+      - etcd-data:/etcd-data
+    networks: [aip_default]
+    restart: unless-stopped
+  patroni1:
+    image: ghcr.io/zalando/spilo-16:3.3-p1
+    environment:
+      SCOPE: aip
+      PGVERSION: "16"
+      ETCD_HOSTS: etcd:2379
+      PATRONI_NAME: patroni1
+      POD_IP: patroni1
+      PGPORT: "5432"
+    volumes:
+      - patroni1-data:/home/postgres/pgdata
+    networks:
+      aip_default:
+        aliases: [patroni1]
+        ipv4_address: 172.28.0.18
+    depends_on: [etcd]
+    restart: unless-stopped
+  patroni2:
+    image: ghcr.io/zalando/spilo-16:3.3-p1
+    environment:
+      SCOPE: aip
+      PGVERSION: "16"
+      ETCD_HOSTS: etcd:2379
+      PATRONI_NAME: patroni2
+      POD_IP: patroni2
+      PGPORT: "5432"
+    volumes:
+      - patroni2-data:/home/postgres/pgdata
+    networks:
+      aip_default:
+        aliases: [patroni2]
+        ipv4_address: 172.28.0.17
+    depends_on: [etcd]
+    restart: unless-stopped
+  patroni-haproxy:
+    image: haproxy:3.0-alpine
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "15432:5432"
+    networks:
+      aip_default:
+        aliases: [patroni-haproxy]
+    depends_on: [patroni1, patroni2]
+    restart: unless-stopped
+volumes:
+  etcd-data:
+  patroni1-data:
+  patroni2-data:

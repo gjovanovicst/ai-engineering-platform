@@ -1,0 +1,37 @@
+# Alertmanager routing for the platform rules in alerts.yml.
+# Replace REPLACE_* values before deploying; secrets belong in the deploy secret.
+route:
+  receiver: team
+  group_by: [alertname, severity]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['severity="critical"']
+      receiver: oncall
+      repeat_interval: 1h
+    - matchers: ['severity="warning"']
+      receiver: team
+
+receivers:
+  - name: team
+    email_configs:
+      - to: REPLACE_TEAM_EMAIL
+        send_resolved: true
+  - name: oncall
+    email_configs:
+      - to: REPLACE_ONCALL_EMAIL
+        send_resolved: true
+    webhook_configs:
+      - url: REPLACE_ONCALL_WEBHOOK
+        send_resolved: true
+
+inhibit_rules:
+  # An API outage explains its own 5xx noise.
+  - source_matchers: ['alertname="AIPApiDown"']
+    target_matchers: ['alertname="AIPHttp5xx"']
+    equal: []
+  # A dead worker explains queue lag.
+  - source_matchers: ['alertname="AIPWorkerDown"']
+    target_matchers: ['alertname=~"AIPQueue.*"']
+    equal: []

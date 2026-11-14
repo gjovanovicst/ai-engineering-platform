@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quality gates · AI Engineering Platform</title>
+<meta name="description" content="Quality is enforced by evidence, not by asking the agent to &quot;be careful&quot;." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group" open><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="active" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Quality &amp; insights</p>
+<article class="prose">
+<h1 id="quality-gates">Quality gates</h1>
+<p>Quality is enforced by evidence, not by asking the agent to &quot;be careful&quot;.</p>
+<h2 id="the-test-ladder">The test ladder</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Layer</th><th style="text-align:left">What it proves</th></tr></thead><tbody><tr><td style="text-align:left">Unit</td><td style="text-align:left">Logic and edge cases in isolation</td></tr><tr><td style="text-align:left">Integration</td><td style="text-align:left">Boundaries: database, queue, object storage</td></tr><tr><td style="text-align:left">End-to-end</td><td style="text-align:left">The user flow works through the real surfaces</td></tr><tr><td style="text-align:left">Visual</td><td style="text-align:left">The UI matches the approved design baseline</td></tr><tr><td style="text-align:left">Security</td><td style="text-align:left">No new secrets, vulnerable dependencies or forbidden changes</td></tr></tbody></table></div>
+<p>The project&#x27;s test strategy defines which layers are required. The e2e command runs in the sandbox after unit tests; a failure blocks the PR.</p>
+<h2 id="acceptance-evidence">Acceptance evidence</h2>
+<p>Every task has acceptance criteria. A development run must produce an <code>AIP_PROOF</code> artifact that maps evidence to each criterion:</p>
+<pre><code>criterion: user can sign in with SSO
+evidence: e2e/sso.spec.ts &gt; signs in with SAML</code></pre>
+<p>The platform validates that the referenced test or file exists in the diff. A proof that points to a missing test fails the run.</p>
+<h2 id="design-checks">Design checks</h2>
+<p>For UI changes the platform can compare a rendered screen against the project&#x27;s baseline:</p>
+<ul><li>layout, spacing and typography</li><li>component usage from the design system</li><li>accessibility checks</li><li>visual diff threshold</li></ul>
+<p>A visual difference does not approve or reject itself. It produces evidence for the human reviewer.</p>
+<h2 id="diff-policy">Diff policy</h2>
+<p>Project rules can block changes before review:</p>
+<ul><li>forbidden paths (secrets, generated files, infrastructure)</li><li>maximum diff size</li><li>dependency changes that need an ADR</li><li>missing migration for a schema change</li><li>new network calls in the sandbox</li></ul>
+<h2 id="review-findings">Review findings</h2>
+<p>A review run reports findings with severity. Findings are not automatically blocking unless the project says so; the PR approval remains the human gate.</p>
+<h2 id="what-to-do-when-a-gate-fails">What to do when a gate fails</h2>
+<ol><li>Read the failing check, not just the summary.</li><li>Reproduce locally with the same command.</li><li>Fix the cause, not the assertion.</li><li>Re-run the check or the agent run.</li><li>Record an override only when a human accepts the risk; the override is audited.</li></ol>
+<h2 id="next">Next</h2>
+<ul><li><a href="pull-requests.html">Pull requests</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#the-test-ladder" class="toc-l2">The test ladder</a><a href="#acceptance-evidence" class="toc-l2">Acceptance evidence</a><a href="#design-checks" class="toc-l2">Design checks</a><a href="#diff-policy" class="toc-l2">Diff policy</a><a href="#review-findings" class="toc-l2">Review findings</a><a href="#what-to-do-when-a-gate-fails" class="toc-l2">What to do when a gate fails</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

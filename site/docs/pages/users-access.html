@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Users and access · AI Engineering Platform</title>
+<meta name="description" content="Workspace access is role-based and auditable. The same role model applies to the UI and the API." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group" open><summary>Administration <span>5</span></summary><div class="nav-items"><a class="active" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Administration</p>
+<article class="prose">
+<h1 id="users-and-access">Users and access</h1>
+<p>Workspace access is role-based and auditable. The same role model applies to the UI and the API.</p>
+<h2 id="roles">Roles</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Role</th><th style="text-align:left">Can</th></tr></thead><tbody><tr><td style="text-align:left">Owner</td><td style="text-align:left">Manage members, workspace settings, security and workspace deletion</td></tr><tr><td style="text-align:left">Admin</td><td style="text-align:left">Manage projects, blueprints, providers, integrations, rules and audit</td></tr><tr><td style="text-align:left">Member</td><td style="text-align:left">Work with tasks, runs, reviews and pull requests in accessible projects</td></tr><tr><td style="text-align:left">Viewer</td><td style="text-align:left">Read projects, runs, checks and metrics; cannot change state</td></tr></tbody></table></div>
+<p>Project access can be narrower than the workspace role. A member of the workspace does not automatically see every project.</p>
+<h2 id="invite-a-user">Invite a user</h2>
+<ol><li>Open <strong>Settings → Invites</strong>.</li><li>Enter the email and choose a role.</li><li>Send the invite.</li><li>The user accepts it and joins the workspace.</li></ol>
+<p>Pending invites can be revoked. The invite email is sent by the configured mailer (Mailhog locally, Postmark/SES in production).</p>
+<h2 id="members">Members</h2>
+<p><strong>Settings → Members</strong> lists everyone in the workspace. Owners and admins can change a member&#x27;s role or remove them.</p>
+<p>Removing a user revokes their sessions and API keys for that workspace. Their audit history remains.</p>
+<h2 id="single-sign-on">Single sign-on</h2>
+<p>The platform supports OIDC and SAML:</p>
+<ul><li><strong>OIDC</strong> — GitHub, Google, Keycloak or another provider</li><li><strong>SAML 2.0</strong> — enterprise identity providers</li><li><strong>SCIM</strong> — provision and deprovision users and groups from the identity provider</li></ul>
+<p>SSO can be required for a workspace. When it is enforced, password login is disabled for members.</p>
+<h2 id="api-keys">API keys</h2>
+<p><strong>Settings → API keys</strong> creates a scoped key for automation. A key belongs to a user and inherits their workspace role; it can be revoked at any time.</p>
+<ul><li>Store the key in a secret manager.</li><li>Use one key per integration.</li><li>Rotate on a schedule and after a team change.</li><li>Never put a key in a task, a prompt or a repository.</li></ul>
+<h2 id="sessions">Sessions</h2>
+<p>Users can sign out of the current session or all sessions. Revoking all sessions is the right action after a lost device or a role change.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="security-audit.html">Security and audit</a></li><li><a href="api-basics.html">API basics</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#roles" class="toc-l2">Roles</a><a href="#invite-a-user" class="toc-l2">Invite a user</a><a href="#members" class="toc-l2">Members</a><a href="#single-sign-on" class="toc-l2">Single sign-on</a><a href="#api-keys" class="toc-l2">API keys</a><a href="#sessions" class="toc-l2">Sessions</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

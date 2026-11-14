@@ -1,0 +1,25 @@
+# Enforce keyless cosign signatures on the API/worker images.
+# Replace OWNER/REPO (and the registry prefix) before applying.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: aip-verify-api-image
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: verify-api-image
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/OWNER/REPO/api*"
+          attestors:
+            - entries:
+                - keyless:
+                    subject: "https://github.com/OWNER/REPO/*"
+                    issuer: "https://token.actions.githubusercontent.com"
+          mutateDigest: true
+          verifyDigest: true

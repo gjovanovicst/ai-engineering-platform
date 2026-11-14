@@ -1,0 +1,10 @@
+# Dev routing: a webhook that is intentionally not delivered anywhere.
+route:
+  receiver: dev
+  group_by: [alertname]
+  repeat_interval: 1h
+receivers:
+  - name: dev
+    webhook_configs:
+      - url: http://127.0.0.1:9999/alerts
+        send_resolved: true

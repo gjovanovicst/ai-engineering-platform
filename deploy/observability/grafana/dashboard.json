@@ -1,0 +1,51 @@
+{
+  "title": "AI Engineering Platform — delivery",
+  "uid": "aip-delivery",
+  "schemaVersion": 39,
+  "refresh": "1m",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Oldest queued run",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "expr": "aip_run_queued_oldest_seconds", "legendFormat": "seconds" }],
+      "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 300 }] } } }
+    },
+    {
+      "type": "stat",
+      "title": "Running runs",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "expr": "aip_run_running" }]
+    },
+    {
+      "type": "stat",
+      "title": "Failure ratio (15m)",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "expr": "aip_run_failed_ratio_15m", "legendFormat": "failed" }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 0.1 }] } } }
+    },
+    {
+      "type": "stat",
+      "title": "Oldest pending approval",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "expr": "aip_approval_pending_oldest_seconds" }],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Run outcomes",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "targets": [
+        { "expr": "rate(runs_finished_total[15m])", "legendFormat": "{{status}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "API latency p95 (spanmetrics)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(duration_milliseconds_bucket{service_name=\"aipd\"}[5m])) by (le))", "legendFormat": "p95" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "name": "aip-vscode",
+  "displayName": "AI Engineering Platform",
+  "description": "Tasks, runs and approvals from VS Code.",
+  "version": "0.1.0",
+  "publisher": "aip",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "aip.listTasks",
+        "title": "AIP: List tasks"
+      },
+      {
+        "command": "aip.startRun",
+        "title": "AIP: Start run"
+      },
+      {
+        "command": "aip.showRun",
+        "title": "AIP: Show run"
+      },
+      {
+        "command": "aip.approve",
+        "title": "AIP: Decide approval"
+      },
+      {
+        "command": "aip.showEvidence",
+        "title": "AIP: Show run evidence"
+      },
+      {
+        "command": "aip.showDiff",
+        "title": "AIP: Show run diff"
+      },
+      {
+        "command": "aip.watchRun",
+        "title": "AIP: Watch run"
+      }
+    ],
+    "configuration": {
+      "title": "AI Engineering Platform",
+      "properties": {
+        "aip.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:18080",
+          "description": "API base URL"
+        },
+        "aip.orgId": {
+          "type": "string",
+          "default": "",
+          "description": "Organisation id"
+        },
+        "aip.token": {
+          "type": "string",
+          "default": "",
+          "description": "Session or API key (stored in settings; prefer an API key with expiry)"
+        },
+        "aip.projectId": {
+          "type": "string",
+          "default": "",
+          "description": "Default project id"
+        }
+      }
+    }
+  }
+}

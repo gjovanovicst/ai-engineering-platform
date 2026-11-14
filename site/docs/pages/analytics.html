@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Analytics · AI Engineering Platform</title>
+<meta name="description" content="Analytics answers two questions: how fast is delivery, and is the quality improving?" />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group" open><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="active" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Quality &amp; insights</p>
+<article class="prose">
+<h1 id="analytics">Analytics</h1>
+<p>Analytics answers two questions: how fast is delivery, and is the quality improving?</p>
+<p><img src="../../assets/product-analytics.png" alt="Analytics" /></p>
+<p><em>Delivery and outcome metrics for the selected period.</em></p>
+<h2 id="metrics">Metrics</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Metric</th><th style="text-align:left">What it means</th></tr></thead><tbody><tr><td style="text-align:left">Lead time</td><td style="text-align:left">From ready task to merged change</td></tr><tr><td style="text-align:left">Approval time</td><td style="text-align:left">Time spent waiting for human decisions</td></tr><tr><td style="text-align:left">Onboarding</td><td style="text-align:left">Time from project creation to the first accepted task</td></tr><tr><td style="text-align:left">Run success</td><td style="text-align:left">Completed runs divided by all runs</td></tr><tr><td style="text-align:left">Cost per accepted change</td><td style="text-align:left">Provider cost divided by merged changes</td></tr><tr><td style="text-align:left">First-pass merge</td><td style="text-align:left">PRs merged without a rework cycle</td></tr><tr><td style="text-align:left">Proof validity</td><td style="text-align:left">Acceptance proofs that referenced real evidence</td></tr><tr><td style="text-align:left">Runs per task</td><td style="text-align:left">How much agent work a task needed</td></tr><tr><td style="text-align:left">Change failure rate</td><td style="text-align:left">Merged changes that required a fix</td></tr><tr><td style="text-align:left">Escaped defects</td><td style="text-align:left">Defects found after merge, per 100 merges</td></tr></tbody></table></div>
+<p>Metrics marked <strong>measured</strong> come from recorded events. Metrics marked <strong>na</strong> have no data yet; the platform does not invent a value.</p>
+<h2 id="filtering">Filtering</h2>
+<p>Use the period selector to compare delivery windows. Project filters narrow the view to one product or client.</p>
+<h2 id="reading-the-numbers">Reading the numbers</h2>
+<ul><li>A short lead time with a high rework rate is not an improvement.</li><li>A high proof validity rate with a low first-pass merge rate suggests the plan or context needs work.</li><li>Approval time is often the largest lever; it is a human process metric, not an agent metric.</li></ul>
+<h2 id="exports">Exports</h2>
+<p>The API exposes the same analytics data. Use it for a dashboard or a weekly report. Large exports should page through the API rather than scrape the UI.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="quality.html">Quality gates</a></li><li><a href="../api.html">API reference</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#metrics" class="toc-l2">Metrics</a><a href="#filtering" class="toc-l2">Filtering</a><a href="#reading-the-numbers" class="toc-l2">Reading the numbers</a><a href="#exports" class="toc-l2">Exports</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

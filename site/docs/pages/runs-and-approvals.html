@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agent runs and approvals · AI Engineering Platform</title>
+<meta name="description" content="A run is one agent execution. It has a type, a frozen context, a budget and an event stream. The run view is where a team sees what the agent did and decides what happens next." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group" open><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="active" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Build &amp; ship</p>
+<article class="prose">
+<h1 id="agent-runs-and-approvals">Agent runs and approvals</h1>
+<p>A <strong>run</strong> is one agent execution. It has a type, a frozen context, a budget and an event stream. The run view is where a team sees what the agent did and decides what happens next.</p>
+<p><img src="../../assets/product-run.png" alt="A completed run" /></p>
+<p><em>A development run: plan, approval, build, test and review in one timeline, with the diff that will be merged.</em></p>
+<h2 id="run-types">Run types</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Type</th><th style="text-align:left">Purpose</th><th style="text-align:left">Gate</th></tr></thead><tbody><tr><td style="text-align:left">Planning</td><td style="text-align:left">Inspect context and propose steps, files and risks</td><td style="text-align:left">Plan approval</td></tr><tr><td style="text-align:left">Development</td><td style="text-align:left">Implement the approved plan and produce a diff</td><td style="text-align:left">Test/design gates, PR approval</td></tr><tr><td style="text-align:left">Review</td><td style="text-align:left">Inspect a diff and report findings</td><td style="text-align:left">PR approval</td></tr></tbody></table></div>
+<h2 id="start-a-run">Start a run</h2>
+<ol><li>Open a <strong>Ready</strong> task.</li><li>Choose <strong>Run agent</strong> and select the type.</li><li>Confirm the model/agent and budget if the project allows a choice.</li><li>Watch the run view; events stream live.</li></ol>
+<p>A run cannot start if the task is not ready, if the repository is unreachable, or if the project has no allowed agent.</p>
+<h2 id="what-the-run-view-shows">What the run view shows</h2>
+<ul><li><strong>Context</strong> — the frozen manifest: files, rules and token budget</li><li><strong>Plan</strong> — steps, files, risks and estimated cost</li><li><strong>Approval</strong> — the decision and who made it</li><li><strong>Changes</strong> — the diff, with additions and deletions</li><li><strong>Checks</strong> — tests, design checks and acceptance evidence</li><li><strong>Cost</strong> — recorded tokens and provider cost</li><li><strong>Events</strong> — an append-only timeline with timestamps</li></ul>
+<h2 id="approvals">Approvals</h2>
+<h3 id="plan-approval">Plan approval</h3>
+<p>A human can <strong>approve</strong>, <strong>request changes</strong> or <strong>reject</strong>.</p>
+<ul><li>Approve sends the run to implementation.</li><li>Request changes returns it to planning with a note.</li><li>Reject stops the run and leaves the task for a human.</li></ul>
+<p>The approval records the user, the time and the plan version.</p>
+<h3 id="pr-approval">PR approval</h3>
+<p>A pull request requires the configured number of distinct approvers and all required checks. An agent cannot approve its own PR or bypass branch protection.</p>
+<h2 id="retry-cancel-and-failures">Retry, cancel and failures</h2>
+<ul><li><strong>Retry</strong> starts a new run from a checkpoint or from the beginning, depending on the failure.</li><li><strong>Cancel</strong> is cooperative: the worker asks the runtime to stop and kills the sandbox.</li><li>A failed run keeps its events and artifacts for inspection. The task returns to a state a human can act on.</li></ul>
+<p>Common failure reasons are shown in the run view: clone failure, provider error, budget exceeded, missing proof or a failed check.</p>
+<h2 id="budgets">Budgets</h2>
+<p>A run has a token and cost budget. The worker checks it between phases. When the budget is exhausted the run fails with a clear reason instead of continuing silently.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="pull-requests.html">Pull requests and merges</a></li><li><a href="quality.html">Quality gates</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#run-types" class="toc-l2">Run types</a><a href="#start-a-run" class="toc-l2">Start a run</a><a href="#what-the-run-view-shows" class="toc-l2">What the run view shows</a><a href="#approvals" class="toc-l2">Approvals</a><a href="#plan-approval" class="toc-l3">Plan approval</a><a href="#pr-approval" class="toc-l3">PR approval</a><a href="#retry-cancel-and-failures" class="toc-l2">Retry, cancel and failures</a><a href="#budgets" class="toc-l2">Budgets</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

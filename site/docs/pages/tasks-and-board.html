@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tasks and board · AI Engineering Platform</title>
+<meta name="description" content="The board is the source of truth for what the team is doing. It is deliberately not a prompt box." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group" open><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="active" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Build &amp; ship</p>
+<article class="prose">
+<h1 id="tasks-and-board">Tasks and board</h1>
+<p>The board is the source of truth for what the team is doing. It is deliberately not a prompt box.</p>
+<p><img src="../../assets/product-board.png" alt="Project board" /></p>
+<p><em>Draft, Ready, Planning, In progress and Review columns. A card only moves when the transition is valid.</em></p>
+<h2 id="columns">Columns</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Column</th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:left">Draft</td><td style="text-align:left">Incomplete idea; an agent cannot start</td></tr><tr><td style="text-align:left">Ready</td><td style="text-align:left">Meets the definition of ready and can be planned</td></tr><tr><td style="text-align:left">Planning</td><td style="text-align:left">A planning run is active or waiting for approval</td></tr><tr><td style="text-align:left">In progress</td><td style="text-align:left">A development run has an approved plan</td></tr><tr><td style="text-align:left">Review</td><td style="text-align:left">A pull request is open and checks are running</td></tr><tr><td style="text-align:left">Done</td><td style="text-align:left">The change is merged and the task is closed</td></tr></tbody></table></div>
+<p>A blocked task leaves the flow and records a reason. A human decides how to unblock it; the agent does not guess.</p>
+<h2 id="definition-of-ready">Definition of ready</h2>
+<p>A task becomes <strong>Ready</strong> when all of these are true:</p>
+<ul><li>the title is an imperative sentence (<code>Add SSO login</code>, not <code>SSO</code>)</li><li>at least one acceptance criterion uses Given/When/Then</li><li>the affected area or packages are identified</li><li>what is out of scope is stated when scope creep is a risk</li><li>dependencies are listed, or explicitly none</li><li>the work is small enough for one agent run</li></ul>
+<p>If a criterion is missing, the platform keeps the task in Draft. This is a feature, not friction.</p>
+<h2 id="create-a-task">Create a task</h2>
+<ol><li>Open the project and choose <strong>Board</strong>.</li><li>Select <strong>+ New task</strong>.</li><li>Write the outcome and context. Include constraints, links and current behaviour.</li><li>Add acceptance criteria.</li><li>Add design references or technical context.</li><li>Save as Draft. Move to Ready when the definition of ready is met.</li></ol>
+<p><img src="../../assets/product-new-task.png" alt="Task creation" /></p>
+<p><em>The task drawer asks for acceptance criteria before it asks for a model.</em></p>
+<h2 id="good-task-hygiene">Good task hygiene</h2>
+<ul><li>One outcome per task. Split large work.</li><li>Write acceptance criteria as observable behaviour, not implementation steps.</li><li>Link the design or component when the change affects UI.</li><li>State what must not change; this prevents unrelated edits.</li><li>Keep the description current. The run freezes the context it received.</li></ul>
+<h2 id="priorities-and-filters">Priorities and filters</h2>
+<p>Tasks have a priority and labels. Use the board filters to focus on a project, a status or a priority. The API exposes the same filters for automation.</p>
+<h2 id="permissions">Permissions</h2>
+<ul><li>Members can create and edit tasks in accessible projects.</li><li>Viewers can read the board and task details.</li><li>Admins can configure the definition of ready and required approvals at project level.</li></ul>
+<h2 id="next">Next</h2>
+<ul><li><a href="runs-and-approvals.html">Agent runs</a></li><li><a href="quality.html">Quality gates</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#columns" class="toc-l2">Columns</a><a href="#definition-of-ready" class="toc-l2">Definition of ready</a><a href="#create-a-task" class="toc-l2">Create a task</a><a href="#good-task-hygiene" class="toc-l2">Good task hygiene</a><a href="#priorities-and-filters" class="toc-l2">Priorities and filters</a><a href="#permissions" class="toc-l2">Permissions</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

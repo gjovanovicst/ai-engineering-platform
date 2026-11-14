@@ -1,0 +1,139 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: aip
+          POSTGRES_PASSWORD: aip
+          POSTGRES_DB: aip
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aip -d aip"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      AIP_DB_MIGRATOR_DSN: postgres://aip_migrator:migrator@localhost:5432/aip?sslmode=disable
+      AIP_TEST_DB_DSN: postgres://aip_app:app@localhost:5432/aip?sslmode=disable
+      AIP_TEST_DB_MIGRATOR_DSN: postgres://aip_migrator:migrator@localhost:5432/aip?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: build
+        working-directory: apps/api
+        run: go build ./...
+      - name: vet
+        working-directory: apps/api
+        run: go vet ./...
+      - name: database roles
+        run: psql "postgres://aip:aip@localhost:5432/aip?sslmode=disable" -f deploy/postgres/00_roles.sql
+      - name: migrate
+        working-directory: apps/api
+        run: go run ./cmd/aipctl migrate up
+      - name: test (unit)
+        working-directory: apps/api
+        run: go test -race -count=1 ./...
+      - name: test (integration)
+        working-directory: apps/api
+        run: go test -race -count=1 -tags=integration ./...
+      - name: lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v2.13
+      - name: install codegen
+        run: go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.8.0
+      - name: openapi models in sync
+        working-directory: apps/api
+        run: |
+          oapi-codegen -config oapi-codegen.yaml ../../api/openapi.yaml
+          git diff --exit-code -- internal/httpapi/oapi
+      - name: openapi valid
+        run: |
+          python3 -c "import yaml,sys; d=yaml.safe_load(open('api/openapi.yaml')); assert d['openapi'].startswith('3.1'); print('openapi', len(d['paths']), 'paths')"
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+      - name: install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - name: install web dependencies (license inventory)
+        working-directory: apps/web
+        run: pnpm install --frozen-lockfile
+      - name: dependency scans
+        run: make security
+      - name: install go-licenses
+        run: go install github.com/google/go-licenses@v1.6.0
+      - name: license policy (Go)
+        working-directory: apps/api
+        run: |
+          go-licenses check ./... \
+            --ignore github.com/gjovanovicst/ai-engineering-platform \
+            --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MPL-2.0,Unlicense,CC0-1.0,BlueOak-1.0.0
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        if: hashFiles('apps/web/package.json') != ''
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        if: hashFiles('apps/web/package.json') != ''
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - name: install
+        if: hashFiles('apps/web/package.json') != ''
+        working-directory: apps/web
+        run: pnpm install --frozen-lockfile
+      - name: lint + typecheck + build + test
+        if: hashFiles('apps/web/package.json') != ''
+        working-directory: apps/web
+        run: |
+          pnpm lint
+          pnpm tsc --noEmit
+          pnpm build
+          pnpm test
+
+  e2e:
+    # Full product flow with a fake GitLab API and a local bare repo.
+    runs-on: ubuntu-latest
+    needs: go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
+      - name: Generate a JWT key
+        run: make keygen
+      - name: Build the sandbox image
+        run: make sandbox-image
+      - name: Run the end-to-end flow
+        run: make e2e

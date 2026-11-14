@@ -1,0 +1,45 @@
+collector_name: aip
+queries:
+  - query_name: aip_run_queued_oldest_seconds
+    query: |
+      SELECT COALESCE(EXTRACT(EPOCH FROM now() - MIN(created_at)), 0)
+      FROM runs WHERE status = 'queued'
+    metrics:
+      - name: aip_run_queued_oldest_seconds
+        help: Age of the oldest queued run in seconds
+        type: gauge
+
+  - query_name: aip_run_running
+    query: SELECT count(*) FROM runs WHERE status = 'running'
+    metrics:
+      - name: aip_run_running
+        help: Runs currently executing
+        type: gauge
+
+  - query_name: aip_run_failed_ratio_15m
+    query: |
+      SELECT COALESCE(
+        count(*) FILTER (WHERE status = 'failed')::float / NULLIF(count(*), 0), 0)
+      FROM runs
+      WHERE created_at > now() - interval '15 minutes'
+        AND status IN ('succeeded', 'failed', 'canceled')
+    metrics:
+      - name: aip_run_failed_ratio_15m
+        help: Failed share of runs that finished in the last 15 minutes
+        type: gauge
+
+  - query_name: aip_approval_pending_oldest_seconds
+    query: |
+      SELECT COALESCE(EXTRACT(EPOCH FROM now() - MIN(requested_at)), 0)
+      FROM approvals WHERE status = 'pending'
+    metrics:
+      - name: aip_approval_pending_oldest_seconds
+        help: Age of the oldest pending approval in seconds
+        type: gauge
+
+  - query_name: aip_worker_heartbeat
+    query: SELECT 1
+    metrics:
+      - name: aip_db_reachable
+        help: 1 when the queries above could run
+        type: gauge

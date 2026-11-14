@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Overview · AI Engineering Platform</title>
+<meta name="description" content="AI Engineering Platform is a workspace where AI agents execute the software lifecycle and people keep the decisions that matter." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group" open><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="active" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Getting started</p>
+<article class="prose">
+<h1 id="overview">Overview</h1>
+<p>AI Engineering Platform is a workspace where AI agents execute the software lifecycle and people keep the decisions that matter.</p>
+<p>A task moves through a defined path:</p>
+<ol><li><strong>Shape</strong> — a project blueprint creates the workspace; a task gets a description and acceptance criteria.</li><li><strong>Plan</strong> — the planning agent proposes steps, files and risks against a frozen context.</li><li><strong>Approve</strong> — a human approves the plan before code is written.</li><li><strong>Build</strong> — a development agent works in a disposable sandbox and produces a diff.</li><li><strong>Prove</strong> — tests, design checks and acceptance evidence are recorded.</li><li><strong>Review</strong> — a pull request is opened; a human approves the merge.</li><li><strong>Learn</strong> — delivery and quality metrics show what happened.</li></ol>
+<p>The platform does not hide these steps behind a chat box. Every transition is an event with an actor, an artifact and a timestamp.</p>
+<p><img src="../../assets/product-overview.png" alt="Workspace overview" /></p>
+<p><em>The workspace: health, projects and the next setup step.</em></p>
+<h2 id="who-it-is-for">Who it is for</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Team</th><th style="text-align:left">What they use it for</th></tr></thead><tbody><tr><td style="text-align:left">Product and platform teams</td><td style="text-align:left">Repeatable delivery with approvals and an audit trail</td></tr><tr><td style="text-align:left">Agencies and studios</td><td style="text-align:left">One workspace per client, with project-level access</td></tr><tr><td style="text-align:left">Regulated teams</td><td style="text-align:left">Human gates, isolation and exportable audit evidence</td></tr></tbody></table></div>
+<h2 id="what-you-need">What you need</h2>
+<ul><li>A workspace (organisation) and a project.</li><li>A Git provider connection: GitHub App, GitLab, or a token for local development.</li><li>A model provider or a registered agent plugin.</li><li>A sandbox runtime (Docker locally, Kubernetes for a cluster deployment).</li></ul>
+<h2 id="principles">Principles</h2>
+<ul><li><strong>Plan before code.</strong> A task cannot start without a definition of ready.</li><li><strong>Sandbox everything.</strong> The agent cannot touch the host, the network or another run.</li><li><strong>Prove acceptance.</strong> The diff must carry evidence for every acceptance criterion.</li><li><strong>Humans merge.</strong> No agent merges its own pull request.</li><li><strong>Measure outcomes.</strong> Speed is reported next to rework, proof validity and escaped defects.</li></ul>
+<h2 id="where-to-go-next">Where to go next</h2>
+<ul><li><a href="quickstart.html">Quickstart</a> — run the platform locally and complete one task.</li><li><a href="concepts.html">Key concepts</a> — the lifecycle, gates and roles.</li><li><a href="tasks-and-board.html">Tasks and board</a> — how work is shaped.</li><li><a href="../api.html">API reference</a> — every REST endpoint.</li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#who-it-is-for" class="toc-l2">Who it is for</a><a href="#what-you-need" class="toc-l2">What you need</a><a href="#principles" class="toc-l2">Principles</a><a href="#where-to-go-next" class="toc-l2">Where to go next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

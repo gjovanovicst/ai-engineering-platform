@@ -1,0 +1,100 @@
+# Prometheus alert rules for the platform. Scrape the API and the worker
+# metrics endpoint (AIP_WORKER_METRICS_ADDR, default :9090).
+groups:
+  - name: aip-availability
+    rules:
+      - alert: AIPApiDown
+        expr: up{job="aip-api"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "API is down"
+      - alert: AIPWorkerDown
+        expr: up{job="aip-worker"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "Worker is down; runs will not start"
+  - name: aip-queue
+    rules:
+      - alert: AIPQueueLag
+        expr: aip_queue_oldest_seconds > 300
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Oldest queued job is older than 5 minutes"
+      - alert: AIPQueueDepth
+        expr: aip_queue_jobs{state="available"} > 20
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "More than 20 jobs waiting"
+  - name: aip-http
+    rules:
+      - alert: AIPHttp5xx
+        expr: sum(rate(aip_http_requests_total{status=~"5.."}[5m])) > 0.1
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Elevated 5xx rate"
+  - name: aip-slo
+    rules:
+      # SLO: 99.5% availability → 0.5% error budget. Fast burn: 14.4x over 5m/2m.
+      - alert: AIPAvailabilityBurnFast
+        expr: |
+          (sum(rate(aip_http_requests_total{status=~"5.."}[5m]))
+           / clamp_min(sum(rate(aip_http_requests_total[5m])), 0.001)) > (14.4 * 0.005)
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "Availability is burning the 99.5% error budget 14.4x too fast"
+      # Slow burn: 6x over 30m/6h.
+      - alert: AIPAvailabilityBurnSlow
+        expr: |
+          (sum(rate(aip_http_requests_total{status=~"5.."}[30m]))
+           / clamp_min(sum(rate(aip_http_requests_total[30m])), 0.001)) > (6 * 0.005)
+        for: 30m
+        labels: { severity: warning }
+        annotations:
+          summary: "Availability is burning the 99.5% error budget 6x too fast"
+      - alert: AIPLatencyHigh
+        expr: |
+          (sum(rate(aip_http_request_duration_seconds_sum[5m]))
+           / clamp_min(sum(rate(aip_http_requests_total[5m])), 0.001)) > 1
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Average request latency is above 1s"
+
+  - name: aip-backup
+    rules:
+      - alert: AIPWALArchiveFailing
+        expr: increase(aip_wal_archive_failed_total[10m]) > 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: "WAL archiving is failing"
+      - alert: AIPWALArchiveStale
+        expr: aip_wal_archive_last_success_age_seconds > 3600
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "No WAL segment archived for over an hour"
+      - alert: AIPBaseBackupStale
+        expr: aip_base_backup_last_success_age_seconds > 172800
+        for: 30m
+        labels: { severity: critical }
+        annotations:
+          summary: "No successful base backup for over 48 hours"
+      - alert: AIPRestoreStale
+        expr: aip_restore_last_success_age_seconds > 2592000
+        for: 1h
+        labels: { severity: warning }
+        annotations:
+          summary: "No successful restore drill for over 30 days"
+      - alert: AIPOffsiteBackupStale
+        expr: aip_offsite_backup_last_success_age_seconds > 172800
+        for: 1h
+        labels: { severity: critical }
+        annotations:
+          summary: "No offsite WAL mirror for over 48 hours"

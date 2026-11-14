@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>API basics · AI Engineering Platform</title>
+<meta name="description" content="The platform exposes a REST API for automation, integrations and reporting. The full endpoint reference is generated from the OpenAPI contract." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group" open><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="active" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / API &amp; integrations</p>
+<article class="prose">
+<h1 id="api-basics">API basics</h1>
+<p>The platform exposes a REST API for automation, integrations and reporting. The full endpoint reference is generated from the OpenAPI contract.</p>
+<h2 id="base-url">Base URL</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Environment</th><th style="text-align:left">URL</th></tr></thead><tbody><tr><td style="text-align:left">Local</td><td style="text-align:left"><code>http://localhost:18080/api/v1</code></td></tr><tr><td style="text-align:left">Staging / production</td><td style="text-align:left">your deployment URL + <code>/api/v1</code></td></tr></tbody></table></div>
+<p>Every path except <code>/auth/*</code> and <code>/healthz</code> is scoped to an organisation.</p>
+<h2 id="authentication">Authentication</h2>
+<p>Obtain an access token, then send it as a bearer token:</p>
+<pre><code class="language-bash">TOKEN=$(curl -s -X POST http://localhost:18080/api/v1/auth/login \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -d &#x27;{&quot;email&quot;:&quot;you@company.com&quot;,&quot;password&quot;:&quot;...&quot;}&#x27; | jq -r .access_token)
+
+curl -H &quot;Authorization: Bearer $TOKEN&quot; \
+  http://localhost:18080/api/v1/orgs/$ORG/projects</code></pre>
+<p>Access tokens are short-lived. Refresh tokens rotate; store them in an HTTP-only cookie or a secret manager.</p>
+<h2 id="conventions">Conventions</h2>
+<ul><li><strong>JSON</strong> request and response bodies.</li><li><strong>Pagination</strong> with <code>limit</code> and <code>cursor</code>; the response includes <code>next_cursor</code> when more data exists.</li><li><strong>Idempotency</strong> with an <code>Idempotency-Key</code> header on mutating requests; replaying the same key and body returns the original result.</li><li><strong>Errors</strong> use a stable shape: <code>{&quot;error&quot;:{&quot;code&quot;:&quot;...&quot;,&quot;message&quot;:&quot;...&quot;,&quot;request_id&quot;:&quot;...&quot;}}</code> plus an HTTP status.</li><li><strong>Rate limits</strong> return <code>429</code> with <code>Retry-After</code>; honour it.</li><li><strong>Versioning</strong> is in the path (<code>/api/v1</code>); breaking changes require a new version.</li></ul>
+<h2 id="common-status-codes">Common status codes</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Code</th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:left">200 / 201</td><td style="text-align:left">Success / created</td></tr><tr><td style="text-align:left">202</td><td style="text-align:left">Accepted; a run or async job started</td></tr><tr><td style="text-align:left">204</td><td style="text-align:left">No content</td></tr><tr><td style="text-align:left">400</td><td style="text-align:left">Validation error</td></tr><tr><td style="text-align:left">401</td><td style="text-align:left">Missing or invalid token</td></tr><tr><td style="text-align:left">403</td><td style="text-align:left">Role or project access denied</td></tr><tr><td style="text-align:left">404</td><td style="text-align:left">Resource not found in this organisation</td></tr><tr><td style="text-align:left">409</td><td style="text-align:left">Invalid transition or idempotency conflict</td></tr><tr><td style="text-align:left">421</td><td style="text-align:left">Region mismatch</td></tr><tr><td style="text-align:left">429</td><td style="text-align:left">Rate limited</td></tr><tr><td style="text-align:left">500</td><td style="text-align:left">Server error with a request ID</td></tr></tbody></table></div>
+<h2 id="live-events">Live events</h2>
+<p>Run events are available over server-sent events:</p>
+<pre><code class="language-text">GET /api/v1/orgs/{org}/runs/{run}/events
+Accept: text/event-stream
+Last-Event-ID: 42</code></pre>
+<p>Reconnect with the last sequence number. The event catalog describes event types and payloads.</p>
+<h2 id="webhooks">Webhooks</h2>
+<p>Project and workspace webhooks deliver signed events for run completion, PR state and approvals. Verify the signature before processing; retries use exponential backoff.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="../api.html">API reference</a> — all endpoints and schemas</li><li><a href="api-events.html">SSE event catalog</a></li><li><a href="security-audit.html">Security and audit</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#base-url" class="toc-l2">Base URL</a><a href="#authentication" class="toc-l2">Authentication</a><a href="#conventions" class="toc-l2">Conventions</a><a href="#common-status-codes" class="toc-l2">Common status codes</a><a href="#live-events" class="toc-l2">Live events</a><a href="#webhooks" class="toc-l2">Webhooks</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

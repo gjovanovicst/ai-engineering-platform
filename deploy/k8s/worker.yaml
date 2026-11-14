@@ -1,0 +1,39 @@
+# The worker runs agent sandboxes. Today the Docker driver needs a Docker
+# socket, so this manifest targets self-hosted clusters (k3s/Docker) and must
+# be replaced by the Kubernetes sandbox driver (Job per run) for managed
+# clusters — see deploy/k8s/README.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aip-worker
+  namespace: aip
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: aip-worker }
+  template:
+    metadata:
+      labels: { app: aip-worker }
+    spec:
+      serviceAccountName: aip-worker
+      containers:
+        - name: worker
+          image: ghcr.io/example/aip-worker:latest
+          envFrom:
+            - configMapRef: { name: aip-config }
+            - secretRef: { name: aip-secrets }
+          env:
+            - name: AIP_DB_DSN
+              valueFrom:
+                secretKeyRef: { name: aip-secrets, key: AIP_DB_DSN }
+          volumeMounts:
+            - { name: docker-sock, mountPath: /var/run/docker.sock }
+            - { name: repos, mountPath: /repos }
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits: { cpu: 2, memory: 4Gi }
+      volumes:
+        - name: docker-sock
+          hostPath: { path: /var/run/docker.sock, type: Socket }
+        - name: repos
+          emptyDir: {}

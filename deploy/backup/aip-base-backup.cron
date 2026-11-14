@@ -1,0 +1,4 @@
+# Daily base backup + heartbeat (install in the platform host crontab).
+17 3 * * * /opt/aip/scripts/walg-base-backup.sh >> /var/log/aip-base-backup.log 2>&1
+
+47 3 * * * /opt/aip/scripts/offsite-wal-backup.sh >> /var/log/aip-offsite-backup.log 2>&1

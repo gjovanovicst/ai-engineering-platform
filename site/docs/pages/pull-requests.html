@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pull requests and merges · AI Engineering Platform</title>
+<meta name="description" content="The platform opens a pull request when a development run is ready. The PR is the hand-off between the agent&#x27;s diff and the team&#x27;s repository rules." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group" open><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="active" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Build &amp; ship</p>
+<article class="prose">
+<h1 id="pull-requests-and-merges">Pull requests and merges</h1>
+<p>The platform opens a pull request when a development run is ready. The PR is the hand-off between the agent&#x27;s diff and the team&#x27;s repository rules.</p>
+<p><img src="../../assets/product-pull-requests.png" alt="Pull requests and checks" /></p>
+<p><em>Every PR shows its provider, number, status and required checks. The merge queue serialises landing.</em></p>
+<h2 id="what-is-checked">What is checked</h2>
+<p>Before a PR can merge:</p>
+<ul><li>required checks are green</li><li>the test gate passed and coverage did not drop beyond the project threshold</li><li>design checks passed for UI changes</li><li>acceptance evidence maps to every criterion</li><li>the required number of humans approved</li><li>the merge window allows landing</li></ul>
+<p>A missing check is not a warning. The merge button stays unavailable.</p>
+<h2 id="reviewing-a-pr">Reviewing a PR</h2>
+<ol><li>Open the PR from the run or the project&#x27;s <strong>Delivery → Pull requests</strong> view.</li><li>Read the diff and the run evidence.</li><li>Leave comments or request changes.</li><li>Approve when the change is correct.</li></ol>
+<p>Approvals are distinct users. The author of the run cannot count as the approver when the project requires an independent review.</p>
+<h2 id="merge-queue">Merge queue</h2>
+<p>The merge queue lands approved changes in order. It exists to prevent two green PRs from breaking each other at the last moment.</p>
+<ul><li>A PR enters the queue after approval.</li><li>The queue rebases or re-runs required checks as configured.</li><li>If a check fails, the PR leaves the queue and returns to the author with the reason.</li></ul>
+<h2 id="merge-windows">Merge windows</h2>
+<p>Admins can restrict landing to a time window. Outside the window, approved PRs wait; the queue shows the next allowed time.</p>
+<h2 id="failed-checks">Failed checks</h2>
+<p>A failed check keeps the PR open. Fix the cause, push a new commit and let the checks run again. Do not weaken a check to make it pass; change the code or the test.</p>
+<h2 id="provider-differences">Provider differences</h2>
+<p>GitHub and GitLab are supported. Both can rebase a PR/MR before merge; GitLab&#x27;s rebase is asynchronous and the queue waits for the conflict status before it merges. The provider is recorded on the repository and on each PR. Branch protection remains the final authority in the Git provider; the platform does not bypass it.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="quality.html">Quality gates</a></li><li><a href="analytics.html">Analytics</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#what-is-checked" class="toc-l2">What is checked</a><a href="#reviewing-a-pr" class="toc-l2">Reviewing a PR</a><a href="#merge-queue" class="toc-l2">Merge queue</a><a href="#merge-windows" class="toc-l2">Merge windows</a><a href="#failed-checks" class="toc-l2">Failed checks</a><a href="#provider-differences" class="toc-l2">Provider differences</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

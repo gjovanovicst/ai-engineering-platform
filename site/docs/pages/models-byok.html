@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agents, models and BYOK · AI Engineering Platform</title>
+<meta name="description" content="The platform is model-agnostic. A project chooses which agents and providers it may use; the platform records the choice on every run." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group" open><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="active" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Administration</p>
+<article class="prose">
+<h1 id="agents-models-and-byok">Agents, models and BYOK</h1>
+<p>The platform is model-agnostic. A project chooses which agents and providers it may use; the platform records the choice on every run.</p>
+<h2 id="supported-execution-modes">Supported execution modes</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Mode</th><th style="text-align:left">Use</th></tr></thead><tbody><tr><td style="text-align:left">Hosted provider</td><td style="text-align:left">Anthropic or an OpenAI-compatible endpoint</td></tr><tr><td style="text-align:left">Command backend</td><td style="text-align:left">A local or self-hosted agent command</td></tr><tr><td style="text-align:left">Custom agent plugin</td><td style="text-align:left">A digest-pinned OCI image with a defined command</td></tr></tbody></table></div>
+<p>The provider and model are recorded on the run, together with token usage and cost.</p>
+<h2 id="configure-a-provider">Configure a provider</h2>
+<ol><li>Open <strong>Settings → Providers</strong>.</li><li>Add the provider and credentials.</li><li>Choose the default model for planning, development and review, or set it per project.</li><li>Test the connection.</li></ol>
+<p>Credentials are encrypted and never shown again after saving. Rotate them from the same screen.</p>
+<h2 id="custom-agent-plugins">Custom agent plugins</h2>
+<p>A plugin is an OCI image pinned by digest:</p>
+<pre><code class="language-text">ghcr.io/acme/agent@sha256:...</code></pre>
+<p>The worker runs the image&#x27;s command only for the project and run types where the plugin is allowed. Signed images can be required; an unsigned image is rejected when cosign verification is on.</p>
+<p><img src="../../assets/product-agents.png" alt="Agent plugins" /></p>
+<p><em>Register a digest-pinned image, choose the run types and attach it to a project.</em></p>
+<h2 id="bring-your-own-key-byok">Bring your own key (BYOK)</h2>
+<p>Organisations can supply their own KMS key for envelope encryption:</p>
+<ol><li>Open <strong>Settings → Encryption</strong>.</li><li>Add the KMS key and region.</li><li>Verify the key.</li><li>Enable BYOK for the workspace.</li></ol>
+<p>Existing data uses data keys wrapped by the organisation key. Rotation re-wraps those keys in an operator-run job; verify the rotation runbook before changing the key. Revoking a key makes encrypted fields unreadable, so keep a recovery procedure.</p>
+<h2 id="regions">Regions</h2>
+<p>A workspace has a region label. Requests routed to the wrong region are rejected with <code>421</code> when the regional guard is enabled. Multi-region data planes are an operator concern, not a per-task setting.</p>
+<h2 id="mcp-tools">MCP tools</h2>
+<p>Projects can declare trusted MCP servers. The sandbox starts only the declared servers, with the project&#x27;s allowlist. A tool that is not declared is unavailable to the run.</p>
+<h2 id="limits">Limits</h2>
+<ul><li>A provider key is scoped to the workspace.</li><li>A plugin must be digest-pinned; tags are not accepted.</li><li>Model choices are constrained by the project&#x27;s allowed list.</li><li>Budgets are enforced by the worker between phases.</li></ul>
+<h2 id="next">Next</h2>
+<ul><li><a href="runs-and-approvals.html">Runs and approvals</a></li><li><a href="security-audit.html">Security and audit</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#supported-execution-modes" class="toc-l2">Supported execution modes</a><a href="#configure-a-provider" class="toc-l2">Configure a provider</a><a href="#custom-agent-plugins" class="toc-l2">Custom agent plugins</a><a href="#bring-your-own-key-byok" class="toc-l2">Bring your own key (BYOK)</a><a href="#regions" class="toc-l2">Regions</a><a href="#mcp-tools" class="toc-l2">MCP tools</a><a href="#limits" class="toc-l2">Limits</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

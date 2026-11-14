@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Projects and blueprints · AI Engineering Platform</title>
+<meta name="description" content="A blueprint is the only entry point for creating a project. It captures the decisions that should not be reinvented for every repository." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group" open><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="active" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Build &amp; ship</p>
+<article class="prose">
+<h1 id="projects-and-blueprints">Projects and blueprints</h1>
+<p>A <strong>blueprint</strong> is the only entry point for creating a project. It captures the decisions that should not be reinvented for every repository.</p>
+<h2 id="what-a-blueprint-contains">What a blueprint contains</h2>
+<ul><li>stack and repository layout</li><li>test strategy and required checks</li><li>design standards and component registry references</li><li>default agents and allowed models</li><li>starter tasks and acceptance templates</li><li>project rules and approval requirements</li></ul>
+<p><img src="../../assets/product-blueprints.png" alt="Blueprints" /></p>
+<p><em>Published templates and versioned project blueprints.</em></p>
+<h2 id="create-a-blueprint-version">Create a blueprint version</h2>
+<ol><li>Open <strong>Blueprints</strong>.</li><li>Choose a template or <strong>+ New blueprint</strong>.</li><li>Edit the definition: stack, test strategy, agents, rules.</li><li>Save a version. Versions are immutable.</li><li>Review the diff and <strong>Publish</strong>.</li></ol>
+<p>A published version can be instantiated by projects. Draft versions are visible only to the team.</p>
+<h2 id="create-a-project">Create a project</h2>
+<ol><li>Open <strong>Projects → New project</strong>.</li><li>Name the project and select the blueprint version.</li><li>Connect the Git repository:<ul><li>install the GitHub App for the repository, or</li><li>connect a GitLab project, or</li><li>use a token for a local repository.</li></ul></li><li>Choose the default branch and the agent/model allowed for the project.</li><li>Create the project.</li></ol>
+<p>The project inherits the blueprint&#x27;s test strategy, rules and starter tasks. You can override values per project, but the blueprint version used at creation is recorded.</p>
+<h2 id="repositories">Repositories</h2>
+<p>The <strong>Repositories</strong> view shows the connected repositories and their status. A repository must be reachable by the worker before a run can clone it.</p>
+<p>For GitHub, the App installation grants access to selected repositories. For GitLab, the connection is scoped to a project. Tokens are stored encrypted and never returned by the API.</p>
+<h2 id="project-settings">Project settings</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Setting</th><th style="text-align:left">Effect</th></tr></thead><tbody><tr><td style="text-align:left">Required checks</td><td style="text-align:left">Checks that must be green before a PR can merge</td></tr><tr><td style="text-align:left">E2E command</td><td style="text-align:left">Command run after unit tests in the sandbox</td></tr><tr><td style="text-align:left">Required approvals</td><td style="text-align:left">Number of distinct approvers for a PR</td></tr><tr><td style="text-align:left">Merge window</td><td style="text-align:left">Time window in which the merge queue may land changes</td></tr><tr><td style="text-align:left">MCP servers</td><td style="text-align:left">Trusted tool servers available to runs</td></tr><tr><td style="text-align:left">Agents and models</td><td style="text-align:left">Providers and agent plugins allowed in the project</td></tr></tbody></table></div>
+<h2 id="permissions">Permissions</h2>
+<ul><li><strong>Owner/Admin</strong> can create, edit and archive projects and blueprints.</li><li><strong>Member</strong> can work with tasks and runs in projects they can access.</li><li><strong>Viewer</strong> can read the board, runs and results.</li></ul>
+<h2 id="limits-and-good-practice">Limits and good practice</h2>
+<ul><li>Keep a blueprint small enough to review; put product-specific detail in tasks.</li><li>Publish a new version instead of editing a published one.</li><li>Connect only the repositories the project needs.</li><li>Use project-level rules when a client or repository needs stricter controls.</li></ul>
+<h2 id="next">Next</h2>
+<ul><li><a href="tasks-and-board.html">Tasks and board</a></li><li><a href="models-byok.html">Agents and models</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#what-a-blueprint-contains" class="toc-l2">What a blueprint contains</a><a href="#create-a-blueprint-version" class="toc-l2">Create a blueprint version</a><a href="#create-a-project" class="toc-l2">Create a project</a><a href="#repositories" class="toc-l2">Repositories</a><a href="#project-settings" class="toc-l2">Project settings</a><a href="#permissions" class="toc-l2">Permissions</a><a href="#limits-and-good-practice" class="toc-l2">Limits and good practice</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

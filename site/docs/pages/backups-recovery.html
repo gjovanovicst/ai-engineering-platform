@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Backups and recovery · AI Engineering Platform</title>
+<meta name="description" content="Backups are a product surface for operators, not a cron job hidden on a server." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group" open><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="active" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Administration</p>
+<article class="prose">
+<h1 id="backups-and-recovery">Backups and recovery</h1>
+<p>Backups are a product surface for operators, not a cron job hidden on a server.</p>
+<p><img src="../../assets/product-backups.png" alt="Backups and DR" /></p>
+<p><em>WAL and base backup health, restore history, restore duration and the offsite mirror.</em></p>
+<h2 id="what-is-protected">What is protected</h2>
+<ul><li><strong>PostgreSQL</strong> — WAL archiving plus periodic base backups</li><li><strong>Object storage</strong> — artifacts and run evidence</li><li><strong>Configuration</strong> — provider and workspace settings in the database</li><li><strong>Audit log</strong> — append-only events with export and legal hold</li></ul>
+<h2 id="health-indicators">Health indicators</h2>
+<p>The <strong>Settings → Backups</strong> panel shows:</p>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Indicator</th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:left">WAL archive</td><td style="text-align:left">Last archived segment and archive failures</td></tr><tr><td style="text-align:left">Last success</td><td style="text-align:left">Age of the most recent successful archive</td></tr><tr><td style="text-align:left">Base backup</td><td style="text-align:left">Name and age of the newest base backup</td></tr><tr><td style="text-align:left">Restores</td><td style="text-align:left">Succeeded and failed restore requests</td></tr><tr><td style="text-align:left">Restore duration</td><td style="text-align:left">Average time for a verified restore</td></tr><tr><td style="text-align:left">Offsite mirror</td><td style="text-align:left">Age of the last successful offsite copy</td></tr></tbody></table></div>
+<p>Alerts fire when WAL archiving stops, a base backup is stale, a restore is too old or the offsite mirror is behind.</p>
+<h2 id="request-a-restore">Request a restore</h2>
+<ol><li>Open <strong>Settings → Backups</strong>.</li><li>Choose a target time. It must be after the base backup and covered by archived WAL.</li><li>Select <strong>Request restore</strong>.</li><li>The restore worker claims the request, starts a scratch instance, replays WAL and verifies row counts.</li><li>The request shows <strong>succeeded</strong> with the target time and verified counts, or <strong>failed</strong> with the reason.</li></ol>
+<p>A restore is a verification step, not a live cutover. Promoting the restored instance is an operator decision with its own runbook.</p>
+<h2 id="offsite">Offsite</h2>
+<p>The WAL and base backup buckets are mirrored to a second MinIO/S3 endpoint. An offsite restore drill proves the mirror is usable, not just present.</p>
+<h2 id="retention">Retention</h2>
+<p>WAL and base backups have a configurable retention period (30 days in the reference deployment). Object storage lifecycle rules should match the retention policy; do not delete a base backup that a restore request may still need.</p>
+<h2 id="what-to-test">What to test</h2>
+<ul><li>restore to a timestamp before a known change</li><li>restore with the primary unavailable</li><li>restore from the offsite endpoint</li><li>alert when WAL archiving stops</li></ul>
+<h2 id="limits">Limits</h2>
+<ul><li>A restore cannot target a time before the oldest base backup.</li><li>A target after the last archived WAL is not recoverable; the wait is visible in the panel.</li><li>The scratch restore does not serve production traffic until promoted.</li></ul>
+<h2 id="next">Next</h2>
+<ul><li><a href="security-audit.html">Security and audit</a></li><li><a href="troubleshooting.html">Troubleshooting</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#what-is-protected" class="toc-l2">What is protected</a><a href="#health-indicators" class="toc-l2">Health indicators</a><a href="#request-a-restore" class="toc-l2">Request a restore</a><a href="#offsite" class="toc-l2">Offsite</a><a href="#retention" class="toc-l2">Retention</a><a href="#what-to-test" class="toc-l2">What to test</a><a href="#limits" class="toc-l2">Limits</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

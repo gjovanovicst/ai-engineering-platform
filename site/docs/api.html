@@ -1,0 +1,1180 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>API reference · AI Engineering Platform</title>
+<meta name="description" content="REST API reference: 123 operations and 59 schemas, generated from OpenAPI." />
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="api-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="pages/overview.html">Overview</a><a class="" href="pages/quickstart.html">Quickstart</a><a class="" href="pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="pages/tasks-and-board.html">Tasks and board</a><a class="" href="pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="pages/quality.html">Quality gates</a><a class="" href="pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="pages/users-access.html">Users and access</a><a class="" href="pages/security-audit.html">Security and audit</a><a class="" href="pages/models-byok.html">Agents, models and BYOK</a><a class="" href="pages/backups-recovery.html">Backups and recovery</a><a class="" href="pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="pages/api-events.html">SSE event catalog</a><a class="" href="pages/api-basics.html">API basics</a></div></details><a class="nav-api active" href="api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="index.html">User guide</a> / API reference</p>
+<div class="api-hero">
+  <p class="eyebrow">Developer reference · v1.0.0</p>
+  <h1>API reference</h1>
+  <p class="lede">Automate projects, tasks, runs, approvals and reporting. Every endpoint below is generated from the OpenAPI contract shipped with the platform.</p>
+  <div class="hero-links"><a class="primary" href="openapi.yaml" download>Download OpenAPI</a><a href="pages/api-basics.html">API basics</a><a href="pages/api-events.html">Event catalog</a></div>
+</div>
+<section id="authentication" class="api-section"><h2>Authentication</h2>
+<p>All endpoints except <code>/auth/*</code> and <code>/healthz</code> require a bearer token. Obtain one with the login endpoint, then send it in the <code>Authorization</code> header.</p>
+<pre><code>TOKEN=$(curl -s -X POST http://localhost:18080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@company.com","password":"..."}' | jq -r .access_token)
+
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:18080/api/v1/orgs/$ORG/projects</code></pre>
+<div class="table-wrap"><table><thead><tr><th>Scheme</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>bearerAuth</code></td><td>http</td><td>Send Authorization: Bearer &amp;lt;access token&amp;gt;.</td></tr></tbody></table></div>
+<p><strong>Servers:</strong> <code>/api/v1</code></p>
+<p>Every path except <code>/auth/*</code> and <code>/healthz</code> is organization-scoped. Access tokens are short-lived; refresh tokens rotate.</p>
+<p><strong>Base URL:</strong> <code>http://localhost:18080/api/v1</code> locally, or your deployment URL plus <code>/api/v1</code>.</p>
+<p><strong>Conventions:</strong> cursor pagination with <code>limit</code>/<code>cursor</code>; <code>Idempotency-Key</code> on mutations; errors returned as <code>{"error":{"code","message","request_id"}}</code>; <code>429</code> includes <code>Retry-After</code>. See <a href="pages/api-basics.html">API basics</a>.</p>
+</section>
+<section id="operations" class="api-section"><h2>Operations</h2>
+<div class="api-tag-summary"><a href="#tag-auth">auth</a><span>16</span></div>
+<div class="api-tag-summary"><a href="#tag-orgs">orgs</a><span>18</span></div>
+<div class="api-tag-summary"><a href="#tag-projects">projects</a><span>27</span></div>
+<div class="api-tag-summary"><a href="#tag-tasks">tasks</a><span>7</span></div>
+<div class="api-tag-summary"><a href="#tag-runs">runs</a><span>10</span></div>
+<div class="api-tag-summary"><a href="#tag-approvals">approvals</a><span>2</span></div>
+<div class="api-tag-summary"><a href="#tag-design">design</a><span>9</span></div>
+<div class="api-tag-summary"><a href="#tag-analytics">analytics</a><span>5</span></div>
+<div class="api-tag-summary"><a href="#tag-environments">environments</a><span>6</span></div>
+<div class="api-tag-summary"><a href="#tag-blueprints">blueprints</a><span>4</span></div>
+<div class="api-tag-summary"><a href="#tag-rules">rules</a><span>7</span></div>
+<div class="api-tag-summary"><a href="#tag-audit">audit</a><span>1</span></div>
+<div class="api-tag-summary"><a href="#tag-meta">meta</a><span>3</span></div>
+<div class="api-tag-summary"><a href="#tag-invites">invites</a><span>4</span></div>
+<div class="api-tag-summary"><a href="#tag-webhooks">webhooks</a><span>2</span></div>
+<div class="api-tag-summary"><a href="#tag-git">git</a><span>2</span></div>
+</section>
+<section id="tag-auth" class="api-section"><div class="tag-head"><h2>auth</h2><span>16 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/auth/login</code><span class="opid">login</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/auth/refresh</code><span class="opid">refresh</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>New tokens</td><td><a href="#schema-tokenpair"><code>TokenPair</code></a></td></tr>
+<tr><td><code>401</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/auth/me</code><span class="opid">getMe</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Profile</td><td><a href="#schema-me"><code>Me</code></a></td></tr>
+<tr><td><code>401</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/auth/register</code><span class="opid">register</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <a href="#schema-registerinput"><code>RegisterInput</code></a></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Account created; verification email sent</td><td><code>object</code></td></tr>
+<tr><td><code>202</code></td><td>Email already exists (not disclosed; the owner has been emailed)</td><td><a href="#schema-problem"><code>Problem</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/auth/verify-email</code><span class="opid">verifyEmail</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Verified</td><td><code>object</code></td></tr>
+<tr><td><code>410</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/auth/logout-all</code><span class="opid">logoutAll</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>All sessions revoked</td><td></td></tr>
+<tr><td><code>401</code></td><td>Missing or invalid access token</td><td></td></tr>
+</tbody></table></div>
+<p class="meta-line">Security: bearerAuth</p>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/auth/logout</code><span class="opid">logout</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Session revoked; cookies cleared (web)</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/auth/password/reset-request</code><span class="opid">requestPasswordReset</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>202</code></td><td>Always 202 (regardless of whether the account exists)</td><td><a href="#schema-problem"><code>Problem</code></a></td></tr>
+<tr><td><code>429</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/auth/password/reset</code><span class="opid">resetPassword</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Password changed; all sessions revoked</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/auth/invites/{token}</code><span class="opid">previewInvite</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>token</code></td><td>path</td><td>yes</td><td><code>string</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Invite</td><td><a href="#schema-invitepreview"><code>InvitePreview</code></a></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/auth/invites/{token}/accept</code><span class="opid">acceptInvite</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>token</code></td><td>path</td><td>yes</td><td><code>string</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Joined; tokens issued</td><td><a href="#schema-tokenpair"><code>TokenPair</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/auth/sessions</code><span class="opid">listSessions</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Active sessions</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method delete">DELETE</span><code class="path">/auth/sessions/{session}</code><span class="opid">revokeSession</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>session</code></td><td>path</td><td>yes</td><td><code>uuid</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Revokovana</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/auth/switch-org</code><span class="opid">switchOrg</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>New access token for another active org</td><td><a href="#schema-tokenpair"><code>TokenPair</code></a></td></tr>
+<tr><td><code>403</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/auth/oidc/{provider}/start</code><span class="opid">oidcStart</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>provider</code></td><td>path</td><td>yes</td><td><code>object</code></td><td></td></tr>
+<tr><td><code>redirect_uri</code></td><td>query</td><td>no</td><td><code>string</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>302</code></td><td>Redirect to the provider (state + PKCE)</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/auth/oidc/{provider}/callback</code><span class="opid">oidcCallback</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>provider</code></td><td>path</td><td>yes</td><td><code>object</code></td><td></td></tr>
+<tr><td><code>code</code></td><td>query</td><td>yes</td><td><code>string</code></td><td></td></tr>
+<tr><td><code>state</code></td><td>query</td><td>yes</td><td><code>string</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>302</code></td><td>Redirect to the app; sets the <code>aip_rt</code> and <code>aip_csrf</code> cookies</td><td></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-orgs" class="api-section"><div class="tag-head"><h2>orgs</h2><span>18 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs</code><span class="opid">listOrgs</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>The user&#x27;s organizations</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs</code><span class="opid">createOrg</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Created</td><td><a href="#schema-org"><code>Org</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}</code><span class="opid">getOrg</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Details</td><td><a href="#schema-org"><code>Org</code></a></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method patch">PATCH</span><code class="path">/orgs/{org}</code><span class="opid">updateOrg</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Updated</td><td><a href="#schema-org"><code>Org</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method delete">DELETE</span><code class="path">/orgs/{org}</code><span class="opid">deleteOrg</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Deleted</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/members</code><span class="opid">listMembers</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Members</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/members</code><span class="opid">inviteMember</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Invite sent</td><td><a href="#schema-member"><code>Member</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/providers</code><span class="opid">listProviders</span></div>
+<p>Never returns secrets; only <code>has_key</code>.</p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Providers</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/providers</code><span class="opid">createProvider</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Created</td><td><a href="#schema-provider"><code>Provider</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/notifications</code><span class="opid">listNotifications</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>unread</code></td><td>query</td><td>no</td><td><code>boolean</code></td><td></td></tr>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Notifications</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/notifications/read</code><span class="opid">markNotificationsRead</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Marked as read&quot;</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/model-prices</code><span class="opid">listModelPrices</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Model prices (USD per 1K tokens)</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method put">PUT</span><code class="path">/orgs/{org}/model-prices</code><span class="opid">upsertModelPrice</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Saved</td><td></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/providers/{provider}/rotate</code><span class="opid">rotateProviderKey</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Key replaced (old ciphertext is overwritten)</td><td><a href="#schema-provider"><code>Provider</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method patch">PATCH</span><code class="path">/orgs/{org}/providers/{provider}</code><span class="opid">setProviderEnabled</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Updated</td><td><a href="#schema-provider"><code>Provider</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method delete">DELETE</span><code class="path">/orgs/{org}/providers/{provider}</code><span class="opid">deleteProvider</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Deleted with its key</td><td></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method patch">PATCH</span><code class="path">/orgs/{org}/members/{user}</code><span class="opid">updateMemberRole</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Role changed</td><td></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method delete">DELETE</span><code class="path">/orgs/{org}/members/{user}</code><span class="opid">removeMember</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Member removed</td><td></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-projects" class="api-section"><div class="tag-head"><h2>projects</h2><span>27 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects</code><span class="opid">listProjects</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code>status</code></td><td>query</td><td>no</td><td><code>string</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>List</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/projects</code><span class="opid">createProject</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <a href="#schema-projectinput"><code>ProjectInput</code></a></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Created</td><td><a href="#schema-project"><code>Project</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects/{project}</code><span class="opid">getProject</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Details</td><td><a href="#schema-project"><code>Project</code></a></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method delete">DELETE</span><code class="path">/orgs/{org}/projects/{project}</code><span class="opid">archiveProject</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Arhiviran</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects/{project}/repos</code><span class="opid">listRepos</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Repositories</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/projects/{project}/repos</code><span class="opid">connectRepo</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Connected</td><td><a href="#schema-repo"><code>Repo</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/repos/{repo}/pull-requests</code><span class="opid">listPullRequests</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Pull requests</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/pull-requests/{pr}</code><span class="opid">getPullRequest</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Details sa checks, fajlovima i review nalazima</td><td><a href="#schema-pullrequestdetail"><code>PullRequestDetail</code></a></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects/{project}/tests</code><span class="opid">listTestResults</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code>run</code></td><td>query</td><td>no</td><td><code>uuid</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Test results</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/design-systems</code><span class="opid">listDesignSystems</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>List</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/design-systems</code><span class="opid">createDesignSystem</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Created</td><td><a href="#schema-designsystem"><code>DesignSystem</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/design-systems/{ds}/versions</code><span class="opid">publishDesignSystemVersion</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Published (immutable)</td><td><a href="#schema-designsystemversion"><code>DesignSystemVersion</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/pull-requests/{pr}/merge</code><span class="opid">mergePullRequest</span></div>
+<p>Human action. Requires green required checks and an approved review.</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Merge performed; the task moves to done</td><td><a href="#schema-pullrequest"><code>PullRequest</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+<tr><td><code>403</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/pull-requests/{pr}/findings/{finding}/waive</code><span class="opid">waiveFinding</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Waived (audit record)</td><td><code>object</code></td></tr>
+<tr><td><code>403</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/blueprints/{blueprint}/versions</code><span class="opid">createBlueprintVersion</span></div>
+<p>Clone a blueprint into the next draft version.</p>
+<p><strong>Request body</strong>: <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>New draft version</td><td><a href="#schema-blueprint"><code>Blueprint</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects/{project}/pull-requests</code><span class="opid">listProjectPullRequests</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Pull/merge requests opened for the project</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/repos</code><span class="opid">listOrgRepos</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Connected repositories across the workspace</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects/{project}/components</code><span class="opid">listProjectComponents</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Allowed components for the project</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method put">PUT</span><code class="path">/orgs/{org}/projects/{project}/components</code><span class="opid">setProjectComponents</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Allowlist replaced</td><td><code>object</code></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects/{project}/standards</code><span class="opid">getProjectStandard</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>The assigned design standard (or null)</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method put">PUT</span><code class="path">/orgs/{org}/projects/{project}/standards</code><span class="opid">setProjectStandard</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Updated project</td><td><a href="#schema-project"><code>Project</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method put">PUT</span><code class="path">/orgs/{org}/projects/{project}/required-checks</code><span class="opid">updateProjectRequiredChecks</span></div>
+<p>Checks that must pass before a pull request can be merged.</p>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Updated project</td><td><a href="#schema-project"><code>Project</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/design-standards</code><span class="opid">listDesignStandards</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Design standards with their versions</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/design-standards</code><span class="opid">createDesignStandard</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Created draft version</td><td><a href="#schema-designstandard"><code>DesignStandard</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/design-standards/{standard}</code><span class="opid">getDesignStandard</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>One version</td><td><a href="#schema-designstandard"><code>DesignStandard</code></a></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/design-standards/{standard}/versions</code><span class="opid">createDesignStandardVersion</span></div>
+<p><strong>Request body</strong>: <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Next draft version</td><td><a href="#schema-designstandard"><code>DesignStandard</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/design-standards/{standard}/publish</code><span class="opid">publishDesignStandard</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Published version</td><td><a href="#schema-designstandard"><code>DesignStandard</code></a></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-tasks" class="api-section"><div class="tag-head"><h2>tasks</h2><span>7 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects/{project}/tasks</code><span class="opid">listTasks</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code>status</code></td><td>query</td><td>no</td><td><a href="#schema-taskstatus"><code>TaskStatus</code></a></td><td></td></tr>
+<tr><td><code>assignee</code></td><td>query</td><td>no</td><td><code>uuid</code></td><td></td></tr>
+<tr><td><code>sort</code></td><td>query</td><td>no</td><td><code>string</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>List</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/projects/{project}/tasks</code><span class="opid">createTask</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <a href="#schema-taskinput"><code>TaskInput</code></a></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Created</td><td><a href="#schema-task"><code>Task</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects/{project}/tasks/{task}</code><span class="opid">getTask</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Details</td><td><a href="#schema-task"><code>Task</code></a></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method patch">PATCH</span><code class="path">/orgs/{org}/projects/{project}/tasks/{task}</code><span class="opid">updateTask</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <a href="#schema-taskinput"><code>TaskInput</code></a></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Updated</td><td><a href="#schema-task"><code>Task</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/projects/{project}/tasks/{task}/transitions</code><span class="opid">transitionTask</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>New status</td><td><a href="#schema-task"><code>Task</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects/{project}/tasks/{task}/comments</code><span class="opid">listComments</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>List</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/projects/{project}/tasks/{task}/comments</code><span class="opid">createComment</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Created</td><td><a href="#schema-comment"><code>Comment</code></a></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-runs" class="api-section"><div class="tag-head"><h2>runs</h2><span>10 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/tasks/{task}/runs</code><span class="opid">startRun</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <a href="#schema-runinput"><code>RunInput</code></a></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>202</code></td><td>Accepted</td><td><a href="#schema-run"><code>Run</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+<tr><td><code>429</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/runs</code><span class="opid">listRuns</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code>status</code></td><td>query</td><td>no</td><td><a href="#schema-runstatus"><code>RunStatus</code></a></td><td></td></tr>
+<tr><td><code>agent_type</code></td><td>query</td><td>no</td><td><a href="#schema-agenttype"><code>AgentType</code></a></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>List</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/runs/{run}</code><span class="opid">getRun</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Details</td><td><a href="#schema-rundetail"><code>RunDetail</code></a></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/runs/{run}/cancel</code><span class="opid">cancelRun</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>202</code></td><td>Cancellation requested</td><td><a href="#schema-run"><code>Run</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/runs/{run}/events</code><span class="opid">streamRunEvents</span></div>
+<p>Server-Sent Events. First a backfill from <code>run_events</code> (from <code>Last-Event-ID</code>), then live.
+Event catalog: <code>docs/api/events.md</code>.
+</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>Last-Event-ID</code></td><td>header</td><td>no</td><td><code>integer</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Stream</td><td><code>string</code></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/runs/{run}/diff</code><span class="opid">getRunDiff</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Unified diff</td><td><code>string</code></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects/{project}/tasks/{task}/runs</code><span class="opid">listTaskRuns</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Runs of the task, newest first</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/projects/{project}/tasks/{task}/runs</code><span class="opid">startTaskRun</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>202</code></td><td>Accepted</td><td><a href="#schema-run"><code>Run</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/runs/{run}/usage</code><span class="opid">getRunUsage</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Token usage and cost of one run</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/runs/{run}/artifacts</code><span class="opid">listRunArtifacts</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Artifacts stored in the object store</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-approvals" class="api-section"><div class="tag-head"><h2>approvals</h2><span>2 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/approvals</code><span class="opid">listApprovals</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code>status</code></td><td>query</td><td>no</td><td><a href="#schema-approvalstatus"><code>ApprovalStatus</code></a></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>List</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/approvals/{approval}/decision</code><span class="opid">decideApproval</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Decision recorded</td><td><a href="#schema-approval"><code>Approval</code></a></td></tr>
+<tr><td><code>403</code></td><td></td><td></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-design" class="api-section"><div class="tag-head"><h2>design</h2><span>9 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/components</code><span class="opid">listComponentEntries</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Component registry</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/components</code><span class="opid">createComponentEntry</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <a href="#schema-componententryinput"><code>ComponentEntryInput</code></a></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Created</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method put">PUT</span><code class="path">/orgs/{org}/components/{component}</code><span class="opid">updateComponentEntry</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <a href="#schema-componententryinput"><code>ComponentEntryInput</code></a></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Updated</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method delete">DELETE</span><code class="path">/orgs/{org}/components/{component}</code><span class="opid">deleteComponentEntry</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Deleted</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/design-tokens</code><span class="opid">listDesignTokens</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Org design tokens</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/design-tokens</code><span class="opid">createDesignToken</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <a href="#schema-designtokeninput"><code>DesignTokenInput</code></a></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Created</td><td><a href="#schema-designtoken"><code>DesignToken</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method put">PUT</span><code class="path">/orgs/{org}/design-tokens/{token}</code><span class="opid">updateDesignToken</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <a href="#schema-designtokeninput"><code>DesignTokenInput</code></a></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Updated</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method delete">DELETE</span><code class="path">/orgs/{org}/design-tokens/{token}</code><span class="opid">deleteDesignToken</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Deleted</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/design/seed</code><span class="opid">seedDesignRegistry</span></div>
+<p>Inserts the built-in baseline when the registry is empty.</p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Created counts</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-analytics" class="api-section"><div class="tag-head"><h2>analytics</h2><span>5 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/search</code><span class="opid">search</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>q</code></td><td>query</td><td>yes</td><td><code>string</code></td><td></td></tr>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Rezultati po tipu</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/activity</code><span class="opid">listActivity</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Activity feed</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/analytics/summary</code><span class="opid">getAnalyticsSummary</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>from</code></td><td>query</td><td>no</td><td><code>date</code></td><td></td></tr>
+<tr><td><code>to</code></td><td>query</td><td>no</td><td><code>date</code></td><td></td></tr>
+<tr><td><code>project</code></td><td>query</td><td>no</td><td><code>uuid</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>KPI sa <code>source</code></td><td><a href="#schema-analyticssummary"><code>AnalyticsSummary</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/usage</code><span class="opid">getUsage</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>from</code></td><td>query</td><td>no</td><td><code>date</code></td><td></td></tr>
+<tr><td><code>to</code></td><td>query</td><td>no</td><td><code>date</code></td><td></td></tr>
+<tr><td><code>group_by</code></td><td>query</td><td>no</td><td><code>string</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Usage</td><td><a href="#schema-usagereport"><code>UsageReport</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/metrics</code><span class="opid">getMetrics</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>days</code></td><td>query</td><td>no</td><td><code>integer</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Delivery metrics</td><td><a href="#schema-metricssummary"><code>MetricsSummary</code></a></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-environments" class="api-section"><div class="tag-head"><h2>environments</h2><span>6 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/deployments/{deployment}/logs</code><span class="opid">getDeploymentLogs</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>NDJSON linije</td><td><code>string</code></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects/{project}/environments</code><span class="opid">listEnvironments</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>List</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/projects/{project}/environments</code><span class="opid">createEnvironment</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Createdo</td><td><a href="#schema-environment"><code>Environment</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/environments/{environment}/deployments</code><span class="opid">listDeployments</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Deployments of the environment, newest first</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/environments/{environment}/deployments</code><span class="opid">createDeployment</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>202</code></td><td>Deploy accepted</td><td><a href="#schema-deployment"><code>Deployment</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/deployments/{deployment}/approve</code><span class="opid">approveDeployment</span></div>
+<p>Four-eyes gate for prod; the approver must differ from the requester.</p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Approved and deployed</td><td><a href="#schema-deployment"><code>Deployment</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-blueprints" class="api-section"><div class="tag-head"><h2>blueprints</h2><span>4 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/blueprints</code><span class="opid">listBlueprints</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>List</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/blueprints</code><span class="opid">createBlueprint</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Created</td><td><a href="#schema-blueprint"><code>Blueprint</code></a></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/blueprints/{blueprint}/publish</code><span class="opid">publishBlueprint</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Published (immutable from now on)</td><td><a href="#schema-blueprint"><code>Blueprint</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/blueprints/{blueprint}/instantiate</code><span class="opid">instantiateBlueprint</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Project created from the blueprint (plus its starter tasks)</td><td><code>object</code></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-rules" class="api-section"><div class="tag-head"><h2>rules</h2><span>7 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/rules</code><span class="opid">listRules</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>project</code></td><td>query</td><td>no</td><td><code>uuid</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>List (sa aktivnom verzijom)</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/rules</code><span class="opid">createRule</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Rule created with draft version 1</td><td><a href="#schema-rule"><code>Rule</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/rules/{rule}/versions</code><span class="opid">listRuleVersions</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Versions, newest first</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/rules/{rule}/versions</code><span class="opid">saveRuleDraft</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>New draft version</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/rules/{rule}/versions/{version}/publish</code><span class="opid">publishRuleVersion</span></div>
+<p>Requests publication; a second admin must approve it (four eyes).</p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>202</code></td><td>Publish request created</td><td><code>object</code></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/rules/approvals</code><span class="opid">listRulePublishApprovals</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Pending rule publications</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/rules/approvals/{approval}/decide</code><span class="opid">decideRulePublishApproval</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Decided (and published when approved)</td><td></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-audit" class="api-section"><div class="tag-head"><h2>audit</h2><span>1 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/audit</code><span class="opid">listAudit</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+<tr><td><code>action</code></td><td>query</td><td>no</td><td><code>string</code></td><td></td></tr>
+<tr><td><code>actor</code></td><td>query</td><td>no</td><td><code>uuid</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Audit zapisi</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-meta" class="api-section"><div class="tag-head"><h2>meta</h2><span>3 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/healthz</code><span class="opid">healthz</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Process is alive</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/readyz</code><span class="opid">readyz</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Ready to serve traffic</td><td><code>object</code></td></tr>
+<tr><td><code>503</code></td><td>Dependency unavailable</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/version</code><span class="opid">version</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Build information</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-invites" class="api-section"><div class="tag-head"><h2>invites</h2><span>4 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/invites</code><span class="opid">listInvites</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Invites</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/invites</code><span class="opid">createInvite</span></div>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Invite created; the token is returned once</td><td><code>object</code></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/invites/accept</code><span class="opid">acceptOrgInvite</span></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Membership created</td><td><code>object</code></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/invites/accept</code><span class="opid">registerAndAcceptInvite</span></div>
+<p>Accepts an invite for a user without an existing account: creates the user,
+adds the membership and returns a session.
+</p>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>201</code></td><td>Account created and signed in</td><td><a href="#schema-tokenpair"><code>TokenPair</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-webhooks" class="api-section"><div class="tag-head"><h2>webhooks</h2><span>2 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/webhooks/github/{repo}</code><span class="opid">githubWebhook</span></div>
+<p>Verified with X-Hub-Signature-256 using the repo secret.</p>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>202</code></td><td>Accepted</td><td></td></tr>
+<tr><td><code>401</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/webhooks/gitlab/{repo}</code><span class="opid">gitlabWebhook</span></div>
+<p>Verified with X-Gitlab-Token using the repo secret.</p>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>202</code></td><td>Accepted</td><td></td></tr>
+<tr><td><code>401</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="tag-git" class="api-section"><div class="tag-head"><h2>git</h2><span>2 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/pull-requests/{pr}/checks</code><span class="opid">listPullRequestChecks</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>CI checks recorded for the pull request</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/runs/{run}/checks</code><span class="opid">listRunChecks</span></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>CI checks recorded for the run</td><td><code>object</code></td></tr>
+</tbody></table></div>
+</article>
+</section>
+<section id="schemas" class="api-section"><div class="tag-head"><h2>Schemas</h2><span>59 definitions</span></div>
+<details class="schema" id="schema-problem"><summary><code>Problem</code><span>7 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>type</code> *</td><td><code>uri</code></td><td></td></tr><tr><td><code>title</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>status</code> *</td><td><code>integer</code></td><td></td></tr><tr><td><code>detail</code></td><td><code>string</code></td><td></td></tr><tr><td><code>instance</code></td><td><code>string</code></td><td></td></tr><tr><td><code>code</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>fields</code></td><td><code>array&lt;object&gt;</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-tokenpair"><summary><code>TokenPair</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>access_token</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>refresh_token</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>expires_in</code> *</td><td><code>integer</code></td><td>seconds</td></tr></tbody></table></div></details>
+<details class="schema" id="schema-me"><summary><code>Me</code><span>2 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>user</code></td><td><a href="#schema-user"><code>User</code></a></td><td></td></tr><tr><td><code>orgs</code></td><td><code>array&lt;object&gt;</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-user"><summary><code>User</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>email</code></td><td><code>email</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>avatar_url</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-orgrole"><summary><code>OrgRole</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
+<details class="schema" id="schema-org"><summary><code>Org</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>slug</code></td><td><code>string</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>max_concurrent_runs</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>created_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-projectinput"><summary><code>ProjectInput</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>description</code></td><td><code>string</code></td><td></td></tr><tr><td><code>blueprint_id</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>tech_stack</code></td><td><code>array&lt;string&gt;</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-project"><summary><code>Project</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
+<details class="schema" id="schema-taskstatus"><summary><code>TaskStatus</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
+<details class="schema" id="schema-taskpriority"><summary><code>TaskPriority</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
+<details class="schema" id="schema-acceptancecriterion"><summary><code>AcceptanceCriterion</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>given</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>when</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>then</code> *</td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-taskinput"><summary><code>TaskInput</code><span>7 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>title</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>description</code></td><td><code>string</code></td><td></td></tr><tr><td><code>acceptance</code></td><td><code>array&lt;AcceptanceCriterion&gt;</code></td><td></td></tr><tr><td><code>priority</code></td><td><a href="#schema-taskpriority"><code>TaskPriority</code></a></td><td></td></tr><tr><td><code>tags</code></td><td><code>array&lt;string&gt;</code></td><td></td></tr><tr><td><code>assignee_id</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>depends_on</code></td><td><code>array&lt;string&gt;</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-task"><summary><code>Task</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
+<details class="schema" id="schema-agenttype"><summary><code>AgentType</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
+<details class="schema" id="schema-runstatus"><summary><code>RunStatus</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
+<details class="schema" id="schema-phasename"><summary><code>PhaseName</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
+<details class="schema" id="schema-phase"><summary><code>Phase</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>phase</code></td><td><a href="#schema-phasename"><code>PhaseName</code></a></td><td></td></tr><tr><td><code>state</code></td><td><code>string</code></td><td></td></tr><tr><td><code>attempt</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>started_at</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>ended_at</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-budget"><summary><code>Budget</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>tokens_in</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>tokens_out</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>cost_micros</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>wall_clock_s</code></td><td><code>integer</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-runinput"><summary><code>RunInput</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>agent_type</code> *</td><td><a href="#schema-agenttype"><code>AgentType</code></a></td><td></td></tr><tr><td><code>model</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>dry_run</code></td><td><code>boolean</code></td><td></td></tr><tr><td><code>budget</code></td><td><a href="#schema-budget"><code>Budget</code></a></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-run"><summary><code>Run</code><span>13 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>status</code></td><td><a href="#schema-runstatus"><code>RunStatus</code></a></td><td></td></tr><tr><td><code>agent_type</code></td><td><a href="#schema-agenttype"><code>AgentType</code></a></td><td></td></tr><tr><td><code>model</code></td><td><code>string</code></td><td></td></tr><tr><td><code>task_id</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>project_id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>current_phase</code></td><td><a href="#schema-phasename"><code>PhaseName</code></a></td><td></td></tr><tr><td><code>spent</code></td><td><code>object</code></td><td></td></tr><tr><td><code>budget</code></td><td><a href="#schema-budget"><code>Budget</code></a></td><td></td></tr><tr><td><code>failure_code</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>started_at</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>finished_at</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>created_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-rundetail"><summary><code>RunDetail</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
+<details class="schema" id="schema-diffsummary"><summary><code>DiffSummary</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>files</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>additions</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>deletions</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>artifact_url</code></td><td><code>uri</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-approvalstatus"><summary><code>ApprovalStatus</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
+<details class="schema" id="schema-approval"><summary><code>Approval</code><span>8 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>run_id</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>type</code></td><td><code>string</code></td><td></td></tr><tr><td><code>status</code></td><td><a href="#schema-approvalstatus"><code>ApprovalStatus</code></a></td><td></td></tr><tr><td><code>requested_at</code></td><td><code>date-time</code></td><td></td></tr><tr><td><code>decided_at</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>decided_by</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>reason</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-blueprint"><summary><code>Blueprint</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>latest_version</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>published_at</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-rule"><summary><code>Rule</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>level</code></td><td><code>string</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>active_version</code></td><td><code>['integer', 'null']</code></td><td></td></tr><tr><td><code>updated_at</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-environment"><summary><code>Environment</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>url</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-deployment"><summary><code>Deployment</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>environment_id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>release_ref</code></td><td><code>string</code></td><td></td></tr><tr><td><code>status</code></td><td><code>string</code></td><td></td></tr><tr><td><code>created_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-kpi"><summary><code>Kpi</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>key</code></td><td><code>string</code></td><td></td></tr><tr><td><code>value</code></td><td><code>number</code></td><td></td></tr><tr><td><code>unit</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>source</code></td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-analyticssummary"><summary><code>AnalyticsSummary</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>from</code></td><td><code>date</code></td><td></td></tr><tr><td><code>to</code></td><td><code>date</code></td><td></td></tr><tr><td><code>kpis</code></td><td><code>array&lt;Kpi&gt;</code></td><td></td></tr><tr><td><code>series</code></td><td><code>array&lt;object&gt;</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-usagereport"><summary><code>UsageReport</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>total_cost_micros</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>total_tokens_in</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>total_tokens_out</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>groups</code></td><td><code>array&lt;object&gt;</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-auditentry"><summary><code>AuditEntry</code><span>7 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>action</code></td><td><code>string</code></td><td></td></tr><tr><td><code>actor_id</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>actor_kind</code></td><td><code>string</code></td><td></td></tr><tr><td><code>target</code></td><td><code>string</code></td><td></td></tr><tr><td><code>metadata</code></td><td><code>object</code></td><td></td></tr><tr><td><code>created_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-member"><summary><code>Member</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>user_id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>email</code></td><td><code>email</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>role</code></td><td><a href="#schema-orgrole"><code>OrgRole</code></a></td><td></td></tr><tr><td><code>last_active_at</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-provider"><summary><code>Provider</code><span>8 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>base_url</code></td><td><code>uri</code></td><td></td></tr><tr><td><code>enabled</code></td><td><code>boolean</code></td><td></td></tr><tr><td><code>model</code></td><td><code>string</code></td><td></td></tr><tr><td><code>kind</code></td><td><code>string</code></td><td></td></tr><tr><td><code>key_hint</code></td><td><code>string</code></td><td>last characters of the stored key, never the key</td></tr><tr><td><code>has_key</code></td><td><code>boolean</code></td><td>true if a secret is set (never returned)</td></tr></tbody></table></div></details>
+<details class="schema" id="schema-repo"><summary><code>Repo</code><span>6 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>provider</code></td><td><code>string</code></td><td></td></tr><tr><td><code>full_name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>default_branch</code></td><td><code>string</code></td><td></td></tr><tr><td><code>open_prs</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>last_sync_at</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-check"><summary><code>Check</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>state</code></td><td><code>string</code></td><td></td></tr><tr><td><code>meta</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-pullrequest"><summary><code>PullRequest</code><span>9 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>number</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>title</code></td><td><code>string</code></td><td></td></tr><tr><td><code>url</code></td><td><code>uri</code></td><td></td></tr><tr><td><code>head</code></td><td><code>string</code></td><td></td></tr><tr><td><code>base</code></td><td><code>string</code></td><td></td></tr><tr><td><code>state</code></td><td><code>string</code></td><td></td></tr><tr><td><code>checks_summary</code></td><td><code>object</code></td><td></td></tr><tr><td><code>updated_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-pullrequestdetail"><summary><code>PullRequestDetail</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
+<details class="schema" id="schema-testsummary"><summary><code>TestSummary</code><span>9 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>suite</code></td><td><code>string</code></td><td></td></tr><tr><td><code>total</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>passed</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>failed</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>skipped</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>coverage_pct</code></td><td><code>['number', 'null']</code></td><td></td></tr><tr><td><code>commit_sha</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>created_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-designsystem"><summary><code>DesignSystem</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>latest_version</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-designsystemversion"><summary><code>DesignSystemVersion</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>design_system_id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>version</code></td><td><code>string</code></td><td></td></tr><tr><td><code>published_at</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>sha256</code></td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-component"><summary><code>Component</code><span>12 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>slug</code></td><td><code>string</code></td><td></td></tr><tr><td><code>category</code></td><td><code>string</code></td><td></td></tr><tr><td><code>latest_version</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>status</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>framework</code></td><td><code>string</code></td><td></td></tr><tr><td><code>package</code></td><td><code>string</code></td><td></td></tr><tr><td><code>import_path</code></td><td><code>string</code></td><td></td></tr><tr><td><code>version</code></td><td><code>string</code></td><td></td></tr><tr><td><code>docs</code></td><td><code>string</code></td><td></td></tr><tr><td><code>example</code></td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-componentversion"><summary><code>ComponentVersion</code><span>6 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>version</code></td><td><code>string</code></td><td></td></tr><tr><td><code>status</code></td><td><code>string</code></td><td></td></tr><tr><td><code>props</code></td><td><code>array&lt;object&gt;</code></td><td></td></tr><tr><td><code>a11y_notes</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>ai_notes</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-comment"><summary><code>Comment</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>task_id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>author_id</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>body</code></td><td><code>string</code></td><td></td></tr><tr><td><code>created_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-notification"><summary><code>Notification</code><span>7 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>kind</code></td><td><code>string</code></td><td></td></tr><tr><td><code>title</code></td><td><code>string</code></td><td></td></tr><tr><td><code>body</code></td><td><code>string</code></td><td></td></tr><tr><td><code>target</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>read_at</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>created_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-searchresult"><summary><code>SearchResult</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>type</code></td><td><code>object</code></td><td></td></tr><tr><td><code>id</code></td><td><code>string</code></td><td></td></tr><tr><td><code>title</code></td><td><code>string</code></td><td></td></tr><tr><td><code>subtitle</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>url</code></td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-activityitem"><summary><code>ActivityItem</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>action</code></td><td><code>string</code></td><td></td></tr><tr><td><code>actor</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>target</code></td><td><code>string</code></td><td></td></tr><tr><td><code>created_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-registerinput"><summary><code>RegisterInput</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>email</code> *</td><td><code>email</code></td><td></td></tr><tr><td><code>password</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>name</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>org_name</code></td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-invitepreview"><summary><code>InvitePreview</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>org_name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>email</code></td><td><code>email</code></td><td></td></tr><tr><td><code>role</code></td><td><a href="#schema-orgrole"><code>OrgRole</code></a></td><td></td></tr><tr><td><code>expires_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-session"><summary><code>Session</code><span>7 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>platform</code></td><td><code>string</code></td><td></td></tr><tr><td><code>ip</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>user_agent</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>last_used_at</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>created_at</code></td><td><code>date-time</code></td><td></td></tr><tr><td><code>current</code></td><td><code>boolean</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-invite"><summary><code>Invite</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code> *</td><td><code>uuid</code></td><td></td></tr><tr><td><code>email</code> *</td><td><code>email</code></td><td></td></tr><tr><td><code>role</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>expires_at</code> *</td><td><code>date-time</code></td><td></td></tr><tr><td><code>accepted_at</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-metricssummary"><summary><code>MetricsSummary</code><span>8 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>days</code> *</td><td><code>integer</code></td><td></td></tr><tr><td><code>runs_by_status</code> *</td><td><code>object</code></td><td></td></tr><tr><td><code>succeeded_runs</code> *</td><td><code>integer</code></td><td></td></tr><tr><td><code>lead_time_minutes</code> *</td><td><a href="#schema-metric"><code>Metric</code></a></td><td></td></tr><tr><td><code>approval_minutes</code> *</td><td><a href="#schema-metric"><code>Metric</code></a></td><td></td></tr><tr><td><code>runs_per_task</code> *</td><td><a href="#schema-metric"><code>Metric</code></a></td><td></td></tr><tr><td><code>merged_pull_requests</code> *</td><td><code>integer</code></td><td></td></tr><tr><td><code>cost_usd</code> *</td><td><a href="#schema-metric"><code>Metric</code></a></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-metric"><summary><code>Metric</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>value</code> *</td><td><code>number</code></td><td></td></tr><tr><td><code>unit</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>source</code> *</td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-designtoken"><summary><code>DesignToken</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>value</code></td><td><code>string</code></td><td></td></tr><tr><td><code>category</code></td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-designtokeninput"><summary><code>DesignTokenInput</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>value</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>category</code></td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-componententry"><summary><code>ComponentEntry</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>purpose</code></td><td><code>string</code></td><td></td></tr><tr><td><code>rules</code></td><td><code>string</code></td><td></td></tr><tr><td><code>status</code></td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-componententryinput"><summary><code>ComponentEntryInput</code><span>4 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>purpose</code></td><td><code>string</code></td><td></td></tr><tr><td><code>rules</code></td><td><code>string</code></td><td></td></tr><tr><td><code>status</code></td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-checkresult"><summary><code>CheckResult</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>status</code></td><td><code>string</code></td><td></td></tr><tr><td><code>output</code></td><td><code>string</code></td><td></td></tr><tr><td><code>duration_ms</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>commit_sha</code></td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-designstandard"><summary><code>DesignStandard</code><span>8 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>version</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>status</code></td><td><code>string</code></td><td></td></tr><tr><td><code>spec</code></td><td><code>object</code></td><td></td></tr><tr><td><code>sha256</code></td><td><code>string</code></td><td></td></tr><tr><td><code>published_at</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>created_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+</section>
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#authentication">Authentication</a><a href="#operations">Operations</a><a href="#tag-auth">auth</a><a href="#tag-orgs">orgs</a><a href="#tag-projects">projects</a><a href="#tag-tasks">tasks</a><a href="#tag-runs">runs</a><a href="#tag-approvals">approvals</a><a href="#tag-design">design</a><a href="#tag-analytics">analytics</a><a href="#tag-environments">environments</a><a href="#tag-blueprints">blueprints</a><a href="#tag-rules">rules</a><a href="#tag-audit">audit</a><a href="#tag-meta">meta</a><a href="#tag-invites">invites</a><a href="#tag-webhooks">webhooks</a><a href="#tag-git">git</a><a href="#schemas">Schemas</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="docs.js" defer></script>
+</body>
+</html>

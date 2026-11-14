@@ -1,0 +1,48 @@
+name: sbom
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  repository-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: generate CycloneDX SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+          artifact-name: sbom-cyclonedx
+      - uses: sigstore/cosign-installer@v3
+      - name: sign the SBOM (keyless)
+        run: cosign sign-blob --yes --output-signature sbom.cdx.sig --output-certificate sbom.cdx.pem sbom.cdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx-json
+          path: |
+            sbom.cdx.json
+            sbom.cdx.sig
+            sbom.cdx.pem
+          if-no-files-found: error
+      - name: build API image
+        run: docker build -t aip-api:ci -f deploy/api/Dockerfile .
+      - name: image SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: aip-api:ci
+          format: cyclonedx-json
+          output-file: image-sbom.cdx.json
+          artifact-name: image-sbom-cyclonedx
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-sbom-cyclonedx-json
+          path: image-sbom.cdx.json
+          if-no-files-found: error

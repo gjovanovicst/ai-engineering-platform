@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Key concepts · AI Engineering Platform</title>
+<meta name="description" content="The platform implements an AI Software Development Lifecycle ASDLC: a sequence of phases, artifacts and gates. The model is replaceable; the process is the product." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group" open><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="active" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Getting started</p>
+<article class="prose">
+<h1 id="key-concepts">Key concepts</h1>
+<p>The platform implements an <strong>AI Software Development Lifecycle (ASDLC)</strong>: a sequence of phases, artifacts and gates. The model is replaceable; the process is the product.</p>
+<h2 id="lifecycle-at-a-glance">Lifecycle at a glance</h2>
+<pre><code>idea → blueprint → backlog → ready → plan → approve → build → test → review → PR approval → merge → measure</code></pre>
+<p>Each arrow is a state transition. The platform records who or what caused it.</p>
+<h2 id="phases">Phases</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Phase</th><th style="text-align:left">Owner</th><th style="text-align:left">Output</th></tr></thead><tbody><tr><td style="text-align:left">Blueprint</td><td style="text-align:left">human + agent</td><td style="text-align:left">project template: stack, repository layout, tests, agents</td></tr><tr><td style="text-align:left">Backlog</td><td style="text-align:left">human</td><td style="text-align:left">tasks with context and acceptance criteria</td></tr><tr><td style="text-align:left">Definition of ready</td><td style="text-align:left">human</td><td style="text-align:left">a task that can safely start</td></tr><tr><td style="text-align:left">Plan</td><td style="text-align:left">planning agent</td><td style="text-align:left">steps, files, risks, estimated cost</td></tr><tr><td style="text-align:left">Build</td><td style="text-align:left">development agent</td><td style="text-align:left">a diff in an isolated sandbox</td></tr><tr><td style="text-align:left">Test</td><td style="text-align:left">agent + platform</td><td style="text-align:left">test report, design checks, acceptance evidence</td></tr><tr><td style="text-align:left">Review</td><td style="text-align:left">human + agent</td><td style="text-align:left">findings, PR comments, approval or rejection</td></tr><tr><td style="text-align:left">Merge</td><td style="text-align:left">human</td><td style="text-align:left">a merged change in the Git provider</td></tr><tr><td style="text-align:left">Measure</td><td style="text-align:left">platform</td><td style="text-align:left">delivery and quality metrics</td></tr></tbody></table></div>
+<h2 id="gates">Gates</h2>
+<p>A gate is a deliberate stop. It cannot be skipped silently; an explicit override is recorded as an event.</p>
+<ol><li><strong>Plan approval</strong> — a human accepts the plan before implementation.</li><li><strong>Test gate</strong> — required checks must pass; acceptance evidence must be valid.</li><li><strong>Design gate</strong> — design standards and visual checks for UI changes.</li><li><strong>PR approval</strong> — a human approves the pull request.</li><li><strong>Merge queue</strong> — changes land in a serialised order.</li></ol>
+<h2 id="artifacts">Artifacts</h2>
+<p>Every artifact is versioned and hashed:</p>
+<ul><li><strong>context manifest</strong> — the exact files, rules and token budget given to the agent</li><li><strong>plan</strong> — steps, files, risks and cost estimate</li><li><strong>diff</strong> — the change produced by the run</li><li><strong>test report</strong> — unit, integration, e2e and visual results</li><li><strong>review</strong> — findings and their severity</li><li><strong>audit event</strong> — append-only record of a decision or transition</li></ul>
+<h2 id="roles">Roles</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Role</th><th style="text-align:left">Typical responsibilities</th></tr></thead><tbody><tr><td style="text-align:left">Owner</td><td style="text-align:left">workspace billing, members, security settings</td></tr><tr><td style="text-align:left">Admin</td><td style="text-align:left">projects, providers, rules, integrations, audit</td></tr><tr><td style="text-align:left">Member</td><td style="text-align:left">tasks, runs, reviews, pull requests</td></tr><tr><td style="text-align:left">Viewer</td><td style="text-align:left">read-only access to projects and results</td></tr></tbody></table></div>
+<p>Roles are enforced by the API and the UI; project-level access can be narrower than the workspace role.</p>
+<h2 id="runs">Runs</h2>
+<p>A run is one agent execution with a type: <strong>planning</strong>, <strong>development</strong> or <strong>review</strong>. Runs are resumable at phase boundaries and stop at approvals. A run has a budget, a frozen context and an append-only event stream.</p>
+<h2 id="two-kinds-of-speed">Two kinds of speed</h2>
+<p>The platform reports delivery speed <strong>and</strong> outcome quality:</p>
+<ul><li>lead time and approval time</li><li>first-pass merge and proof validity</li><li>rework, change failure rate and escaped defects</li></ul>
+<p>A faster merge that creates more rework is not an improvement.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="projects-blueprints.html">Projects and blueprints</a></li><li><a href="runs-and-approvals.html">Runs and approvals</a></li><li><a href="quality.html">Quality gates</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#lifecycle-at-a-glance" class="toc-l2">Lifecycle at a glance</a><a href="#phases" class="toc-l2">Phases</a><a href="#gates" class="toc-l2">Gates</a><a href="#artifacts" class="toc-l2">Artifacts</a><a href="#roles" class="toc-l2">Roles</a><a href="#runs" class="toc-l2">Runs</a><a href="#two-kinds-of-speed" class="toc-l2">Two kinds of speed</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

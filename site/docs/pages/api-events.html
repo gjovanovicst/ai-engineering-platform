@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SSE event catalog · AI Engineering Platform</title>
+<meta name="description" content="Live run events, payloads and reconnect behaviour." />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group" open><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="active" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / API &amp; integrations</p>
+<article class="prose">
+<h1 id="api-sse-event-catalog">API · SSE event catalog</h1>
+<p><code>GET /api/v1/orgs/{org}/runs/{run}/events</code></p>
+<pre><code>Content-Type: text/event-stream
+Cache-Control: no-cache
+X-Accel-Buffering: no</code></pre>
+<h2 id="protocol">Protocol</h2>
+<pre><code>id: 41
+event: phase.completed
+data: {&quot;run_id&quot;:&quot;7c9e&quot;,&quot;phase&quot;:&quot;implement&quot;,&quot;duration_ms&quot;:142300,&quot;ts&quot;:&quot;2026-10-21T18:22:09Z&quot;}
+
+: ping
+</code></pre>
+<ul><li><code>id</code> = <code>run_events.seq</code> (increases monotonically per run). On reconnect the client sends <code>Last-Event-ID</code>; the server first backfills from the database, then subscribes to Redis.</li><li>An unknown event type is <strong>ignored</strong> (forward compatibility).</li><li>Heartbeat <code>: ping</code> every 15s. The server closes the connection after 1h; the client reconnects.</li><li><code>retry: 3000</code> is sent at the start of the stream.</li><li>If <code>Last-Event-ID</code> does not exist in the database (archived), the server sends <code>event: stream.reset</code> with <code>{&quot;from_seq&quot;: N}</code> and continues from the oldest available.</li></ul>
+<h2 id="types">Types</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left"><code>event</code></th><th style="text-align:left">When</th><th style="text-align:left"><code>data</code> (key fields)</th></tr></thead><tbody><tr><td style="text-align:left"><code>run.queued</code></td><td style="text-align:left">run created</td><td style="text-align:left"><code>run_id</code>, <code>agent_type</code>, <code>model</code></td></tr><tr><td style="text-align:left"><code>run.started</code></td><td style="text-align:left">worker picked it up</td><td style="text-align:left"><code>started_at</code></td></tr><tr><td style="text-align:left"><code>phase.started</code></td><td style="text-align:left">entering a phase</td><td style="text-align:left"><code>phase</code>, <code>attempt</code></td></tr><tr><td style="text-align:left"><code>phase.completed</code></td><td style="text-align:left">leaving a phase</td><td style="text-align:left"><code>phase</code>, <code>duration_ms</code>, <code>meta</code></td></tr><tr><td style="text-align:left"><code>phase.failed</code></td><td style="text-align:left">phase failed</td><td style="text-align:left"><code>phase</code>, <code>code</code>, <code>detail</code></td></tr><tr><td style="text-align:left"><code>llm.started</code></td><td style="text-align:left">before the LLM call</td><td style="text-align:left"><code>model</code>, <code>prompt_tokens_est</code></td></tr><tr><td style="text-align:left"><code>llm.chunk</code></td><td style="text-align:left">token stream</td><td style="text-align:left"><code>text</code> (delta), <code>index</code></td></tr><tr><td style="text-align:left"><code>llm.completed</code></td><td style="text-align:left">end of the call</td><td style="text-align:left"><code>tokens_in</code>, <code>tokens_out</code>, <code>cost_micros</code>, <code>finish_reason</code></td></tr><tr><td style="text-align:left"><code>tool.call</code></td><td style="text-align:left">tool call</td><td style="text-align:left"><code>tool</code>, <code>args_digest</code>, <code>permitted</code></td></tr><tr><td style="text-align:left"><code>tool.result</code></td><td style="text-align:left">result</td><td style="text-align:left"><code>tool</code>, <code>ok</code>, <code>duration_ms</code>, <code>bytes</code></td></tr><tr><td style="text-align:left"><code>file.changed</code></td><td style="text-align:left">FS change in the sandbox</td><td style="text-align:left"><code>path</code>, <code>change</code> (<code>added</code>/<code>modified</code>/<code>deleted</code>)</td></tr><tr><td style="text-align:left"><code>plan.ready</code></td><td style="text-align:left">plan ready for approval</td><td style="text-align:left"><code>artifact_id</code>, <code>sha256</code>, <code>summary</code></td></tr><tr><td style="text-align:left"><code>approval.requested</code></td><td style="text-align:left">waiting for a human</td><td style="text-align:left"><code>approval_id</code>, <code>type</code></td></tr><tr><td style="text-align:left"><code>approval.decided</code></td><td style="text-align:left">decision</td><td style="text-align:left"><code>approval_id</code>, <code>status</code>, <code>decided_by</code></td></tr><tr><td style="text-align:left"><code>test.started</code> / <code>test.completed</code></td><td style="text-align:left">test run</td><td style="text-align:left"><code>suite</code>, <code>passed</code>, <code>failed</code>, <code>coverage_pct</code></td></tr><tr><td style="text-align:left"><code>diff.ready</code></td><td style="text-align:left">diff finalized</td><td style="text-align:left"><code>artifact_id</code>, <code>files</code>, <code>additions</code>, <code>deletions</code></td></tr><tr><td style="text-align:left"><code>usage.updated</code></td><td style="text-align:left">after every LLM call</td><td style="text-align:left"><code>tokens_in</code>, <code>tokens_out</code>, <code>cost_micros</code>, <code>budget_pct</code></td></tr><tr><td style="text-align:left"><code>run.succeeded</code></td><td style="text-align:left">end</td><td style="text-align:left"><code>duration_ms</code>, <code>head_commit</code>, <code>pr_url?</code></td></tr><tr><td style="text-align:left"><code>run.failed</code></td><td style="text-align:left">end</td><td style="text-align:left"><code>code</code>, <code>detail</code>, <code>retryable</code></td></tr><tr><td style="text-align:left"><code>run.canceled</code></td><td style="text-align:left">cancellation</td><td style="text-align:left"><code>requested_by</code></td></tr><tr><td style="text-align:left"><code>stream.reset</code></td><td style="text-align:left">gap in the history</td><td style="text-align:left"><code>from_seq</code></td></tr></tbody></table></div>
+<h2 id="ordering-and-guarantees">Ordering and guarantees</h2>
+<ul><li>Events of the same run are <strong>ordered</strong> by <code>seq</code>; the client must not assume they arrive exactly once — a duplicate is skipped by <code>id</code>.</li><li><code>llm.chunk</code> is <strong>best-effort</strong> (it may be lost on reconnect); the full text is in the <code>log</code> artifact. After a reconnect the UI loads the last N events and continues.</li><li>No <code>llm.chunk</code> carries prompt/system messages (only the model output).</li></ul>
+<h2 id="minimal-client-pseudocode">Minimal client pseudocode</h2>
+<pre><code class="language-ts">const es = new EventSource(url, { withCredentials: false });
+es.onmessage = (m) =&gt; apply(JSON.parse(m.data));
+es.addEventListener(&#x27;run.failed&#x27;, (m) =&gt; showError(JSON.parse(m.data)));
+es.onerror = () =&gt; { /* EventSource reconnects by itself; on 401 → refresh token */ };</code></pre>
+<p>SSE authorization goes through the <code>Authorization</code> header, so in practice <code>fetch</code> + <code>ReadableStream</code> is used (EventSource does not send headers). Reference implementation: <code>web/src/lib/sse.ts</code>.</p>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#protocol" class="toc-l2">Protocol</a><a href="#types" class="toc-l2">Types</a><a href="#ordering-and-guarantees" class="toc-l2">Ordering and guarantees</a><a href="#minimal-client-pseudocode" class="toc-l2">Minimal client pseudocode</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

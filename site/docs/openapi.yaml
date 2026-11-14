@@ -1,0 +1,3235 @@
+openapi: 3.1.0
+info:
+  title: AI Engineering Platform API
+  version: "1.0.0"
+  description: |
+    REST API for the AI Engineering Platform. Conventions (pagination, errors, idempotency,
+    RBAC) are described in `docs/04-api.md`; the SSE catalog is in `docs/api/events.md`.
+
+    Tenancy: every path except `/auth/*` and `/healthz` is scoped to an organization.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+tags:
+  - name: auth
+  - name: orgs
+  - name: projects
+  - name: tasks
+  - name: runs
+  - name: approvals
+  - name: blueprints
+  - name: rules
+  - name: environments
+  - name: analytics
+  - name: audit
+
+paths:
+  /auth/login:
+    post:
+      tags: [auth]
+      security: []
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+
+  responses:
+
+        "200":
+          description: Tokens
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /auth/refresh:
+    post:
+      tags: [auth]
+      security: []
+      operationId: refresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        "200":
+          description: New tokens
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /auth/me:
+    get:
+      tags: [auth]
+      operationId: getMe
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Me" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /auth/register:
+    post:
+      tags: [auth]
+      security: []
+      operationId: register
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterInput" }
+      responses:
+        "201":
+          description: Account created; verification email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id: { type: string, format: uuid }
+                  email_verified: { type: boolean }
+                  org_slug: { type: string }
+        "202":
+          description: Email already exists (not disclosed; the owner has been emailed)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+
+  /auth/verify-email:
+    post:
+      tags: [auth]
+      security: []
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verified: { type: boolean }
+        "410": { $ref: "#/components/responses/Conflict" }
+
+  /auth/logout-all:
+    post:
+      tags: [auth]
+      operationId: logoutAll
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: All sessions revoked }
+        "401": { description: Missing or invalid access token }
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      responses:
+        "204": { description: Session revoked; cookies cleared (web) }
+
+  /auth/password/reset-request:
+    post:
+      tags: [auth]
+      security: []
+      operationId: requestPasswordReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "202":
+          description: Always 202 (regardless of whether the account exists)
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /auth/password/reset:
+    post:
+      tags: [auth]
+      security: []
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, new_password]
+              properties:
+                token: { type: string }
+                new_password: { type: string, minLength: 12, maxLength: 128 }
+      responses:
+        "200":
+          description: Password changed; all sessions revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions_revoked: { type: boolean }
+
+  /auth/invites/{token}:
+    get:
+      tags: [auth]
+      security: []
+      operationId: previewInvite
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Invite
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/InvitePreview" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /auth/invites/{token}/accept:
+    post:
+      tags: [auth]
+      security: []
+      operationId: acceptInvite
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                password: { type: string, minLength: 12, maxLength: 128 }
+                platform: { enum: [web, mobile, cli], default: web }
+      responses:
+        "200":
+          description: Joined; tokens issued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /auth/sessions:
+    get:
+      tags: [auth]
+      operationId: listSessions
+      responses:
+        "200":
+          description: Active sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Session" }
+
+  /auth/sessions/{session}:
+    delete:
+      tags: [auth]
+      operationId: revokeSession
+      parameters:
+        - name: session
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Revokovana }
+
+  /auth/switch-org:
+    post:
+      tags: [auth]
+      operationId: switchOrg
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [org]
+              properties:
+                org: { type: string, description: slug or UUID }
+      responses:
+        "200":
+          description: New access token for another active org
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /auth/oidc/{provider}/start:
+    get:
+      tags: [auth]
+      security: []
+      operationId: oidcStart
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: { enum: [github, google] }
+        - name: redirect_uri
+          in: query
+          schema: { type: string, default: / }
+      responses:
+        "302":
+          description: Redirect to the provider (state + PKCE)
+
+  /auth/oidc/{provider}/callback:
+    get:
+      tags: [auth]
+      security: []
+      operationId: oidcCallback
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema: { enum: [github, google] }
+        - name: code
+          in: query
+          required: true
+          schema: { type: string }
+        - name: state
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "302":
+          description: Redirect to the app; sets the `aip_rt` and `aip_csrf` cookies
+
+  /orgs:
+    get:
+      tags: [orgs]
+      operationId: listOrgs
+      responses:
+        "200":
+          description: The user's organizations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Org" }
+    post:
+      tags: [orgs]
+      operationId: createOrg
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, slug]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 80 }
+                slug:
+                  type: string
+                  pattern: "^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Org" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [orgs]
+      operationId: getOrg
+      responses:
+        "200":
+          description: Details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Org" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [orgs]
+      operationId: updateOrg
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                max_concurrent_runs: { type: integer, minimum: 1, maximum: 64 }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Org" }
+    delete:
+      tags: [orgs]
+      operationId: deleteOrg
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm_slug]
+              properties:
+                confirm_slug: { type: string }
+      responses:
+        "204": { description: Deleted }
+
+  /orgs/{org}/projects:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [projects]
+      operationId: listProjects
+      parameters:
+        - { $ref: "#/components/parameters/LimitParam" }
+        - { $ref: "#/components/parameters/CursorParam" }
+        - name: status
+          in: query
+          schema: { type: string, enum: [active, archived] }
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Project" }
+                  next_cursor: { type: [string, "null"] }
+    post:
+      tags: [projects]
+      operationId: createProject
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProjectInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/projects/{project}:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+    get:
+      tags: [projects]
+      operationId: getProject
+      responses:
+        "200":
+          description: Details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [projects]
+      operationId: archiveProject
+      responses:
+        "204": { description: Arhiviran }
+
+  /orgs/{org}/projects/{project}/tasks:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+    get:
+      tags: [tasks]
+      operationId: listTasks
+      parameters:
+        - { $ref: "#/components/parameters/LimitParam" }
+        - { $ref: "#/components/parameters/CursorParam" }
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/TaskStatus" }
+        - name: assignee
+          in: query
+          schema: { type: string, format: uuid }
+        - name: sort
+          in: query
+          schema: { type: string, enum: ["-updated_at", "updated_at", "priority", "-priority"] }
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Task" }
+                  next_cursor: { type: [string, "null"] }
+    post:
+      tags: [tasks]
+      operationId: createTask
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/projects/{project}/tasks/{task}:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+      - $ref: "#/components/parameters/TaskParam"
+    get:
+      tags: [tasks]
+      operationId: getTask
+      responses:
+        "200":
+          description: Details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [tasks]
+      operationId: updateTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+
+  /orgs/{org}/projects/{project}/tasks/{task}/transitions:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+      - $ref: "#/components/parameters/TaskParam"
+    post:
+      tags: [tasks]
+      operationId: transitionTask
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to]
+              properties:
+                to: { $ref: "#/components/schemas/TaskStatus" }
+                reason: { type: [string, "null"] }
+      responses:
+        "200":
+          description: New status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/members:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [orgs]
+      operationId: listMembers
+      responses:
+        "200":
+          description: Members
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Member" }
+    post:
+      tags: [orgs]
+      operationId: inviteMember
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email: { type: string, format: email }
+                role: { $ref: "#/components/schemas/OrgRole" }
+      responses:
+        "201":
+          description: Invite sent
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Member" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/providers:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [orgs]
+      operationId: listProviders
+      description: Never returns secrets; only `has_key`.
+      responses:
+        "200":
+          description: Providers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Provider" }
+    post:
+      tags: [orgs]
+      operationId: createProvider
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, base_url]
+              properties:
+                name: { type: string, example: openai-compatible }
+                base_url: { type: string, format: uri }
+                model: { type: string }
+                api_key: { type: string, writeOnly: true, description: "Encrypted at rest; requires AIP_SECRETS_KEY" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Provider" }
+
+  /orgs/{org}/projects/{project}/repos:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+    get:
+      tags: [projects]
+      operationId: listRepos
+      responses:
+        "200":
+          description: Repositories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Repo" }
+    post:
+      tags: [projects]
+      operationId: connectRepo
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [full_name]
+              properties:
+                full_name: { type: string, example: acme/crm-platform }
+                default_branch: { type: string, default: main }
+      responses:
+        "201":
+          description: Connected
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Repo" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/repos/{repo}/pull-requests:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/RepoParam" }
+    get:
+      tags: [projects]
+      operationId: listPullRequests
+      responses:
+        "200":
+          description: Pull requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/PullRequest" }
+
+  /orgs/{org}/pull-requests/{pr}:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/PrParam" }
+    get:
+      tags: [projects]
+      operationId: getPullRequest
+      responses:
+        "200":
+          description: Details sa checks, fajlovima i review nalazima
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PullRequestDetail" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /orgs/{org}/projects/{project}/tests:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+    get:
+      tags: [projects]
+      operationId: listTestResults
+      parameters:
+        - { $ref: "#/components/parameters/LimitParam" }
+        - { $ref: "#/components/parameters/CursorParam" }
+        - name: run
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Test results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/TestSummary" }
+                  next_cursor: { type: [string, "null"] }
+
+  /orgs/{org}/tasks/{task}/runs:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/TaskParam"
+    post:
+      tags: [runs]
+      operationId: startRun
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RunInput" }
+      responses:
+        "202":
+          description: Accepted
+          headers:
+            Location:
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Run" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /orgs/{org}/runs:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [runs]
+      operationId: listRuns
+      parameters:
+        - { $ref: "#/components/parameters/LimitParam" }
+        - { $ref: "#/components/parameters/CursorParam" }
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/RunStatus" }
+        - name: agent_type
+          in: query
+          schema: { $ref: "#/components/schemas/AgentType" }
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Run" }
+                  next_cursor: { type: [string, "null"] }
+
+  /orgs/{org}/runs/{run}:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/RunParam"
+    get:
+      tags: [runs]
+      operationId: getRun
+      responses:
+        "200":
+          description: Details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RunDetail" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /orgs/{org}/runs/{run}/cancel:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/RunParam"
+    post:
+      tags: [runs]
+      operationId: cancelRun
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      responses:
+        "202":
+          description: Cancellation requested
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Run" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/runs/{run}/events:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/RunParam"
+    get:
+      tags: [runs]
+      operationId: streamRunEvents
+      description: |
+        Server-Sent Events. First a backfill from `run_events` (from `Last-Event-ID`), then live.
+        Event catalog: `docs/api/events.md`.
+      parameters:
+        - name: Last-Event-ID
+          in: header
+          schema: { type: integer, format: int64, minimum: 0 }
+      responses:
+        "200":
+          description: Stream
+          content:
+            text/event-stream:
+              schema: { type: string }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /orgs/{org}/runs/{run}/diff:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/RunParam"
+    get:
+      tags: [runs]
+      operationId: getRunDiff
+      responses:
+        "200":
+          description: Unified diff
+          content:
+            text/x-diff:
+              schema: { type: string }
+            application/json:
+              schema: { $ref: "#/components/schemas/DiffSummary" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /orgs/{org}/approvals:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [approvals]
+      operationId: listApprovals
+      parameters:
+        - { $ref: "#/components/parameters/LimitParam" }
+        - { $ref: "#/components/parameters/CursorParam" }
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/ApprovalStatus" }
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Approval" }
+                  next_cursor: { type: [string, "null"] }
+
+  /orgs/{org}/approvals/{approval}/decision:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: approval
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [approvals]
+      operationId: decideApproval
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision:
+                  type: string
+                  enum: [approved, rejected, changes_requested]
+                reason: { type: [string, "null"], maxLength: 2000 }
+      responses:
+        "200":
+          description: Decision recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Approval" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/design-systems:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [projects]
+      operationId: listDesignSystems
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/DesignSystem" }
+    post:
+      tags: [projects]
+      operationId: createDesignSystem
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 2, maxLength: 80 }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DesignSystem" }
+
+  /orgs/{org}/design-systems/{ds}/versions:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/DsParam" }
+    post:
+      tags: [projects]
+      operationId: publishDesignSystemVersion
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version, tokens]
+              properties:
+                version: { type: string, pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+                tokens: { type: object, additionalProperties: true }
+      responses:
+        "201":
+          description: Published (immutable)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DesignSystemVersion" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/components:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [design]
+      operationId: listComponentEntries
+      responses:
+        "200":
+          description: Component registry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/ComponentEntry" }
+    post:
+      tags: [design]
+      operationId: createComponentEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ComponentEntryInput" }
+      responses:
+        "201": { description: Created }
+
+  /orgs/{org}/components/{component}:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: component
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      tags: [design]
+      operationId: updateComponentEntry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ComponentEntryInput" }
+      responses:
+        "200": { description: Updated }
+    delete:
+      tags: [design]
+      operationId: deleteComponentEntry
+      responses:
+        "204": { description: Deleted }
+
+  /orgs/{org}/pull-requests/{pr}/merge:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/PrParam" }
+    post:
+      tags: [projects]
+      operationId: mergePullRequest
+      description: Human action. Requires green required checks and an approved review.
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                method: { enum: [squash, merge, rebase], default: squash }
+      responses:
+        "200":
+          description: Merge performed; the task moves to done
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PullRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /orgs/{org}/pull-requests/{pr}/findings/{finding}/waive:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/PrParam" }
+      - { $ref: "#/components/parameters/FindingParam" }
+    post:
+      tags: [projects]
+      operationId: waiveFinding
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 10, maxLength: 1000 }
+      responses:
+        "200":
+          description: Waived (audit record)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string, format: uuid }
+                  waived_by: { type: string, format: uuid }
+                  reason: { type: string }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /orgs/{org}/projects/{project}/tasks/{task}/comments:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+      - $ref: "#/components/parameters/TaskParam"
+    get:
+      tags: [tasks]
+      operationId: listComments
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Comment" }
+    post:
+      tags: [tasks]
+      operationId: createComment
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string, minLength: 1, maxLength: 10000 }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Comment" }
+
+  /orgs/{org}/notifications:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [orgs]
+      operationId: listNotifications
+      parameters:
+        - name: unread
+          in: query
+          schema: { type: boolean }
+        - { $ref: "#/components/parameters/LimitParam" }
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Notification" }
+
+  /orgs/{org}/notifications/read:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    post:
+      tags: [orgs]
+      operationId: markNotificationsRead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items: { type: string, format: uuid }
+                  description: empty = all
+      responses:
+        "204": { description: Marked as read" }
+
+  /orgs/{org}/search:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [analytics]
+      operationId: search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2, maxLength: 200 }
+        - { $ref: "#/components/parameters/LimitParam" }
+      responses:
+        "200":
+          description: Rezultati po tipu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/SearchResult" }
+
+  /orgs/{org}/activity:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [analytics]
+      operationId: listActivity
+      parameters:
+        - { $ref: "#/components/parameters/LimitParam" }
+        - { $ref: "#/components/parameters/CursorParam" }
+      responses:
+        "200":
+          description: Activity feed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/ActivityItem" }
+                  next_cursor: { type: [string, "null"] }
+
+  /orgs/{org}/deployments/{deployment}/logs:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/DeploymentParam" }
+    get:
+      tags: [environments]
+      operationId: getDeploymentLogs
+      responses:
+        "200":
+          description: NDJSON linije
+          content:
+            application/x-ndjson:
+              schema: { type: string }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /orgs/{org}/blueprints:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [blueprints]
+      operationId: listBlueprints
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Blueprint" }
+    post:
+      tags: [blueprints]
+      operationId: createBlueprint
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, spec]
+              properties:
+                name: { type: string }
+                spec: { type: object, additionalProperties: true }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Blueprint" }
+
+  /orgs/{org}/rules:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [rules]
+      operationId: listRules
+      parameters:
+        - name: project
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: List (sa aktivnom verzijom)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Rule" }
+    post:
+      tags: [rules]
+      operationId: createRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [level, name, body]
+              properties:
+                level: { type: string, enum: [organization, project, module, task] }
+                project_id: { type: string, format: uuid }
+                scope_ref: { type: string }
+                name: { type: string }
+                body: { type: string }
+      responses:
+        "201":
+          description: Rule created with draft version 1
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Rule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/rules/{rule}/versions:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: rule
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [rules]
+      operationId: listRuleVersions
+      responses:
+        "200":
+          description: Versions, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        version: { type: integer }
+                        body: { type: string }
+                        published: { type: boolean }
+                        published_at: { type: string, format: date-time }
+                        created_at: { type: string, format: date-time }
+    post:
+      tags: [rules]
+      operationId: saveRuleDraft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string }
+      responses:
+        "201": { description: New draft version }
+
+  /orgs/{org}/rules/{rule}/versions/{version}/publish:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: rule
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - name: version
+        in: path
+        required: true
+        schema: { type: integer }
+    post:
+      tags: [rules]
+      operationId: publishRuleVersion
+      description: Requests publication; a second admin must approve it (four eyes).
+      responses:
+        "202":
+          description: Publish request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  approval_id: { type: string, format: uuid }
+                  status: { type: string }
+                  version: { type: integer }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/rules/approvals:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [rules]
+      operationId: listRulePublishApprovals
+      responses:
+        "200":
+          description: Pending rule publications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, format: uuid }
+                        rule_id: { type: string, format: uuid }
+                        rule: { type: string }
+                        version: { type: integer }
+
+  /orgs/{org}/rules/approvals/{approval}/decide:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: approval
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [rules]
+      operationId: decideRulePublishApproval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: { type: string, enum: [approved, rejected] }
+                reason: { type: string }
+      responses:
+        "200": { description: Decided (and published when approved) }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/projects/{project}/environments:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+    get:
+      tags: [environments]
+      operationId: listEnvironments
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Environment" }
+    post:
+      tags: [environments]
+      operationId: createEnvironment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, enum: [dev, staging, prod] }
+                url: { type: [string, "null"], format: uri }
+      responses:
+        "201":
+          description: Createdo
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Environment" }
+
+  /orgs/{org}/environments/{environment}/deployments:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: environment
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [environments]
+      operationId: listDeployments
+      responses:
+        "200":
+          description: Deployments of the environment, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Deployment" }
+    post:
+      tags: [environments]
+      operationId: createDeployment
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [release_ref]
+              properties:
+                release_ref: { type: string }
+      responses:
+        "202":
+          description: Deploy accepted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Deployment" }
+
+  /orgs/{org}/analytics/summary:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [analytics]
+      operationId: getAnalyticsSummary
+      parameters:
+        - name: from
+          in: query
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          schema: { type: string, format: date }
+        - name: project
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: KPI sa `source`
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AnalyticsSummary" }
+
+  /orgs/{org}/usage:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [analytics]
+      operationId: getUsage
+      parameters:
+        - name: from
+          in: query
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          schema: { type: string, format: date }
+        - name: group_by
+          in: query
+          schema: { type: string, enum: [project, model, day] }
+      responses:
+        "200":
+          description: Usage
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UsageReport" }
+
+  /orgs/{org}/audit:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [audit]
+      operationId: listAudit
+      parameters:
+        - { $ref: "#/components/parameters/LimitParam" }
+        - { $ref: "#/components/parameters/CursorParam" }
+        - name: action
+          in: query
+          schema: { type: string }
+        - name: actor
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Audit zapisi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/AuditEntry" }
+                  next_cursor: { type: [string, "null"] }
+
+  /healthz:
+    get:
+      operationId: healthz
+      security: []
+      tags: [meta]
+      responses:
+        "200":
+          description: Process is alive
+          content:
+            application/json:
+              schema: { type: object, properties: { status: { type: string } } }
+
+  /readyz:
+    get:
+      operationId: readyz
+      security: []
+      tags: [meta]
+      responses:
+        "200":
+          description: Ready to serve traffic
+          content:
+            application/json:
+              schema: { type: object, properties: { status: { type: string } } }
+        "503":
+          description: Dependency unavailable
+
+  /version:
+    get:
+      operationId: version
+      security: []
+      tags: [meta]
+      responses:
+        "200":
+          description: Build information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  version: { type: string }
+                  commit: { type: string }
+
+  /orgs/{org}/metrics:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [analytics]
+      operationId: getMetrics
+      parameters:
+        - name: days
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 365, default: 30 }
+      responses:
+        "200":
+          description: Delivery metrics
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MetricsSummary" }
+
+  /orgs/{org}/invites:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [invites]
+      operationId: listInvites
+      responses:
+        "200":
+          description: Invites
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Invite" }
+    post:
+      tags: [invites]
+      operationId: createInvite
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email: { type: string, format: email }
+                role: { type: string, enum: [owner, admin, member, viewer] }
+      responses:
+        "201":
+          description: Invite created; the token is returned once
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/Invite" }
+                  - type: object
+                    required: [token]
+                    properties:
+                      token: { type: string, description: Raw token, shown once }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/invites/accept:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    post:
+      tags: [invites]
+      operationId: acceptOrgInvite
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        "200":
+          description: Membership created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  org_id: { type: string, format: uuid }
+                  email: { type: string, format: email }
+                  role: { type: string }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/blueprints/{blueprint}/versions:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: blueprint
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [projects]
+      operationId: createBlueprintVersion
+      description: Clone a blueprint into the next draft version.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                spec: { type: object }
+      responses:
+        "201":
+          description: New draft version
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Blueprint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/blueprints/{blueprint}/publish:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/BlueprintParam"
+    post:
+      tags: [blueprints]
+      operationId: publishBlueprint
+      responses:
+        "200":
+          description: Published (immutable from now on)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Blueprint" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/blueprints/{blueprint}/instantiate:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/BlueprintParam"
+    post:
+      tags: [blueprints]
+      operationId: instantiateBlueprint
+      responses:
+        "201":
+          description: Project created from the blueprint (plus its starter tasks)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/Project" }
+                  - type: object
+                    properties:
+                      created_tasks: { type: integer }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/projects/{project}/tasks/{task}/runs:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+      - $ref: "#/components/parameters/TaskParam"
+    get:
+      tags: [runs]
+      operationId: listTaskRuns
+      responses:
+        "200":
+          description: Runs of the task, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Run" }
+    post:
+      tags: [runs]
+      operationId: startTaskRun
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agent_type: { $ref: "#/components/schemas/AgentType" }
+                model: { type: string }
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Run" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /webhooks/github/{repo}:
+    parameters:
+      - name: repo
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [webhooks]
+      operationId: githubWebhook
+      security: []
+      description: Verified with X-Hub-Signature-256 using the repo secret.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "202": { description: Accepted }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /webhooks/gitlab/{repo}:
+    parameters:
+      - name: repo
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [webhooks]
+      operationId: gitlabWebhook
+      security: []
+      description: Verified with X-Gitlab-Token using the repo secret.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "202": { description: Accepted }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+
+  /orgs/{org}/projects/{project}/pull-requests:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+    get:
+      tags: [projects]
+      operationId: listProjectPullRequests
+      responses:
+        "200":
+          description: Pull/merge requests opened for the project
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/PullRequest" }
+
+  /invites/accept:
+    post:
+      tags: [invites]
+      operationId: registerAndAcceptInvite
+      security: []
+      description: |
+        Accepts an invite for a user without an existing account: creates the user,
+        adds the membership and returns a session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, name, password]
+              properties:
+                token: { type: string }
+                name: { type: string }
+                password: { type: string, minLength: 12 }
+      responses:
+        "201":
+          description: Account created and signed in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenPair" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/repos:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [projects]
+      operationId: listOrgRepos
+      responses:
+        "200":
+          description: Connected repositories across the workspace
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, format: uuid }
+                        project_id: { type: string, format: uuid }
+                        project_name: { type: string }
+                        provider: { type: string, enum: [github, gitlab, gitea, bitbucket] }
+                        name: { type: string }
+                        default_branch: { type: string }
+                        created_at: { type: string, format: date-time }
+
+  /orgs/{org}/deployments/{deployment}/approve:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: deployment
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [environments]
+      operationId: approveDeployment
+      description: Four-eyes gate for prod; the approver must differ from the requester.
+      responses:
+        "200":
+          description: Approved and deployed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Deployment" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/model-prices:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [orgs]
+      operationId: listModelPrices
+      responses:
+        "200":
+          description: Model prices (USD per 1K tokens)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        provider: { type: string }
+                        model: { type: string }
+                        input_per_1k: { type: number }
+                        output_per_1k: { type: number }
+    put:
+      tags: [orgs]
+      operationId: upsertModelPrice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider, model, input_per_1k, output_per_1k]
+              properties:
+                provider: { type: string }
+                model: { type: string }
+                input_per_1k: { type: number, minimum: 0 }
+                output_per_1k: { type: number, minimum: 0 }
+      responses:
+        "200": { description: Saved }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/providers/{provider}/rotate:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: provider
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [orgs]
+      operationId: rotateProviderKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [api_key]
+              properties:
+                api_key: { type: string, writeOnly: true }
+      responses:
+        "200":
+          description: Key replaced (old ciphertext is overwritten)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Provider" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/providers/{provider}:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: provider
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [orgs]
+      operationId: setProviderEnabled
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Provider" }
+    delete:
+      tags: [orgs]
+      operationId: deleteProvider
+      responses:
+        "204": { description: Deleted with its key }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /orgs/{org}/design-tokens:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [design]
+      operationId: listDesignTokens
+      responses:
+        "200":
+          description: Org design tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/DesignToken" }
+    post:
+      tags: [design]
+      operationId: createDesignToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DesignTokenInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DesignToken" }
+
+  /orgs/{org}/design-tokens/{token}:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: token
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      tags: [design]
+      operationId: updateDesignToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DesignTokenInput" }
+      responses:
+        "200": { description: Updated }
+    delete:
+      tags: [design]
+      operationId: deleteDesignToken
+      responses:
+        "204": { description: Deleted }
+
+  /orgs/{org}/design/seed:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    post:
+      tags: [design]
+      operationId: seedDesignRegistry
+      description: Inserts the built-in baseline when the registry is empty.
+      responses:
+        "200":
+          description: Created counts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tokens: { type: integer }
+                  components: { type: integer }
+
+  /orgs/{org}/pull-requests/{pr}/checks:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: pr
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [git]
+      operationId: listPullRequestChecks
+      responses:
+        "200":
+          description: CI checks recorded for the pull request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/CheckResult" }
+
+  /orgs/{org}/runs/{run}/checks:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: run
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [git]
+      operationId: listRunChecks
+      responses:
+        "200":
+          description: CI checks recorded for the run
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/CheckResult" }
+
+  /orgs/{org}/projects/{project}/components:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+    get:
+      tags: [projects]
+      operationId: listProjectComponents
+      responses:
+        "200":
+          description: Allowed components for the project
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Component" }
+    put:
+      tags: [projects]
+      operationId: setProjectComponents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [component_ids]
+              properties:
+                component_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Allowlist replaced
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count: { type: integer }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/projects/{project}/standards:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+    get:
+      tags: [projects]
+      operationId: getProjectStandard
+      responses:
+        "200":
+          description: The assigned design standard (or null)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  design_standard:
+                    oneOf:
+                      - { $ref: "#/components/schemas/DesignStandard" }
+                      - { type: "null" }
+    put:
+      tags: [projects]
+      operationId: setProjectStandard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                design_standard_id: { type: [string, "null"], format: uuid }
+      responses:
+        "200":
+          description: Updated project
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/projects/{project}/required-checks:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+    put:
+      tags: [projects]
+      operationId: updateProjectRequiredChecks
+      description: Checks that must pass before a pull request can be merged.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [checks]
+              properties:
+                checks:
+                  type: array
+                  items: { type: string }
+      responses:
+        "200":
+          description: Updated project
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/runs/{run}/usage:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: run
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [runs]
+      operationId: getRunUsage
+      responses:
+        "200":
+          description: Token usage and cost of one run
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        provider: { type: string }
+                        model: { type: string }
+                        input_tokens: { type: integer }
+                        output_tokens: { type: integer }
+                        cost_usd: { type: number }
+                  totals:
+                    type: object
+                    properties:
+                      input_tokens: { type: integer }
+                      output_tokens: { type: integer }
+                      cost_usd: { type: number }
+
+  /orgs/{org}/runs/{run}/artifacts:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: run
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [runs]
+      operationId: listRunArtifacts
+      responses:
+        "200":
+          description: Artifacts stored in the object store
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        kind: { type: string }
+                        key: { type: string }
+                        bytes: { type: integer }
+                        sha256: { type: string }
+                        created_at: { type: string, format: date-time }
+
+  /orgs/{org}/members/{user}:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: user
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      tags: [orgs]
+      operationId: updateMemberRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { $ref: "#/components/schemas/OrgRole" }
+      responses:
+        "204": { description: Role changed }
+        "400": { $ref: "#/components/responses/BadRequest" }
+    delete:
+      tags: [orgs]
+      operationId: removeMember
+      responses:
+        "204": { description: Member removed }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/design-standards:
+    parameters: [{ $ref: "#/components/parameters/OrgParam" }]
+    get:
+      tags: [projects]
+      operationId: listDesignStandards
+      responses:
+        "200":
+          description: Design standards with their versions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/DesignStandard" }
+    post:
+      tags: [projects]
+      operationId: createDesignStandard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, spec]
+              properties:
+                name: { type: string, minLength: 3, maxLength: 80 }
+                spec: { type: object }
+      responses:
+        "201":
+          description: Created draft version
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DesignStandard" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /orgs/{org}/design-standards/{standard}:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: standard
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [projects]
+      operationId: getDesignStandard
+      responses:
+        "200":
+          description: One version
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DesignStandard" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /orgs/{org}/design-standards/{standard}/versions:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: standard
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [projects]
+      operationId: createDesignStandardVersion
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                spec: { type: object }
+      responses:
+        "201":
+          description: Next draft version
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DesignStandard" }
+
+  /orgs/{org}/design-standards/{standard}/publish:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - name: standard
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    post:
+      tags: [projects]
+      operationId: publishDesignStandard
+      responses:
+        "200":
+          description: Published version
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DesignStandard" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    OrgParam:
+      name: org
+      in: path
+      required: true
+      schema: { type: string }
+    ProjectParam:
+      name: project
+      in: path
+      required: true
+      schema: { type: string }
+    TaskParam:
+      name: task
+      in: path
+      required: true
+      description: Task UUID or `ref` (e.g. `T-88`)
+      schema: { type: string }
+    RunParam:
+      name: run
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    LimitParam:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+    CursorParam:
+      name: cursor
+      in: query
+      schema: { type: string }
+    DsParam:
+      name: ds
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ComponentParam:
+      name: component
+      in: path
+      required: true
+      schema: { type: string }
+    FindingParam:
+      name: finding
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    DeploymentParam:
+      name: deployment
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    RepoParam:
+      name: repo
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    PrParam:
+      name: pr
+      in: path
+      required: true
+      description: PR number or UUID
+      schema: { type: string }
+    IdempotencyKeyParam:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 8, maxLength: 128 }
+
+    BlueprintParam:
+      name: blueprint
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    Unauthenticated:
+      description: Nema ili istekao token
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    Forbidden:
+      description: Nema dozvolu
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    NotFound:
+      description: Ne postoji ili nema pristupa
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    Conflict:
+      description: Konflikt stanja
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        code: { type: string }
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              path: { type: string }
+              message: { type: string }
+
+    TokenPair:
+      type: object
+      required: [access_token, refresh_token, expires_in]
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        expires_in: { type: integer, description: seconds }
+
+    Me:
+      type: object
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        orgs:
+          type: array
+          items:
+            type: object
+            properties:
+              org: { $ref: "#/components/schemas/Org" }
+              role: { $ref: "#/components/schemas/OrgRole" }
+
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: string }
+        avatar_url: { type: [string, "null"], format: uri }
+
+    OrgRole:
+      type: string
+      enum: [owner, admin, member, viewer, designer]
+
+    Org:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        max_concurrent_runs: { type: integer }
+        created_at: { type: string, format: date-time }
+
+    ProjectInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        description: { type: string, maxLength: 5000 }
+        blueprint_id: { type: [string, "null"], format: uuid }
+        tech_stack:
+          type: array
+          items: { type: string }
+
+    Project:
+      allOf:
+        - $ref: "#/components/schemas/ProjectInput"
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            slug: { type: string }
+            required_checks:
+              type: array
+              items: { type: string }
+            status: { type: string, enum: [active, archived] }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+
+    TaskStatus:
+      type: string
+      enum: [draft, ready, planning, in_progress, review, done, blocked, canceled]
+
+    TaskPriority:
+      type: string
+      enum: [low, med, high]
+
+    AcceptanceCriterion:
+      type: object
+      required: [given, when, then]
+      properties:
+        given: { type: string }
+        when: { type: string }
+        then: { type: string }
+
+    TaskInput:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 20000 }
+        acceptance:
+          type: array
+          items: { $ref: "#/components/schemas/AcceptanceCriterion" }
+        priority: { $ref: "#/components/schemas/TaskPriority" }
+        tags:
+          type: array
+          items: { type: string }
+        assignee_id: { type: [string, "null"], format: uuid }
+        depends_on:
+          type: array
+          maxItems: 20
+          items: { type: string, example: T-12 }
+
+    Task:
+      allOf:
+        - $ref: "#/components/schemas/TaskInput"
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            ref: { type: string, example: T-88 }
+            status: { $ref: "#/components/schemas/TaskStatus" }
+            project_id: { type: string, format: uuid }
+            blocked_reason: { type: [string, "null"] }
+            ready_at: { type: [string, "null"], format: date-time }
+            done_at: { type: [string, "null"], format: date-time }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+
+    AgentType:
+      type: string
+      enum: [planning, development, testing, review, documentation]
+
+    RunStatus:
+      type: string
+      enum: [queued, running, awaiting_approval, succeeded, failed, canceled]
+
+    PhaseName:
+      type: string
+      enum: [context, plan, implement, test, review, diff, pr]
+
+    Phase:
+      type: object
+      properties:
+        phase: { $ref: "#/components/schemas/PhaseName" }
+        state: { type: string, enum: [pending, active, done, failed, skipped] }
+        attempt: { type: integer }
+        started_at: { type: [string, "null"], format: date-time }
+        ended_at: { type: [string, "null"], format: date-time }
+
+    Budget:
+      type: object
+      properties:
+        tokens_in: { type: integer, minimum: 1 }
+        tokens_out: { type: integer, minimum: 1 }
+        cost_micros: { type: integer, minimum: 1 }
+        wall_clock_s: { type: integer, minimum: 60 }
+
+    RunInput:
+      type: object
+      required: [agent_type, model]
+      properties:
+        agent_type: { $ref: "#/components/schemas/AgentType" }
+        model: { type: string, example: gpt-4o }
+        dry_run: { type: boolean, default: false }
+        budget: { $ref: "#/components/schemas/Budget" }
+
+    Run:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        status: { $ref: "#/components/schemas/RunStatus" }
+        agent_type: { $ref: "#/components/schemas/AgentType" }
+        model: { type: string }
+        task_id: { type: [string, "null"], format: uuid }
+        project_id: { type: string, format: uuid }
+        current_phase: { $ref: "#/components/schemas/PhaseName" }
+        spent:
+          type: object
+          properties:
+            tokens_in: { type: integer }
+            tokens_out: { type: integer }
+            cost_micros: { type: integer }
+        budget: { $ref: "#/components/schemas/Budget" }
+        failure_code: { type: [string, "null"] }
+        started_at: { type: [string, "null"], format: date-time }
+        finished_at: { type: [string, "null"], format: date-time }
+        created_at: { type: string, format: date-time }
+
+    RunDetail:
+      allOf:
+        - $ref: "#/components/schemas/Run"
+        - type: object
+          properties:
+            phases:
+              type: array
+              items: { $ref: "#/components/schemas/Phase" }
+            rules_snapshot:
+              type: array
+              items:
+                type: object
+                properties:
+                  rule_id: { type: string, format: uuid }
+                  name: { type: string }
+                  version: { type: integer }
+                  sha256: { type: string }
+            pr_url: { type: [string, "null"], format: uri }
+
+    DiffSummary:
+      type: object
+      properties:
+        files: { type: integer }
+        additions: { type: integer }
+        deletions: { type: integer }
+        artifact_url: { type: string, format: uri }
+
+    ApprovalStatus:
+      type: string
+      enum: [pending, approved, rejected, changes_requested, expired]
+
+    Approval:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        run_id: { type: [string, "null"], format: uuid }
+        type: { type: string, enum: [plan, pr, deploy_prod, rule_publish] }
+        status: { $ref: "#/components/schemas/ApprovalStatus" }
+        requested_at: { type: string, format: date-time }
+        decided_at: { type: [string, "null"], format: date-time }
+        decided_by: { type: [string, "null"], format: uuid }
+        reason: { type: [string, "null"] }
+
+    Blueprint:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        latest_version: { type: [string, "null"] }
+        published_at: { type: [string, "null"], format: date-time }
+
+    Rule:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        level: { type: string, enum: [organization, project, module, task] }
+        name: { type: string }
+        active_version: { type: [integer, "null"] }
+        updated_at: { type: [string, "null"], format: date-time }
+
+    Environment:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, enum: [dev, staging, prod] }
+        url: { type: [string, "null"], format: uri }
+
+    Deployment:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        environment_id: { type: string, format: uuid }
+        release_ref: { type: string }
+        status: { type: string, enum: [queued, running, succeeded, failed, rolled_back] }
+        created_at: { type: string, format: date-time }
+
+    Kpi:
+      type: object
+      properties:
+        key: { type: string }
+        value: { type: number }
+        unit: { type: [string, "null"] }
+        source: { type: string, enum: [measured, estimated, na] }
+
+    AnalyticsSummary:
+      type: object
+      properties:
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        kpis:
+          type: array
+          items: { $ref: "#/components/schemas/Kpi" }
+        series:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              points:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    t: { type: string, format: date }
+                    v: { type: number }
+
+    UsageReport:
+      type: object
+      properties:
+        total_cost_micros: { type: integer }
+        total_tokens_in: { type: integer }
+        total_tokens_out: { type: integer }
+        groups:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              cost_micros: { type: integer }
+              tokens_in: { type: integer }
+              tokens_out: { type: integer }
+
+    AuditEntry:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        action: { type: string }
+        actor_id: { type: [string, "null"], format: uuid }
+        actor_kind: { type: string, enum: [user, api_key, system] }
+        target: { type: string }
+        metadata: { type: object, additionalProperties: true }
+        created_at: { type: string, format: date-time }
+
+    Member:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: string }
+        role: { $ref: "#/components/schemas/OrgRole" }
+        last_active_at: { type: [string, "null"], format: date-time }
+
+    Provider:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        base_url: { type: string, format: uri }
+        enabled: { type: boolean }
+        model: { type: string }
+        kind: { type: string, enum: [openai, anthropic] }
+        key_hint: { type: string, description: "last characters of the stored key, never the key" }
+        has_key: { type: boolean, description: "true if a secret is set (never returned)" }
+
+    Repo:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        provider: { type: string, example: github }
+        full_name: { type: string, example: acme/crm-platform }
+        default_branch: { type: string }
+        open_prs: { type: integer }
+        last_sync_at: { type: [string, "null"], format: date-time }
+
+    Check:
+      type: object
+      properties:
+        name: { type: string }
+        state: { type: string, enum: [passed, failed, running, pending, skipped] }
+        meta: { type: [string, "null"] }
+
+    PullRequest:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        number: { type: integer }
+        title: { type: string }
+        url: { type: string, format: uri }
+        head: { type: string }
+        base: { type: string }
+        state: { type: string, enum: [open, closed, merged] }
+        checks_summary:
+          type: object
+          properties:
+            passed: { type: integer }
+            total: { type: integer }
+            running: { type: integer }
+        updated_at: { type: string, format: date-time }
+
+    PullRequestDetail:
+      allOf:
+        - $ref: "#/components/schemas/PullRequest"
+        - type: object
+          properties:
+            checks:
+              type: array
+              items: { $ref: "#/components/schemas/Check" }
+            files:
+              type: array
+              items:
+                type: object
+                properties:
+                  status: { type: string, enum: [added, modified, deleted] }
+                  path: { type: string }
+                  additions: { type: integer }
+                  deletions: { type: integer }
+            review:
+              type: object
+              properties:
+                issues:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      severity: { type: string, enum: [blocker, major, minor, nit] }
+                      text: { type: string }
+                cost_micros: { type: integer }
+                duration_ms: { type: integer }
+            reviewers:
+              type: array
+              items:
+                type: object
+                properties:
+                  user_id: { type: [string, "null"], format: uuid }
+                  name: { type: string }
+                  state: { type: string, enum: [requested, approved, done] }
+            linked:
+              type: object
+              properties:
+                task_id: { type: [string, "null"], format: uuid }
+                requirement: { type: [string, "null"] }
+                tests: { type: integer }
+
+    TestSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        suite: { type: string }
+        total: { type: integer }
+        passed: { type: integer }
+        failed: { type: integer }
+        skipped: { type: integer }
+        coverage_pct: { type: [number, "null"] }
+        commit_sha: { type: [string, "null"] }
+        created_at: { type: string, format: date-time }
+
+    DesignSystem:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        latest_version: { type: [string, "null"] }
+
+    DesignSystemVersion:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        design_system_id: { type: string, format: uuid }
+        version: { type: string }
+        published_at: { type: [string, "null"], format: date-time }
+        sha256: { type: string }
+
+    Component:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        category: { type: string }
+        latest_version: { type: [string, "null"] }
+        status: { type: [string, "null"], enum: [stable, beta, deprecated, null] }
+        framework: { type: string }
+        package: { type: string }
+        import_path: { type: string }
+        version: { type: string }
+        docs: { type: string }
+        example: { type: string }
+
+    ComponentVersion:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: string }
+        status: { type: string, enum: [stable, beta, deprecated] }
+        props:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              type: { type: string }
+              default: { type: string }
+              description: { type: string }
+        a11y_notes: { type: [string, "null"] }
+        ai_notes: { type: [string, "null"] }
+
+    Comment:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        task_id: { type: string, format: uuid }
+        author_id: { type: [string, "null"], format: uuid }
+        body: { type: string }
+        created_at: { type: string, format: date-time }
+
+    Notification:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string }
+        title: { type: string }
+        body: { type: string }
+        target: { type: [string, "null"] }
+        read_at: { type: [string, "null"], format: date-time }
+        created_at: { type: string, format: date-time }
+
+    SearchResult:
+      type: object
+      properties:
+        type: { enum: [project, task, component, run, rule] }
+        id: { type: string }
+        title: { type: string }
+        subtitle: { type: [string, "null"] }
+        url: { type: string }
+
+    ActivityItem:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        action: { type: string }
+        actor: { type: [string, "null"] }
+        target: { type: string }
+        created_at: { type: string, format: date-time }
+
+    RegisterInput:
+      type: object
+      required: [email, password, name]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 12, maxLength: 128 }
+        name: { type: string, minLength: 1, maxLength: 80 }
+        org_name: { type: string, maxLength: 80 }
+
+    InvitePreview:
+      type: object
+      properties:
+        org_name: { type: string }
+        email: { type: string, format: email }
+        role: { $ref: "#/components/schemas/OrgRole" }
+        expires_at: { type: string, format: date-time }
+
+    Session:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        platform: { type: string, enum: [web, mobile, cli] }
+        ip: { type: [string, "null"] }
+        user_agent: { type: [string, "null"] }
+        last_used_at: { type: [string, "null"], format: date-time }
+        created_at: { type: string, format: date-time }
+        current: { type: boolean }
+
+    Invite:
+      type: object
+      required: [id, email, role, expires_at]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        role: { type: string, enum: [owner, admin, member, viewer] }
+        expires_at: { type: string, format: date-time }
+        accepted_at: { type: [string, "null"], format: date-time }
+
+    MetricsSummary:
+      type: object
+      required: [days, runs_by_status, succeeded_runs, lead_time_minutes, approval_minutes, runs_per_task, merged_pull_requests, cost_usd]
+      properties:
+        days: { type: integer }
+        runs_by_status:
+          type: object
+          additionalProperties: { type: integer }
+        succeeded_runs: { type: integer }
+        lead_time_minutes: { $ref: "#/components/schemas/Metric" }
+        approval_minutes: { $ref: "#/components/schemas/Metric" }
+        runs_per_task: { $ref: "#/components/schemas/Metric" }
+        merged_pull_requests: { type: integer }
+        cost_usd: { $ref: "#/components/schemas/Metric" }
+
+    Metric:
+      type: object
+      required: [value, unit, source]
+      properties:
+        value: { type: number }
+        unit: { type: string }
+        source: { type: string, enum: [measured, estimated, na] }
+
+    DesignToken:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        value: { type: string }
+        category: { type: string, enum: [color, typography, spacing, radius, layout, other] }
+
+    DesignTokenInput:
+      type: object
+      required: [name, value]
+      properties:
+        name: { type: string, maxLength: 80 }
+        value: { type: string }
+        category: { type: string, enum: [color, typography, spacing, radius, layout, other] }
+
+    ComponentEntry:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        purpose: { type: string }
+        rules: { type: string }
+        status: { type: string, enum: [draft, published, deprecated] }
+
+    ComponentEntryInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, maxLength: 80 }
+        purpose: { type: string }
+        rules: { type: string }
+        status: { type: string, enum: [draft, published, deprecated] }
+
+    CheckResult:
+      type: object
+      properties:
+        name: { type: string }
+        status: { type: string, enum: [pending, running, passed, failed] }
+        output: { type: string }
+        duration_ms: { type: integer }
+        commit_sha: { type: string }
+
+    DesignStandard:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        version: { type: integer }
+        status: { type: string, enum: [draft, published] }
+        spec: { type: object }
+        sha256: { type: string }
+        published_at: { type: [string, "null"], format: date-time }
+        created_at: { type: string, format: date-time }
+

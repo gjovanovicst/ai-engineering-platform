@@ -1,0 +1,52 @@
+# Nightly logical backup to a PVC. For managed Postgres prefer the provider's
+# automated backups and keep this only for self-hosted clusters.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: aip-backup
+  namespace: aip
+spec:
+  schedule: "15 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: backup
+              image: postgres:17-alpine
+              command: ["/bin/sh", "/scripts/backup.sh"]
+              env:
+                - name: AIP_DB_DSN
+                  valueFrom:
+                    secretKeyRef: { name: aip-secrets, key: AIP_DB_DSN }
+                - name: BACKUP_DIR
+                  value: /backups
+                - name: RETENTION_DAYS
+                  value: "14"
+              volumeMounts:
+                - { name: scripts, mountPath: /scripts, readOnly: true }
+                - { name: backups, mountPath: /backups }
+          volumes:
+            - name: scripts
+              configMap:
+                name: aip-backup-scripts
+                defaultMode: 0755
+            - name: backups
+              persistentVolumeClaim:
+                claimName: aip-backups
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aip-backups
+  namespace: aip
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 20Gi
