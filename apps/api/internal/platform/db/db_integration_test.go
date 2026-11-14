@@ -59,10 +59,10 @@ func TestTenantIsolation(t *testing.T) {
 		query string
 		args  []any
 	}{
-		{`INSERT INTO orgs (id, slug, name) VALUES ($1, 'acme', 'Acme'), ($2, 'globex', 'Globex')`, []any{orgA, orgB}},
-		{`INSERT INTO users (id, email, name) VALUES ($1, 'a@acme.io', 'A'), ($2, 'b@globex.io', 'B')`, []any{userA, userB}},
+		{`INSERT INTO orgs (id, slug, name) VALUES ($1, 'tenant-acme', 'Tenant Acme'), ($2, 'tenant-globex', 'Tenant Globex')`, []any{orgA, orgB}},
+		{`INSERT INTO users (id, email, name) VALUES ($1, 'a@tenant-a.test', 'A'), ($2, 'b@tenant-b.test', 'B')`, []any{userA, userB}},
 		{`INSERT INTO memberships (org_id, user_id, role) VALUES ($1, $3, 'owner'), ($2, $4, 'owner')`, []any{orgA, orgB, userA, userB}},
-		{`INSERT INTO audit_log (org_id, actor_kind, action, target) VALUES ($1, 'system', 'org.bootstrap', 'org:acme')`, []any{orgA}},
+		{`INSERT INTO audit_log (org_id, actor_kind, action, target) VALUES ($1, 'system', 'org.bootstrap', 'org:tenant-acme')`, []any{orgA}},
 	}
 	for _, s := range seeds {
 		if _, err := migrator.Exec(ctx, s.query, s.args...); err != nil {
