@@ -326,13 +326,13 @@ func main() {
 			if provider.Kind == "anthropic" {
 				return &agent.AnthropicBackend{
 					Sandbox: driver, Image: cfg.SandboxImage,
-					BaseURL: provider.BaseURL, APIKey: key, Model: provider.Model, MaxSteps: 12,
+					BaseURL: provider.BaseURL, APIKey: key, Model: provider.Model, MaxSteps: cfg.AgentMaxSteps,
 					MCPConfig: cfg.MCPConfig,
 				}, nil
 			}
 			return &agent.ToolLoopBackend{
 				Sandbox: driver, Image: cfg.SandboxImage,
-				BaseURL: provider.BaseURL, APIKey: key, Model: provider.Model, MaxSteps: 12,
+				BaseURL: provider.BaseURL, APIKey: key, Model: provider.Model, MaxSteps: cfg.AgentMaxSteps,
 				MCPConfig: cfg.MCPConfig,
 			}, nil
 		})
@@ -346,7 +346,7 @@ func main() {
 			if provider.Kind == "anthropic" {
 				return &agent.AnthropicBackend{
 					Sandbox: driver, Image: cfg.SandboxImage,
-					BaseURL: provider.BaseURL, APIKey: key, Model: provider.Model, MaxSteps: 12,
+					BaseURL: provider.BaseURL, APIKey: key, Model: provider.Model, MaxSteps: cfg.AgentMaxSteps,
 					MCPConfig: cfg.MCPConfig,
 				}, nil
 			}

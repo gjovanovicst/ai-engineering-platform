@@ -85,6 +85,10 @@ AIP_SANDBOX_DRIVER=docker          # docker | k8s
 AIP_SANDBOX_IMAGE=aip/sandbox:go1.25-node22
 AIP_SANDBOX_EGRESS_ALLOW=proxy.golang.org,registry.npmjs.org,api.github.com
 
+# ── agent
+AIP_AGENT_BACKEND=tools            # command | provider | tools
+AIP_AGENT_MAX_STEPS=24             # model/tool steps per run (1-200)
+
 # ── git providers
 GITHUB_TOKEN=                       # PAT fallback; or configure the GitHub App below
 GITLAB_TOKEN=

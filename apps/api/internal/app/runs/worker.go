@@ -158,6 +158,11 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 		prompt += "\nYou are the REVIEW agent. Do NOT modify files.\n" +
 			"Finish with exactly one line:\n" +
 			"AIP_REVIEW: {\"findings\":[{\"severity\":\"major|minor|nit\",\"body\":\"...\"}]}\n"
+	case string(domain.AgentDevelopment):
+		prompt += "\nYou are the DEVELOPMENT agent. Implement the task inside the repository with " +
+			"write_file and verify it with run_tests. Execute the whole approved plan; do not stop " +
+			"after one file or one step. When everything is implemented and the tests pass, finish " +
+			"with the AIP_PROOF line described below.\n"
 	}
 	criteria := make([]string, 0, len(task.Acceptance))
 	if run.AgentType == string(domain.AgentDevelopment) && len(task.Acceptance) > 0 {

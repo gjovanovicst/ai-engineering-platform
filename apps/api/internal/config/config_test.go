@@ -73,6 +73,29 @@ func TestGitHubTokenEnv(t *testing.T) {
 	}
 }
 
+func TestAgentMaxStepsEnv(t *testing.T) {
+	t.Setenv("AIP_DB_DSN", "postgres://localhost/aip")
+	if cfg, err := Load(); err != nil {
+		t.Fatal(err)
+	} else if cfg.AgentMaxSteps != 24 {
+		t.Fatalf("default max steps = %d, want 24", cfg.AgentMaxSteps)
+	}
+
+	t.Setenv("AIP_AGENT_MAX_STEPS", "40")
+	if cfg, err := Load(); err != nil {
+		t.Fatal(err)
+	} else if cfg.AgentMaxSteps != 40 {
+		t.Fatalf("max steps = %d, want 40", cfg.AgentMaxSteps)
+	}
+
+	t.Setenv("AIP_AGENT_MAX_STEPS", "0")
+	if cfg, err := Load(); err != nil {
+		t.Fatal(err)
+	} else if cfg.AgentMaxSteps != 24 {
+		t.Fatalf("invalid value must keep the default, got %d", cfg.AgentMaxSteps)
+	}
+}
+
 func TestLoadRejectsUnimplementedEgressAllowlist(t *testing.T) {
 	t.Setenv("AIP_DB_DSN", "postgres://localhost/aip")
 	t.Setenv("AIP_ENV", "local")
