@@ -136,8 +136,10 @@ done
 [ "$PRS" = "1" ] || fail "no pull request was recorded"
 git --git-dir "$REPOS/group/project.git" branch -a | grep -q 'aip/' || fail "no aip branch was pushed"
 
-log "merge before approval must be blocked"
-BODY='{"object_kind":"merge_request","project":{"path_with_namespace":"group/project"},"object_attributes":{"iid":7,"action":"merge","state":"merged"}}'
+PR_NUM=$(docker exec "$PG_CONTAINER" psql -U aip -d aip -tAc "select number from pull_requests limit 1" | tr -d ' ')
+[ -n "$PR_NUM" ] || fail "no pull request number in the database"
+log "merge before approval must be blocked (PR #$PR_NUM)"
+BODY="{\"object_kind\":\"merge_request\",\"project\":{\"path_with_namespace\":\"group/project\"},\"object_attributes\":{\"iid\":$PR_NUM,\"action\":\"merge\",\"state\":\"merged\"}}"
 OUT=$(curl_json "wget -qO- --header='Content-Type: application/json' --header='X-Gitlab-Token: hook-secret' --post-data='$BODY' http://$API_CONTAINER:8080/webhooks/gitlab/$REPO")
 echo "$OUT" | grep -q 'approval_required' || fail "merge was not gated: $OUT"
 
