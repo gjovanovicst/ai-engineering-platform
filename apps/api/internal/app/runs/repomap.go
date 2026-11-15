@@ -40,7 +40,12 @@ func RepoMap(archive []byte, prompt string, limit int) []string {
 		}
 		path := strings.TrimPrefix(hdr.Name, "./")
 		lower := strings.ToLower(path)
-		ext := lower[strings.LastIndex(lower, "."):]
+		dot := strings.LastIndex(lower, ".")
+		if dot < 0 {
+			// LICENSE, Makefile and Dockerfile have no extension.
+			continue
+		}
+		ext := lower[dot:]
 		if !textExt[ext] || strings.Contains(lower, "vendor/") || strings.Contains(lower, "node_modules/") {
 			continue
 		}
