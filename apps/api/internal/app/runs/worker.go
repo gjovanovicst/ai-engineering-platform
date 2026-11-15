@@ -155,7 +155,7 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 			"Investigate with read-only tools if needed, then finish with exactly one line:\n" +
 			"AIP_PLAN: {\"steps\":[\"...\"],\"files\":[\"...\"],\"risks\":[\"...\"]}\n"
 	case string(domain.AgentReview):
-		prompt += "\nYou are the REVIEW agent. Do NOT modify files.\n" +
+		prompt += reviewPrompt(w.developmentDiff(ctx, run)) +
 			"Finish with exactly one line:\n" +
 			"AIP_REVIEW: {\"findings\":[{\"severity\":\"major|minor|nit\",\"body\":\"...\"}]}\n"
 	case string(domain.AgentDevelopment):

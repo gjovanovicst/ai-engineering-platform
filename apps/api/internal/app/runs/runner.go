@@ -697,6 +697,8 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 			pr, perr := r.publisher.Publish(context.WithoutCancel(ctx), updated, result.Workspace)
 			if perr != nil {
 				r.log.Warn("runs: publish branch", slog.Any("err", perr))
+				_ = r.store.AppendEvent(context.WithoutCancel(ctx), run.OrgID, run.ID, "pr.failed", "system",
+					map[string]any{"detail": truncate(perr.Error(), 1000)})
 			} else if pr.ID != "" {
 				_ = r.store.AppendEvent(context.WithoutCancel(ctx), run.OrgID, run.ID, "pr.opened", "system",
 					map[string]any{"number": pr.Number, "url": pr.URL})
