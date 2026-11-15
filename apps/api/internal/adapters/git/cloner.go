@@ -22,6 +22,9 @@ type Cloner struct {
 	Repos     RepoLookup
 	Tokens    map[string]string
 	TokenFunc func(ctx context.Context, provider string) (string, error)
+	// RepoTokenFunc supplies the per-repository credential; it wins over the
+	// App and global tokens. An error or an empty token falls through.
+	RepoTokenFunc func(ctx context.Context, repo domain.Repo) (string, error)
 	// OrgTokenFunc supplies a per-org GitHub App token; errors fall back.
 	OrgTokenFunc func(ctx context.Context, orgID, provider string) (string, error)
 	CloneBases   map[string]string
@@ -39,6 +42,11 @@ func (c *Cloner) Clone(ctx context.Context, orgID, projectID string) ([]byte, er
 		return nil, err
 	}
 	token := c.Tokens[string(repo.Provider)]
+	if c.RepoTokenFunc != nil {
+		if fresh, terr := c.RepoTokenFunc(ctx, repo); terr == nil && fresh != "" {
+			token = fresh
+		}
+	}
 	if c.OrgTokenFunc != nil && repo.Provider == domain.ProviderGitHub {
 		if fresh, terr := c.OrgTokenFunc(ctx, orgID, string(repo.Provider)); terr == nil && fresh != "" {
 			token = fresh

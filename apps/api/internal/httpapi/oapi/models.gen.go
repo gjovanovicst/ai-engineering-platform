@@ -1551,6 +1551,15 @@ type Repo struct {
 	Provider      *string             `json:"provider,omitempty"`
 }
 
+// RepoCredential defines model for RepoCredential.
+type RepoCredential struct {
+	Configured *bool `json:"configured,omitempty"`
+
+	// Hint Last four characters of the token; never the token itself.
+	Hint      *string    `json:"hint,omitempty"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+}
+
 // Rule defines model for Rule.
 type Rule struct {
 	ActiveVersion *int                `json:"active_version,omitempty"`
@@ -2078,6 +2087,12 @@ type ConnectRepoParams struct {
 	IdempotencyKey IdempotencyKeyParam `json:"Idempotency-Key"`
 }
 
+// SetRepoCredentialJSONBody defines parameters for SetRepoCredential.
+type SetRepoCredentialJSONBody struct {
+	// Token Fine-grained PAT or GitLab token; encrypted at rest (AIP_SECRETS_KEY).
+	Token *string `json:"token,omitempty"`
+}
+
 // UpdateProjectRequiredChecksJSONBody defines parameters for UpdateProjectRequiredChecks.
 type UpdateProjectRequiredChecksJSONBody struct {
 	Checks []string `json:"checks"`
@@ -2368,6 +2383,9 @@ type CreateEnvironmentJSONRequestBody CreateEnvironmentJSONBody
 
 // ConnectRepoJSONRequestBody defines body for ConnectRepo for application/json ContentType.
 type ConnectRepoJSONRequestBody ConnectRepoJSONBody
+
+// SetRepoCredentialJSONRequestBody defines body for SetRepoCredential for application/json ContentType.
+type SetRepoCredentialJSONRequestBody SetRepoCredentialJSONBody
 
 // UpdateProjectRequiredChecksJSONRequestBody defines body for UpdateProjectRequiredChecks for application/json ContentType.
 type UpdateProjectRequiredChecksJSONRequestBody UpdateProjectRequiredChecksJSONBody

@@ -6,6 +6,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Per-repository git credentials**: an encrypted PAT per repository that takes
+  precedence over the GitHub App installation token and the global
+  `AIP_GITHUB_TOKEN`; owner/admin-only API and Repositories UI, audit events,
+  and a git-providers user guide (`docs/user/15-git-providers.md`).
 - **ASDLC flow**: task → plan approval → development → test/design gates → PR →
   CI/human approval → merge → metrics, with SSE run events.
 - **Enterprise controls**: project RBAC, append-only audit chain + witness, legal

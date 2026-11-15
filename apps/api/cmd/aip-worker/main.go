@@ -29,6 +29,7 @@ import (
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/notifications"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/previews"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/providers"
+	"github.com/gjovanovicst/ai-engineering-platform/internal/app/repocreds"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/rules"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/runartifacts"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/runs"
@@ -199,6 +200,26 @@ func main() {
 	if providerCipher != nil {
 		appTokenCipher = providerCipher
 	}
+	var repoCredCipher repocreds.Cipher
+	if providerCipher != nil {
+		repoCredCipher = providerCipher
+	}
+	repoCredentialService, err := repocreds.New(postgres.NewRepoCredentialStore(pool), repoCredCipher)
+	if err != nil {
+		logger.Error("repo credential service", slog.Any("err", err))
+		os.Exit(1)
+	}
+	publisher.RepoTokenFunc = func(ctx context.Context, repo domain.Repo) (string, error) {
+		return repoCredentialService.Token(ctx, repo.OrgID, repo.ID)
+	}
+	// The check syncer knows the repo by name, not by id.
+	repoTokenByName := func(ctx context.Context, orgID, repoName string) (string, error) {
+		repo, rerr := repoStore.ForWebhookNameInOrg(ctx, orgID, "github", repoName)
+		if rerr != nil {
+			return "", rerr
+		}
+		return repoCredentialService.Token(ctx, orgID, repo.ID)
+	}
 	githubAppSetup := githubsetup.New(postgres.NewGithubAppStore(pool), appTokenCipher, cfg.APIURL, cfg.WebURL, cfg.GitHubAPIURL)
 	orgTokenFunc := func(ctx context.Context, orgID, provider string) (string, error) {
 		if provider != "github" {
@@ -217,7 +238,7 @@ func main() {
 	gitChecks := gitadapters.NewGitHub(cfg.GitHubToken, "")
 	gitChecks.BaseURL = cfg.GitHubAPIURL
 	checkSyncer := checksync.New(postgres.NewPRSyncStore(pool), checkService,
-		map[string]checksync.Lister{"github": gitCheckLister{static: gitChecks, appToken: githubAppSetup.InstallationToken}}, logger)
+		map[string]checksync.Lister{"github": gitCheckLister{static: gitChecks, appToken: githubAppSetup.InstallationToken, repoToken: repoTokenByName}}, logger)
 	go checkSyncer.Run(ctx, time.Minute)
 	notificationService := notifications.New(postgres.NewNotificationStore(pool), logger).
 		WithEmailer(mail.NewSMTP(cfg.SMTPAddr, cfg.MailFrom), cfg.WebURL)
@@ -240,11 +261,12 @@ func main() {
 
 	publisher.OrgTokenFunc = orgTokenFunc
 	cloner := &gitadapters.Cloner{
-		Repos:        repoStore,
-		Tokens:       publisher.Tokens,
-		TokenFunc:    publisher.TokenFunc,
-		OrgTokenFunc: orgTokenFunc,
-		CloneBases:   publisher.CloneBases,
+		Repos:         repoStore,
+		Tokens:        publisher.Tokens,
+		TokenFunc:     publisher.TokenFunc,
+		OrgTokenFunc:  orgTokenFunc,
+		RepoTokenFunc: publisher.RepoTokenFunc,
+		CloneBases:    publisher.CloneBases,
 	}
 
 	objectStore, oerr := artifacts.New(ctx, cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Region, cfg.S3Bucket, cfg.S3UseSSL)
@@ -459,17 +481,27 @@ func (a publisherAdapter) Publish(ctx context.Context, run domain.Run, workspace
 
 // gitCheckLister adapts the GitHub client to checksync.
 type gitCheckLister struct {
-	static   *gitadapters.GitHub
-	appToken func(ctx context.Context, orgID string) (string, error)
+	static    *gitadapters.GitHub
+	appToken  func(ctx context.Context, orgID string) (string, error)
+	repoToken func(ctx context.Context, orgID, repo string) (string, error)
 }
 
 func (l gitCheckLister) ListChecks(ctx context.Context, orgID, repo string, number int) ([]checksync.Check, error) {
-	client := l.static
-	if l.appToken != nil {
-		if token, err := l.appToken(ctx, orgID); err == nil && token != "" {
-			client = gitadapters.NewGitHub(token, "")
-			client.BaseURL = l.static.BaseURL
+	var token string
+	if l.repoToken != nil {
+		if fresh, err := l.repoToken(ctx, orgID, repo); err == nil {
+			token = fresh
 		}
+	}
+	if token == "" && l.appToken != nil {
+		if fresh, err := l.appToken(ctx, orgID); err == nil {
+			token = fresh
+		}
+	}
+	client := l.static
+	if token != "" {
+		client = gitadapters.NewGitHub(token, "")
+		client.BaseURL = l.static.BaseURL
 	}
 	events, err := client.ListChecks(ctx, repo, number)
 	if err != nil {

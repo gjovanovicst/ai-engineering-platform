@@ -9,6 +9,9 @@ SELECT * FROM repos WHERE org_id = $1 AND project_id = $2 ORDER BY created_at DE
 -- name: GetRepo :one
 SELECT * FROM repos WHERE id = $1 AND org_id = $2;
 
+-- name: GetRepoForProject :one
+SELECT * FROM repos WHERE id = $1 AND org_id = $2 AND project_id = $3;
+
 -- name: RepoOrg :one
 SELECT app_repo_org($1);
 

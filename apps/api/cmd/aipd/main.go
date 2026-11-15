@@ -46,6 +46,7 @@ import (
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/projectaccess"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/projects"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/providers"
+	"github.com/gjovanovicst/ai-engineering-platform/internal/app/repocreds"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/restores"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/rules"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/runs"
@@ -287,6 +288,18 @@ func main() {
 		logger.Error("provider service", slog.Any("err", err))
 		os.Exit(1)
 	}
+	var repoCredCipher repocreds.Cipher
+	if providerCipher != nil {
+		repoCredCipher = providerCipher
+	}
+	repoCredentialService, err := repocreds.New(postgres.NewRepoCredentialStore(pool), repoCredCipher)
+	if err != nil {
+		logger.Error("repo credential service", slog.Any("err", err))
+		os.Exit(1)
+	}
+	merger.RepoTokenFunc = func(ctx context.Context, repo domain.Repo) (string, error) {
+		return repoCredentialService.Token(ctx, repo.OrgID, repo.ID)
+	}
 	orgCryptoStore := postgres.NewOrgCryptoStore(pool)
 	orgCryptoService := orgcrypto.New(orgCryptoStore, providerCipher)
 	secretsKey := cfg.SecretsKey
@@ -424,7 +437,7 @@ func main() {
 		Handler: httpapi.NewRouter(httpapi.Deps{
 			Version: version, StartedAt: time.Now(), Log: logger, DB: pool, Readiness: writablePool{pool: pool},
 			AllowedOrigins: []string{cfg.WebURL},
-			Auth:           accounts, Projects: projectService, Tasks: taskService, Runs: runService, Repos: repoStore, Analytics: analyticsService, Blueprints: blueprintService, Invites: inviteService, Search: searchService, Providers: providerService, Prices: usageService, Design: designService, Directory: directoryService, Rules: rulesService, Deployments: deploymentService, Checks: checkService, Artifacts: artifactStore, Notifications: notificationService, OIDC: oidcService, WebURL: cfg.WebURL,
+			Auth:           accounts, Projects: projectService, Tasks: taskService, Runs: runService, Repos: repoStore, RepoCredentials: repoCredentialService, Analytics: analyticsService, Blueprints: blueprintService, Invites: inviteService, Search: searchService, Providers: providerService, Prices: usageService, Design: designService, Directory: directoryService, Rules: rulesService, Deployments: deploymentService, Checks: checkService, Artifacts: artifactStore, Notifications: notificationService, OIDC: oidcService, WebURL: cfg.WebURL,
 			Issuer: issuer, Limits: limits, RateLimitPerMin: cfg.RateLimitPerMin, Events: bus, Usage: usageService, Orgs: orgService, DesignStandards: designStandardService, Attachments: attachmentService, GitHubApps: githubAppService, TestCommand: cfg.TestCommand, AgentBackend: cfg.AgentBackend, GitHubToken: cfg.GitHubToken, AllowedIPs: allowedIPs, GitLabToken: cfg.GitLabToken, AuditSigningKey: cfg.AuditSigningKey, AuditEd25519: auditKey, Figma: figma.New(cfg.FigmaAPIURL, cfg.FigmaToken), ApprovalReauthMinutes: cfg.ApprovalReauthMinutes, Objects: baselineObjects, MergeQueue: mergeQueueService, Previews: previewService, ProjectAccess: projectAccessService, APIKeys: apiKeyService, AuditWitness: auditWitnessService, Incidents: incidents.New(postgres.NewIncidentStore(pool)), SCIM: scim.New(postgres.NewSCIMStore(pool), inviteService), SAML: samlService, SAMLAccounts: accounts, SAMLReplay: samlReplay, SAMLAdminGroups: splitList(cfg.SAMLAdminGroups), SAMLRoleMap: roleMap, SSO: sso.New(postgres.NewSSOStore(pool), cfg.SSOAllowPrivateMetadata), OrgCrypto: orgCryptoService, Region: cfg.Region, OrgRegion: postgres.NewOrgRegion(pool), WALStats: postgres.NewWALStats(pool), BackupStats: postgres.NewBackupStats(pool), AgentPlugins: agentplugins.New(postgres.NewAgentPluginStore(pool), cfg.PluginAllowedDigests, imageverify.New(cfg.CosignBin, cfg.CosignIdentity, cfg.CosignIssuer, cfg.CosignKey)), Restores: restores.New(postgres.NewRestoreStore(pool)), GitHubAppConfigured: cfg.GitHubAppID > 0, GitHubAppWebhookSecret: cfg.GitHubAppWebhookSecret,
 		}),
 		ReadHeaderTimeout: 5 * time.Second,

@@ -44,6 +44,10 @@ type Publisher struct {
 	// TokenFunc, when set, supplies tokens (e.g. a GitHub App installation
 	// token that is refreshed automatically); it wins over Tokens.
 	TokenFunc func(ctx context.Context, provider string) (string, error)
+	// RepoTokenFunc supplies the per-repository credential. It takes
+	// precedence over every organisation/global token; an error or an empty
+	// token falls through to the next source.
+	RepoTokenFunc func(ctx context.Context, repo domain.Repo) (string, error)
 	// OrgTokenFunc takes precedence for per-org GitHub App tokens; a failure
 	// falls back to the static token so a broken app does not stop delivery.
 	OrgTokenFunc func(ctx context.Context, orgID, provider string) (string, error)
@@ -63,7 +67,7 @@ func (p *Publisher) Publish(ctx context.Context, run domain.Run, workspace []byt
 		}
 		return domain.PullRequest{}, err
 	}
-	token, err := p.tokenFor(ctx, run.OrgID, string(repo.Provider))
+	token, err := p.tokenFor(ctx, run.OrgID, repo)
 	if err != nil {
 		return domain.PullRequest{}, err
 	}
@@ -115,7 +119,7 @@ func (p *Publisher) Merge(ctx context.Context, orgID, projectID string, number i
 	if err != nil {
 		return err
 	}
-	token, err := p.tokenFor(ctx, orgID, string(repo.Provider))
+	token, err := p.tokenFor(ctx, orgID, repo)
 	if err != nil {
 		return err
 	}
@@ -212,13 +216,18 @@ func prBody(task domain.Task, run domain.Run, webURL string) string {
 	return out.String()
 }
 
-func (p *Publisher) tokenFor(ctx context.Context, orgID, provider string) (string, error) {
-	if p.OrgTokenFunc != nil && provider == "github" {
-		if token, err := p.OrgTokenFunc(ctx, orgID, provider); err == nil && token != "" {
+func (p *Publisher) tokenFor(ctx context.Context, orgID string, repo domain.Repo) (string, error) {
+	if p.RepoTokenFunc != nil {
+		if token, err := p.RepoTokenFunc(ctx, repo); err == nil && token != "" {
 			return token, nil
 		}
 	}
-	return p.token(ctx, provider)
+	if p.OrgTokenFunc != nil && repo.Provider == domain.ProviderGitHub {
+		if token, err := p.OrgTokenFunc(ctx, orgID, string(repo.Provider)); err == nil && token != "" {
+			return token, nil
+		}
+	}
+	return p.token(ctx, string(repo.Provider))
 }
 
 func (p *Publisher) token(ctx context.Context, provider string) (string, error) {
@@ -284,7 +293,7 @@ func (p *Publisher) Rebase(ctx context.Context, orgID, projectID string, number 
 	if err != nil {
 		return err
 	}
-	token, err := p.tokenFor(ctx, orgID, string(repo.Provider))
+	token, err := p.tokenFor(ctx, orgID, repo)
 	if err != nil {
 		return err
 	}

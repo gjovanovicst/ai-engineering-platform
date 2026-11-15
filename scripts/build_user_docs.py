@@ -34,7 +34,7 @@ GROUP_ORDER = {key: i for i, (key, _) in enumerate(GROUPS)}
 GROUP_FOR = {
     "overview": "start", "quickstart": "start", "concepts": "start",
     "projects-blueprints": "work", "tasks-and-board": "work", "runs-and-approvals": "work",
-    "pull-requests": "work", "quality": "quality", "analytics": "quality",
+    "pull-requests": "work", "git-providers": "work", "quality": "quality", "analytics": "quality",
     "users-access": "admin", "security-audit": "admin", "models-byok": "admin",
     "backups-recovery": "admin", "troubleshooting": "admin",
     "api-basics": "api",

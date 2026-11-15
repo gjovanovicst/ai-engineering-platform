@@ -10,11 +10,13 @@ Start with the run view and the event stream. Most failures have a specific even
 | SSO button missing | OIDC/SAML not configured or enabled for the workspace |
 | 401 after login | Session expired or the API JWT key changed |
 | 403 on a project | Workspace role is insufficient or project access is narrower |
+| 401/403/404 from GitHub or GitLab | Token scope, SSO authorisation or repo access — see [Git providers](git-providers.html#troubleshooting) |
 
 ## A run will not start
 
 - The task is still **Draft**; complete the definition of ready.
-- The repository is unreachable; check the GitHub App installation or GitLab connection.
+- The repository is unreachable; check the repository credential, the GitHub App
+  installation or the GitLab connection ([Git providers](git-providers.html)).
 - The project has no allowed agent/model.
 - A previous active run exists for the task.
 

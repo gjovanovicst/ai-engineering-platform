@@ -701,6 +701,62 @@ paths:
               schema: { $ref: "#/components/schemas/Repo" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /orgs/{org}/projects/{project}/repos/{repo}/credential:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { $ref: "#/components/parameters/ProjectParam" }
+      - { $ref: "#/components/parameters/RepoParam" }
+    get:
+      tags: [projects]
+      operationId: getRepoCredential
+      description: >-
+        Reports whether the repository has its own git credential. The token
+        itself is never returned.
+      responses:
+        "200":
+          description: Credential status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RepoCredential" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [projects]
+      operationId: setRepoCredential
+      description: >-
+        Stores an encrypted per-repository token (owner/admin only). Resolution
+        order is: repository credential, GitHub App installation token, global
+        provider token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                  writeOnly: true
+                  description: "Fine-grained PAT or GitLab token; encrypted at rest (AIP_SECRETS_KEY)."
+      responses:
+        "200":
+          description: Stored
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RepoCredential" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [projects]
+      operationId: deleteRepoCredential
+      description: Removes the repository credential and falls back to the GitHub App or global token.
+      responses:
+        "204":
+          description: Removed
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /orgs/{org}/repos/{repo}/pull-requests:
     parameters:
       - { $ref: "#/components/parameters/OrgParam" }
@@ -2946,6 +3002,16 @@ components:
         default_branch: { type: string }
         open_prs: { type: integer }
         last_sync_at: { type: [string, "null"], format: date-time }
+
+    RepoCredential:
+      type: object
+      properties:
+        configured: { type: boolean }
+        hint:
+          type: string
+          example: "…9f2c"
+          description: "Last four characters of the token; never the token itself."
+        updated_at: { type: [string, "null"], format: date-time }
 
     Check:
       type: object

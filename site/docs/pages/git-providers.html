@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Git providers · AI Engineering Platform</title>
+<meta name="description" content="The platform talks to your repository host with a token. That token pushes" />
+<link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../docs.css" />
+<script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
+</head>
+<body class="doc-page">
+<a class="skip" href="#doc-content">Skip to content</a>
+<header class="topbar">
+  <button class="menu-btn" type="button" aria-label="Open documentation menu">☰</button>
+  <a class="doc-brand" href="../index.html">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#080b12"/><path d="M7 24 16 5l9 19h-4.2l-1.6-3.7h-6.4L11.2 24H7Zm6.9-7h4.2L16 11.6 13.9 17Z" fill="#7c9cff"/><circle cx="16" cy="27" r="1.8" fill="#7c9cff"/></svg>
+    <span><strong>User guide</strong><small>AI Engineering Platform</small></span>
+  </a>
+  <div class="top-search">
+    <input id="doc-search" type="search" placeholder="Search…" autocomplete="off" aria-label="Search the user guide" />
+    <div id="doc-results" class="search-results" hidden></div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+    <a class="back-site" href="../../index.html"><span aria-hidden="true">←</span> <span class="back-long">Back to site</span><span class="back-short">Site</span></a>
+  </div>
+</header>
+<div class="docs-layout">
+  <aside class="docs-nav" aria-label="User guide">
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="../pages/overview.html">Overview</a><a class="" href="../pages/quickstart.html">Quickstart</a><a class="" href="../pages/concepts.html">Key concepts</a></div></details><details class="nav-group" open><summary>Build & ship <span>5</span></summary><div class="nav-items"><a class="" href="../pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="../pages/tasks-and-board.html">Tasks and board</a><a class="" href="../pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="../pages/pull-requests.html">Pull requests and merges</a><a class="active" href="../pages/git-providers.html">Git providers</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="../pages/quality.html">Quality gates</a><a class="" href="../pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="../pages/users-access.html">Users and access</a><a class="" href="../pages/security-audit.html">Security and audit</a><a class="" href="../pages/models-byok.html">Agents, models and BYOK</a><a class="" href="../pages/backups-recovery.html">Backups and recovery</a><a class="" href="../pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="../pages/api-events.html">SSE event catalog</a><a class="" href="../pages/api-basics.html">API basics</a></div></details><a class="nav-api" href="../api.html">API reference <span>REST</span></a></nav>
+    <a class="nav-back" href="../../index.html"><span aria-hidden="true">←</span> Back to product site</a>
+    <p class="nav-note">AI Engineering Platform · User guide</p>
+  </aside>
+  <div class="docs-main">
+    <main id="doc-content" class="doc-content">
+      <p class="breadcrumb"><a href="../index.html">User guide</a> / Build &amp; ship</p>
+<article class="prose">
+<h1 id="git-providers">Git providers</h1>
+<p>The platform talks to your repository host with a token. That token pushes branches, opens pull requests / merge requests, reads checks and (optionally) protects the default branch. This page explains which token is used, how to scope it, and what to check when the provider answers with an error.</p>
+<p>Everything here is about <strong>outbound</strong> calls from the platform to GitHub or GitLab. Inbound webhooks are covered in <a href="#webhooks">Webhooks</a>.</p>
+<h2 id="how-the-platform-chooses-a-token">How the platform chooses a token</h2>
+<p>For every repository operation the platform tries the sources in this order and stops at the first one that yields a token:</p>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">#</th><th style="text-align:left">Source</th><th style="text-align:left">Scope</th><th style="text-align:left">Where it is configured</th></tr></thead><tbody><tr><td style="text-align:left">1</td><td style="text-align:left">Repository credential</td><td style="text-align:left">one repository</td><td style="text-align:left">Project <strong>Delivery → Repositories → Credential</strong> (owner/admin)</td></tr><tr><td style="text-align:left">2</td><td style="text-align:left">GitHub App installation token</td><td style="text-align:left">every repo the app is installed on</td><td style="text-align:left"><strong>Settings → Integrations → GitHub App</strong>, or <code>AIP_GITHUB_APP_*</code></td></tr><tr><td style="text-align:left">3</td><td style="text-align:left">Global provider token</td><td style="text-align:left">every repo the token can see</td><td style="text-align:left"><code>AIP_GITHUB_TOKEN</code> / <code>AIP_GITLAB_TOKEN</code> in <code>.env</code></td></tr></tbody></table></div>
+<p>The first source that returns a non-empty token wins; a failure in one source falls through to the next, so a revoked repository credential does not stop delivery as long as an App or global token exists. The resolution order is evaluated per repository, not per project.</p>
+<blockquote><p><strong>Pilot recommendation:</strong> give the pilot project its own fine-grained PAT as a repository credential. The global token stays untouched for the rest of the organisation.</p></blockquote>
+<h2 id="per-repository-credential">Per-repository credential</h2>
+<p>A repository credential is a PAT or project access token stored encrypted with <code>AIP_SECRETS_KEY</code> (the same key that protects model provider keys). It is the narrowest and safest option: the token only has to see one repository.</p>
+<p><img src="../../assets/product-repo-credential.png" alt="Repository credential panel" /></p>
+<p><em>Project → Delivery → Repositories: the credential panel shows the repository, the token hint and when it was last updated — never the token.</em></p>
+<h3 id="store-a-credential">Store a credential</h3>
+<ol><li>Open the project, <strong>Delivery → Repositories</strong>.</li><li>Next to the repository, choose <strong>Credential</strong>.</li><li>Paste the token and <strong>Save</strong>. The panel then shows the last four characters (<code>…9f2c</code>) and the update time — never the token itself.</li><li>Run a development run, or use <strong>Protect branch</strong>, to confirm the token works.</li></ol>
+<p>The same operation over the API:</p>
+<pre><code class="language-bash">curl -s -X PUT &quot;$AIP_API_URL/api/v1/orgs/$ORG/projects/$PROJECT/repos/$REPO/credential&quot; \
+  -H &quot;Authorization: Bearer $TOKEN&quot; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -d &#x27;{&quot;token&quot;:&quot;github_pat_...&quot;}&#x27;</code></pre>
+<p><code>GET</code> on the same path returns only the status:</p>
+<pre><code class="language-json">{ &quot;configured&quot;: true, &quot;hint&quot;: &quot;…9f2c&quot;, &quot;updated_at&quot;: &quot;2026-11-15T20:10:00Z&quot; }</code></pre>
+<p><code>DELETE</code> removes the credential and the repository immediately falls back to the App or the global token. Removing a credential that is not there is a no-op.</p>
+<h3 id="rules">Rules</h3>
+<ul><li>Only <strong>owner</strong> and <strong>admin</strong> can set or remove a credential; any member can read the status.</li><li>If <code>AIP_SECRETS_KEY</code> is not configured, writes fail with a validation error instead of storing a plaintext token.</li><li>Setting and removing a credential write an audit event (<code>repo.credential.set</code> / <code>repo.credential.deleted</code>) with the repo id and the hint. The token never appears in the audit log.</li><li>Replacing a credential is a new <code>PUT</code>; there is no separate rotation endpoint.</li></ul>
+<h2 id="github-fine-grained-pat">GitHub fine-grained PAT</h2>
+<p>Create the token under <strong>Settings → Developer settings → Personal access tokens → Fine-grained tokens</strong>.</p>
+<ul><li><strong>Repository access:</strong> <em>Only select repositories</em> and pick the one repository.</li><li><strong>Permissions:</strong><ul><li><em>Contents</em>: read and write — push branches.</li><li><em>Pull requests</em>: read and write — open and merge PRs.</li><li><em>Checks</em>: read — read check runs for the gate.</li><li><em>Metadata</em>: read — mandatory, granted automatically.</li><li><em>Administration</em>: read and write — only required for <strong>Protect branch</strong> (branch protection and required checks). Skip it if your team manages branch protection outside the platform.</li></ul></li><li><strong>Expiration:</strong> prefer a short expiry. When it lapses, <code>401</code>/<code>403</code> starts appearing on runs; replace the credential in the UI.</li></ul>
+<p>For an organisation that enforces SAML SSO, authorise the token for the organisation after creating it, otherwise GitHub answers <code>403</code>.</p>
+<h2 id="github-app">GitHub App</h2>
+<p>A GitHub App avoids personal tokens and mints short-lived installation tokens for the organisation. Set it up once per organisation from <strong>Settings → Integrations → GitHub App</strong>:</p>
+<ol><li>Start the manifest flow and let GitHub create the app.</li><li>Install the app on the repository (or on the organisation).</li><li>The platform stores the private key and webhook secret encrypted and mints installation tokens on demand.</li></ol>
+<p>Event subscriptions are described in the webhook section below. The app needs the same permissions as the fine-grained PAT: <em>Contents</em>, <em>Pull requests</em>, <em>Checks</em> and — for branch protection — <em>Administration</em>.</p>
+<h2 id="gitlab-pat">GitLab PAT</h2>
+<p>Create a personal, group or project access token under <strong>Preferences → Access tokens</strong>.</p>
+<ul><li><strong>Scopes:</strong> <code>api</code> (read and write the project, including merge requests and branch protection). <code>read_api</code> is not enough for opening an MR.</li><li><strong>Role:</strong> <em>Developer</em> or higher on the project.</li><li><strong>Expiry:</strong> set one; an expired token produces <code>401</code> on the next provider call.</li></ul>
+<p>Self-hosted GitLab needs the API and clone URLs. Set them once:</p>
+<pre><code class="language-bash">AIP_GITLAB_API_URL=https://gitlab.example.com/api/v4
+AIP_GITLAB_CLONE_BASE=https://gitlab.example.com</code></pre>
+<p>GitHub Enterprise uses <code>AIP_GITHUB_API_URL</code> and <code>AIP_GITHUB_CLONE_BASE</code> the same way. The repository name is still <code>group/project</code> or <code>owner/name</code>.</p>
+<h2 id="webhooks">Webhooks</h2>
+<p>Webhooks make checks and merge state arrive immediately. The checks syncer polls once a minute as a backstop, so a missing webhook delays feedback but does not lose it.</p>
+<p>The URL is shown next to every connected repository:</p>
+<pre><code>https://&lt;your-platform&gt;/webhooks/github/&lt;repo-id&gt;
+https://&lt;your-platform&gt;/webhooks/gitlab/&lt;repo-id&gt;</code></pre>
+<h3 id="github">GitHub</h3>
+<ul><li>Content type: <code>application/json</code>.</li><li>Events: <strong>Pull requests</strong>, <strong>Check runs</strong>, <strong>Pull request reviews</strong>.</li><li>Secret: the webhook secret you entered when connecting the repository (or the GitHub App&#x27;s webhook secret). The platform verifies the HMAC signature of every delivery and rejects a mismatch with <code>401</code>.</li></ul>
+<h3 id="gitlab">GitLab</h3>
+<ul><li>Events: <strong>Merge request events</strong>, <strong>Pipeline events</strong>.</li><li>Secret token: the webhook secret from the repository connection. GitLab sends it verbatim; the platform compares it and rejects a mismatch with <code>401</code>.</li></ul>
+<h2 id="local-development-with-a-tunnel">Local development with a tunnel</h2>
+<p>GitHub and GitLab cannot deliver webhooks to <code>localhost</code>. Use a public tunnel:</p>
+<pre><code class="language-bash">cloudflared tunnel --url http://localhost:18080</code></pre>
+<ol><li>Copy the printed <code>https://…trycloudflare.com</code> URL.</li><li>Set <code>AIP_API_URL</code> to that URL so the platform builds webhook URLs pointing at the tunnel, and restart the API/worker.</li><li>Paste <code>https://…trycloudflare.com/webhooks/github/&lt;repo-id&gt;</code> into the repository webhook settings.</li><li>Quick tunnels get a new hostname on every restart — update the webhook URL when that happens.</li></ol>
+<p>Provider API calls (push, PR, checks) do not need the tunnel; only webhooks do.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Symptom</th><th style="text-align:left">Likely cause</th><th style="text-align:left">Fix</th></tr></thead><tbody><tr><td style="text-align:left"><code>401</code> from GitHub/GitLab</td><td style="text-align:left">token missing, expired, revoked, or from the wrong provider</td><td style="text-align:left">check the repository credential first, then the App installation, then the global token</td></tr><tr><td style="text-align:left"><code>403</code> from GitHub</td><td style="text-align:left">fine-grained PAT lacks <em>Contents</em> / <em>Pull requests</em> / <em>Administration</em>, or the org enforces SSO and the token is not authorised</td><td style="text-align:left">grant the permission or authorise the token for the organisation</td></tr><tr><td style="text-align:left"><code>403</code> from GitLab</td><td style="text-align:left">token role below <em>Developer</em>, or missing <code>api</code> scope</td><td style="text-align:left">raise the role or recreate the token</td></tr><tr><td style="text-align:left"><code>404</code> from GitHub/GitLab</td><td style="text-align:left">the token cannot see the repository, or <code>owner/name</code> is wrong</td><td style="text-align:left">scope the token to the repository; for apps, install it on the repository</td></tr><tr><td style="text-align:left"><code>409</code> when connecting a repository</td><td style="text-align:left">the same <code>owner/name</code> is already connected for this org</td><td style="text-align:left">edit the existing connection instead</td></tr><tr><td style="text-align:left">webhook <code>401</code></td><td style="text-align:left">webhook secret mismatch between provider and platform</td><td style="text-align:left">re-enter the same secret on both sides</td></tr><tr><td style="text-align:left">checks never arrive</td><td style="text-align:left">webhook not delivered, or the URL points at a stale tunnel</td><td style="text-align:left">check the provider&#x27;s delivery log; the syncer polls every minute</td></tr><tr><td style="text-align:left"><code>AIP_SECRETS_KEY is required</code> when saving a credential</td><td style="text-align:left">deployment has no secrets key</td><td style="text-align:left">set <code>AIP_SECRETS_KEY</code> (32 bytes, hex or base64) and restart</td></tr></tbody></table></div>
+<p>Never paste a token into a ticket, a log line or a PR description. Replace it instead; rotation is one <code>PUT</code>.</p>
+<h2 id="supported-providers">Supported providers</h2>
+<p>The repository contract currently exposes <strong>GitHub</strong> and <strong>GitLab</strong>. Gitea and Bitbucket adapters exist in the codebase, but they are not claimable as supported yet: they are not accepted by the repository schema and have not been through the provider test matrix. Treat them as experimental.</p>
+<h2 id="next">Next</h2>
+<ul><li><a href="pull-requests.html">Pull requests and merges</a></li><li><a href="projects-blueprints.html">Projects and blueprints</a></li><li><a href="models-byok.html">Models and BYOK</a></li></ul>
+</article>
+
+    </main>
+    <aside class="page-toc"><p>On this page</p><a href="#how-the-platform-chooses-a-token" class="toc-l2">How the platform chooses a token</a><a href="#per-repository-credential" class="toc-l2">Per-repository credential</a><a href="#store-a-credential" class="toc-l3">Store a credential</a><a href="#rules" class="toc-l3">Rules</a><a href="#github-fine-grained-pat" class="toc-l2">GitHub fine-grained PAT</a><a href="#github-app" class="toc-l2">GitHub App</a><a href="#gitlab-pat" class="toc-l2">GitLab PAT</a><a href="#webhooks" class="toc-l2">Webhooks</a><a href="#github" class="toc-l3">GitHub</a><a href="#gitlab" class="toc-l3">GitLab</a><a href="#local-development-with-a-tunnel" class="toc-l2">Local development with a tunnel</a><a href="#troubleshooting" class="toc-l2">Troubleshooting</a><a href="#supported-providers" class="toc-l2">Supported providers</a><a href="#next" class="toc-l2">Next</a></aside>
+  </div>
+</div>
+<div class="nav-backdrop" hidden></div>
+<script src="../docs.js" defer></script>
+</body>
+</html>

@@ -62,6 +62,11 @@ type GitHubAppTokenMinter interface {
 	InstallationToken(ctx context.Context, orgID string) (string, error)
 }
 
+// RepoTokenReader resolves the per-repository git credential.
+type RepoTokenReader interface {
+	Token(ctx context.Context, orgID, repoID string) (string, error)
+}
+
 type projectHandlers struct {
 	svc          ProjectService
 	repos        RepoService
@@ -70,6 +75,7 @@ type projectHandlers struct {
 	githubToken  string
 	gitlabToken  string
 	appTokens    GitHubAppTokenMinter
+	repoTokens   RepoTokenReader
 	objects      ObjectStore
 	mergeQueue   MergeQueueReader
 	access       ProjectAccessReader
@@ -83,6 +89,31 @@ func newProjectHandlers(svc ProjectService, repos RepoService, issuer *auth.Issu
 		log = slog.New(slog.DiscardHandler)
 	}
 	return &projectHandlers{svc: svc, repos: repos, issuer: issuer, testCommand: testCommand, agentBackend: agentBackend, githubToken: githubToken, gitlabToken: gitlabToken, appTokens: appTokens, objects: objects, mergeQueue: mergeQueue, access: access, githubApp: githubApp, log: log}
+}
+
+// withRepoTokens enables per-repository credentials (repo -> app -> global).
+func (h *projectHandlers) withRepoTokens(reader RepoTokenReader) *projectHandlers {
+	h.repoTokens = reader
+	return h
+}
+
+// tokenForRepo resolves the git token in priority order: the repository
+// credential, then the GitHub App installation token, then the global token.
+func (h *projectHandlers) tokenForRepo(ctx context.Context, orgID string, repo domain.Repo) string {
+	if h.repoTokens != nil {
+		if token, err := h.repoTokens.Token(ctx, orgID, repo.ID); err == nil && token != "" {
+			return token
+		}
+	}
+	if repo.Provider == domain.ProviderGitHub {
+		if h.appTokens != nil {
+			if token, err := h.appTokens.InstallationToken(ctx, orgID); err == nil && token != "" {
+				return token
+			}
+		}
+		return h.githubToken
+	}
+	return h.gitlabToken
 }
 
 func (h *projectHandlers) registerRoutes(mux *http.ServeMux) {
@@ -275,11 +306,12 @@ func (h *projectHandlers) protectBranch(w http.ResponseWriter, r *http.Request) 
 		branch = "main"
 	}
 	if repo.Provider == domain.ProviderGitLab {
-		if h.gitlabToken == "" {
+		token := h.tokenForRepo(r.Context(), claims.OrgID, repo)
+		if token == "" {
 			writeProblem(w, http.StatusBadRequest, "validation_failed", "no GitLab token configured")
 			return
 		}
-		client := gitadapters.NewGitLab(h.gitlabToken, "")
+		client := gitadapters.NewGitLab(token, "")
 		if err := client.ProtectBranch(r.Context(), repo.Name, branch, project.RequiredChecks); err != nil {
 			h.log.Warn("projects.protection", slog.Any("err", err))
 			writeProblem(w, http.StatusBadGateway, "github_error", "could not protect the branch: "+err.Error())
@@ -292,12 +324,7 @@ func (h *projectHandlers) protectBranch(w http.ResponseWriter, r *http.Request) 
 		writeProblem(w, http.StatusBadRequest, "validation_failed", "branch protection is not supported for this provider yet")
 		return
 	}
-	token := h.githubToken
-	if h.appTokens != nil {
-		if fresh, terr := h.appTokens.InstallationToken(r.Context(), claims.OrgID); terr == nil && fresh != "" {
-			token = fresh
-		}
-	}
+	token := h.tokenForRepo(r.Context(), claims.OrgID, repo)
 	if token == "" {
 		writeProblem(w, http.StatusBadRequest, "validation_failed", "no GitHub token or app installation available")
 		return
@@ -876,26 +903,21 @@ func (h *projectHandlers) evaluatePullRequestPolicy(w http.ResponseWriter, r *ht
 		return
 	}
 	repo := repos[0]
+	token := h.tokenForRepo(r.Context(), claims.OrgID, repo)
 	var diff string
 	switch repo.Provider {
 	case domain.ProviderGitHub:
-		token := h.githubToken
-		if h.appTokens != nil {
-			if fresh, terr := h.appTokens.InstallationToken(r.Context(), claims.OrgID); terr == nil && fresh != "" {
-				token = fresh
-			}
-		}
 		if token == "" {
 			writeProblem(w, http.StatusBadRequest, "validation_failed", "no GitHub token or app installation available")
 			return
 		}
 		diff, err = gitadapters.NewGitHub(token, "").PullRequestDiff(r.Context(), repo.Name, req.Number)
 	case domain.ProviderGitLab:
-		if h.gitlabToken == "" {
+		if token == "" {
 			writeProblem(w, http.StatusBadRequest, "validation_failed", "no GitLab token configured")
 			return
 		}
-		diff, err = gitadapters.NewGitLab(h.gitlabToken, "").PullRequestDiff(r.Context(), repo.Name, req.Number)
+		diff, err = gitadapters.NewGitLab(token, "").PullRequestDiff(r.Context(), repo.Name, req.Number)
 	default:
 		writeProblem(w, http.StatusBadRequest, "validation_failed", "provider does not support PR diff fetch")
 		return

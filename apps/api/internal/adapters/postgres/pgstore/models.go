@@ -550,6 +550,17 @@ type Repo struct {
 	CreatedAt     pgtype.Timestamptz
 }
 
+type RepoCredential struct {
+	ID         pgtype.UUID
+	OrgID      pgtype.UUID
+	RepoID     pgtype.UUID
+	Ciphertext []byte
+	Hint       string
+	CreatedBy  pgtype.UUID
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+}
+
 type RestoreRequest struct {
 	ID          pgtype.UUID
 	OrgID       pgtype.UUID
