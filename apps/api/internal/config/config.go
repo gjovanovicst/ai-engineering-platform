@@ -112,6 +112,7 @@ type Config struct {
 	PriceOutputPer1K        float64
 	LLMMaxAttempts          int
 	MaxActiveRuns           int
+	AgentMaxSteps           int
 	RateLimitPerMin         int
 	S3Endpoint              string
 	S3Bucket                string
@@ -262,6 +263,7 @@ func Load() (*Config, error) {
 		PriceOutputPer1K:        getFloat("AIP_PRICE_OUTPUT_PER_1K", 0),
 		LLMMaxAttempts:          3,
 		MaxActiveRuns:           5,
+		AgentMaxSteps:           24,
 		RateLimitPerMin:         600,
 		S3Endpoint:              get("AIP_S3_ENDPOINT", ""),
 		S3Bucket:                get("AIP_S3_BUCKET", "aip-artifacts"),
@@ -292,6 +294,11 @@ func Load() (*Config, error) {
 	if raw := strings.TrimSpace(os.Getenv("AIP_MAX_ACTIVE_RUNS")); raw != "" {
 		if n, err := strconv.Atoi(raw); err == nil && n > 0 && n <= 100 {
 			cfg.MaxActiveRuns = n
+		}
+	}
+	if raw := strings.TrimSpace(os.Getenv("AIP_AGENT_MAX_STEPS")); raw != "" {
+		if n, err := strconv.Atoi(raw); err == nil && n > 0 && n <= 200 {
+			cfg.AgentMaxSteps = n
 		}
 	}
 	if raw := strings.TrimSpace(os.Getenv("AIP_RATE_LIMIT_PER_MINUTE")); raw != "" {
