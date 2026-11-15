@@ -34,3 +34,16 @@ func TestRepoMapRanksMeetingFiles(t *testing.T) {
 		t.Fatalf("map = %v", files)
 	}
 }
+
+func TestRepoMapIgnoresFilesWithoutAnExtension(t *testing.T) {
+	t.Parallel()
+	archive := tarFilesForMap(map[string]string{
+		"LICENSE":       "pagination permissions",
+		"Makefile":      "pagination test",
+		"pagination.go": "package main func paginate() {}",
+	})
+	files := RepoMap(archive, "Fix pagination", 10)
+	if len(files) != 1 || files[0] != "pagination.go" {
+		t.Fatalf("map = %v, want [pagination.go]", files)
+	}
+}
