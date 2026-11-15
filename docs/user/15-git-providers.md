@@ -34,6 +34,10 @@ A repository credential is a PAT or project access token stored encrypted with
 `AIP_SECRETS_KEY` (the same key that protects model provider keys). It is the
 narrowest and safest option: the token only has to see one repository.
 
+![Repository credential panel](../../assets/product-repo-credential.png)
+
+*Project → Delivery → Repositories: the credential panel shows the repository, the token hint and when it was last updated — never the token.*
+
 ### Store a credential
 
 1. Open the project, **Delivery → Repositories**.
