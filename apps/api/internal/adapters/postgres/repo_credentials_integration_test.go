@@ -16,11 +16,14 @@ import (
 	"github.com/gjovanovicst/ai-engineering-platform/migrations"
 )
 
+// Distinct from the ids other integration tests seed (they share one database).
 const (
-	credOrg     = "33333333-3333-3333-3333-333333333333"
-	credUser    = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
-	credProject = "44444444-4444-4444-4444-444444444444"
-	credRepo    = "55555555-5555-5555-5555-555555555555"
+	credOrg      = "7a7a7a7a-7a7a-4a7a-8a7a-7a7a7a7a7a7a"
+	credUser     = "7b7b7b7b-7b7b-4b7b-8b7b-7b7b7b7b7b7b"
+	credProject  = "7c7c7c7c-7c7c-4c7c-8c7c-7c7c7c7c7c7c"
+	credRepo     = "7d7d7d7d-7d7d-4d7d-8d7d-7d7d7d7d7d7d"
+	credUnknown  = "7e7e7e7e-7e7e-4e7e-8e7e-7e7e7e7e7e7e"
+	credOtherOrg = "7f7f7f7f-7f7f-4f7f-8f7f-7f7f7f7f7f7f"
 )
 
 func TestRepoCredentialStoreLifecycle(t *testing.T) {
@@ -46,6 +49,10 @@ func TestRepoCredentialStoreLifecycle(t *testing.T) {
 		t.Fatalf("connect app: %v", err)
 	}
 	t.Cleanup(func() {
+		// The integration tests share one database and goose "down" rolls back a
+		// single migration, so remove what this test seeded before closing.
+		_, _ = migrator.Exec(context.Background(), `DELETE FROM orgs WHERE id = $1`, credOrg)
+		_, _ = migrator.Exec(context.Background(), `DELETE FROM users WHERE id IN ($1, $2)`, credUser, credUnknown)
 		app.Close()
 		migrator.Close()
 		if err := db.Migrate(context.Background(), migDSN, migrations.FS, "down"); err != nil {
@@ -114,7 +121,7 @@ func TestRepoCredentialStoreLifecycle(t *testing.T) {
 
 	// An actor without a users row (API key subject) must not fail the write:
 	// created_by falls back to NULL.
-	stored, err = store.Upsert(ctx, credOrg, credRepo, "99999999-9999-4999-8999-999999999999", "repo.credential.set", repocreds.Record{
+	stored, err = store.Upsert(ctx, credOrg, credRepo, credUnknown, "repo.credential.set", repocreds.Record{
 		RepoID: credRepo, Ciphertext: []byte("sealed-token-3"), Hint: "…9999",
 	})
 	if err != nil {
@@ -125,7 +132,7 @@ func TestRepoCredentialStoreLifecycle(t *testing.T) {
 	}
 
 	// Another org cannot read the credential (RLS + org predicate).
-	if _, err := store.Get(ctx, "66666666-6666-6666-6666-666666666666", credRepo); !errors.Is(err, domain.ErrNotFound) {
+	if _, err := store.Get(ctx, credOtherOrg, credRepo); !errors.Is(err, domain.ErrNotFound) {
 		t.Fatalf("cross-org get = %v, want ErrNotFound", err)
 	}
 
