@@ -75,7 +75,7 @@ func (c *Cloner) Clone(ctx context.Context, orgID, projectID string) ([]byte, er
 		// An empty repository has no branch yet; clone it without --branch so
 		// the run can still create the first commit.
 		if retryErr := c.runClone(ctx, url, dir, ""); retryErr != nil {
-			return nil, err
+			return nil, fmt.Errorf("%s", redactCredentials(err.Error(), url))
 		}
 	}
 

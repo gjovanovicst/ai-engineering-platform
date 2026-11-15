@@ -65,7 +65,8 @@ func (p HostPusher) Push(ctx context.Context, archive []byte, req PushRequest) e
 		var stderr bytes.Buffer
 		cmd.Stderr = &stderr
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("git: %s: %w: %s", args[0], err, strings.TrimSpace(stderr.String()))
+			return fmt.Errorf("git: %s: %w: %s", args[0], err,
+				redactCredentials(strings.TrimSpace(stderr.String()), req.RemoteURL))
 		}
 	}
 	return nil
