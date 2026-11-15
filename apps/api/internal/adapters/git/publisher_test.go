@@ -143,3 +143,83 @@ func TestPRBodyRendersAcceptanceEvidence(t *testing.T) {
 		}
 	}
 }
+
+func TestPublisherTokenPrecedence(t *testing.T) {
+	t.Parallel()
+	repoToken := func(value string) func(context.Context, domain.Repo) (string, error) {
+		return func(context.Context, domain.Repo) (string, error) { return value, nil }
+	}
+	orgToken := func(value string) func(context.Context, string, string) (string, error) {
+		return func(context.Context, string, string) (string, error) { return value, nil }
+	}
+	providerToken := func(value string) func(context.Context, string) (string, error) {
+		return func(context.Context, string) (string, error) { return value, nil }
+	}
+	github := domain.Repo{ID: "repo-1", OrgID: "org-1", Provider: domain.ProviderGitHub}
+	gitlab := domain.Repo{ID: "repo-2", OrgID: "org-1", Provider: domain.ProviderGitLab}
+
+	cases := []struct {
+		name   string
+		p      Publisher
+		repo   domain.Repo
+		want   string
+		absent bool
+	}{
+		{
+			name: "repository credential wins",
+			p: Publisher{
+				RepoTokenFunc: repoToken("repo-token"), OrgTokenFunc: orgToken("app-token"),
+				TokenFunc: providerToken("global-app"), Tokens: map[string]string{"github": "static"},
+			},
+			repo: github, want: "repo-token",
+		},
+		{
+			name: "app token when the repo has none",
+			p: Publisher{
+				RepoTokenFunc: repoToken(""), OrgTokenFunc: orgToken("app-token"),
+				Tokens: map[string]string{"github": "static"},
+			},
+			repo: github, want: "app-token",
+		},
+		{
+			name: "global token when neither repo nor app resolves",
+			p: Publisher{
+				RepoTokenFunc: repoToken(""), OrgTokenFunc: orgToken(""),
+				Tokens: map[string]string{"github": "static"},
+			},
+			repo: github, want: "static",
+		},
+		{
+			name: "gitlab skips the GitHub App and uses the static token",
+			p: Publisher{
+				RepoTokenFunc: repoToken(""), OrgTokenFunc: orgToken("app-token"),
+				Tokens: map[string]string{"gitlab": "glpat-static"},
+			},
+			repo: gitlab, want: "glpat-static",
+		},
+		{
+			name:   "no source configured is an error",
+			p:      Publisher{},
+			repo:   github,
+			absent: true,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := tc.p.tokenFor(context.Background(), tc.repo.OrgID, tc.repo)
+			if tc.absent {
+				if err == nil {
+					t.Fatalf("token = %q, want an error", got)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("tokenFor: %v", err)
+			}
+			if got != tc.want {
+				t.Fatalf("token = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}

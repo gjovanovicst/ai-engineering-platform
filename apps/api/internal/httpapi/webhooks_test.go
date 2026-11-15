@@ -21,6 +21,9 @@ func (f *fakeRepos) Create(context.Context, domain.Repo) (domain.Repo, error) {
 	return domain.Repo{}, nil
 }
 func (f *fakeRepos) List(context.Context, string, string) ([]domain.Repo, error) { return nil, nil }
+func (f *fakeRepos) Get(context.Context, string, string, string) (domain.Repo, error) {
+	return domain.Repo{}, domain.ErrNotFound
+}
 func (f *fakeRepos) ForWebhookName(context.Context, string, string) (domain.Repo, error) {
 	return domain.Repo{}, nil
 }

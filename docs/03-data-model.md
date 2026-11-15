@@ -16,7 +16,8 @@ orgs ──< memberships >── users
   │      │            │         ├──< approvals
   │      │            │         └──< run_artifacts
   │      │            └──< task_links (deps)
-  │      ├──< repos ──< pull_requests ──< test_results
+  │      ├──< repos ──< repo_credentials (1:1)
+  │      │        └──< pull_requests ──< test_results
   │      ├──< environments ──< deployments
   │      └──< rules ──< rule_versions
   ├──< blueprints ──< blueprint_versions
@@ -357,6 +358,19 @@ CREATE TABLE repos (
   installation_id bigint,
   created_at   timestamptz NOT NULL DEFAULT now(),
   UNIQUE (project_id, full_name)
+);
+
+-- One encrypted credential per repository. Resolution order is
+-- repo_credentials -> GitHub App installation token -> global AIP_GITHUB_TOKEN.
+CREATE TABLE repo_credentials (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id     uuid NOT NULL REFERENCES orgs(id) ON DELETE CASCADE,
+  repo_id    uuid NOT NULL UNIQUE REFERENCES repos(id) ON DELETE CASCADE,
+  ciphertext bytea NOT NULL,                        -- AES-GCM envelope from AIP_SECRETS_KEY
+  hint       text NOT NULL DEFAULT '',              -- last four characters, for the UI
+  created_by uuid REFERENCES users(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE pull_requests (

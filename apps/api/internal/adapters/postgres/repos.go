@@ -60,6 +60,25 @@ func (s *RepoStore) List(ctx context.Context, orgID, projectID string) ([]domain
 	return out, err
 }
 
+// Get returns one repo inside a project, or domain.ErrNotFound.
+func (s *RepoStore) Get(ctx context.Context, orgID, projectID, repoID string) (domain.Repo, error) {
+	var out domain.Repo
+	err := db.WithOrg(ctx, s.pool, orgID, func(ctx context.Context, tx pgx.Tx) error {
+		row, err := s.q.WithTx(tx).GetRepoForProject(ctx, pgstore.GetRepoForProjectParams{
+			ID: toUUID(repoID), OrgID: toUUID(orgID), ProjectID: toUUID(projectID),
+		})
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return domain.ErrNotFound
+			}
+			return err
+		}
+		out = repoFromRow(row)
+		return nil
+	})
+	return out, err
+}
+
 // ByProject returns the first repo connected to a project.
 func (s *RepoStore) ByProject(ctx context.Context, orgID, projectID string) (domain.Repo, error) {
 	var out domain.Repo

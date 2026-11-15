@@ -384,6 +384,38 @@ export function webhookURL(repo: Repo): string {
   return `${API_URL}/webhooks/${repo.provider}/${repo.id}`;
 }
 
+/** Per-repo git credential status. The token is never returned. */
+export type RepoCredential = {
+  configured: boolean;
+  hint: string;
+  updated_at: string | null;
+};
+
+export function getRepoCredential(orgID: string, projectID: string, repoID: string) {
+  return request<RepoCredential>(
+    `/api/v1/orgs/${orgID}/projects/${projectID}/repos/${repoID}/credential`,
+  );
+}
+
+export function setRepoCredential(
+  orgID: string,
+  projectID: string,
+  repoID: string,
+  token: string,
+) {
+  return request<RepoCredential>(
+    `/api/v1/orgs/${orgID}/projects/${projectID}/repos/${repoID}/credential`,
+    { method: "PUT", body: JSON.stringify({ token }) },
+  );
+}
+
+export function deleteRepoCredential(orgID: string, projectID: string, repoID: string) {
+  return request<void>(
+    `/api/v1/orgs/${orgID}/projects/${projectID}/repos/${repoID}/credential`,
+    { method: "DELETE" },
+  );
+}
+
 export type Metric = { value: number; unit: string; source: "measured" | "estimated" | "na" };
 
 export type MetricsSummary = {

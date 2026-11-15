@@ -46,7 +46,9 @@ A failed check keeps the PR open. Fix the cause, push a new commit and let the c
 
 ## Provider differences
 
-GitHub and GitLab are supported. Both can rebase a PR/MR before merge; GitLab's
+GitHub and GitLab are supported, and the token that opens the PR is resolved
+per repository ([Git providers](git-providers.html)). Both providers can rebase
+a PR/MR before merge; GitLab's
 rebase is asynchronous and the queue waits for the conflict status before it
 merges. The provider is recorded on the repository and on each PR. Branch
 protection remains the final authority in the Git provider; the platform does

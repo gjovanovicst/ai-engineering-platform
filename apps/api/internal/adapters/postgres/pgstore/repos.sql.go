@@ -239,6 +239,33 @@ func (q *Queries) GetRepoByProject(ctx context.Context, arg GetRepoByProjectPara
 	return i, err
 }
 
+const getRepoForProject = `-- name: GetRepoForProject :one
+SELECT id, org_id, project_id, provider, name, external_id, default_branch, webhook_secret, created_at FROM repos WHERE id = $1 AND org_id = $2 AND project_id = $3
+`
+
+type GetRepoForProjectParams struct {
+	ID        pgtype.UUID
+	OrgID     pgtype.UUID
+	ProjectID pgtype.UUID
+}
+
+func (q *Queries) GetRepoForProject(ctx context.Context, arg GetRepoForProjectParams) (Repo, error) {
+	row := q.db.QueryRow(ctx, getRepoForProject, arg.ID, arg.OrgID, arg.ProjectID)
+	var i Repo
+	err := row.Scan(
+		&i.ID,
+		&i.OrgID,
+		&i.ProjectID,
+		&i.Provider,
+		&i.Name,
+		&i.ExternalID,
+		&i.DefaultBranch,
+		&i.WebhookSecret,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listPullRequestsForProject = `-- name: ListPullRequestsForProject :many
 SELECT pr.id, pr.org_id, pr.repo_id, pr.task_id, pr.provider, pr.number, pr.url, pr.state, pr.created_at, pr.merged_at FROM pull_requests pr
 JOIN repos r ON r.id = pr.repo_id

@@ -937,7 +937,13 @@ export function ProjectView({ projectId }: { projectId: string }) {
         />
       ) : null}
 
-      {tab === "delivery" && deliveryTab === "repos" && claims ? <RepoPanel orgID={claims.org} projectID={projectId} /> : null}
+      {tab === "delivery" && deliveryTab === "repos" && claims ? (
+        <RepoPanel
+          orgID={claims.org}
+          projectID={projectId}
+          canManage={claims.role === "owner" || claims.role === "admin"}
+        />
+      ) : null}
       {tab === "delivery" && deliveryTab === "environments" && claims ? <><EnvironmentsPanel orgID={claims.org} projectID={projectId} /><PreviewsPanel orgID={claims.org} projectID={projectId} /></> : null}
       {tab === "delivery" && deliveryTab === "prs" && claims ? <PullRequestsPanel orgID={claims.org} projectID={projectId} /> : null}
       {tab === "delivery" && deliveryTab === "access" && claims ? <ProjectMembersPanel orgID={claims.org} projectID={projectId} /> : null}

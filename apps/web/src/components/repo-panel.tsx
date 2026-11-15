@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
+import { RepoCredentialControl } from "@/components/repo-credential-panel";
 import {
   ApiError,
   connectRepo,
@@ -16,7 +17,15 @@ import {
   type ConnectRepoInput,
 } from "@/lib/api";
 
-export function RepoPanel({ orgID, projectID }: { orgID: string; projectID: string }) {
+export function RepoPanel({
+  orgID,
+  projectID,
+  canManage = false,
+}: {
+  orgID: string;
+  projectID: string;
+  canManage?: boolean;
+}) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<ConnectRepoInput>({
@@ -159,6 +168,9 @@ export function RepoPanel({ orgID, projectID }: { orgID: string; projectID: stri
                 {repo.name}
               </a>
               <span className="text-xs text-text-muted">base: {repo.default_branch}</span>
+              {canManage ? (
+                <RepoCredentialControl orgID={orgID} projectID={projectID} repo={repo} />
+              ) : null}
               <code className="ml-auto truncate rounded bg-bg-hover px-2 py-1 text-[11px] text-text-secondary" title={webhookURL(repo)}>
                 {webhookURL(repo)}
               </code>

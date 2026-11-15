@@ -15,6 +15,7 @@ import (
 type RepoService interface {
 	Create(ctx context.Context, r domain.Repo) (domain.Repo, error)
 	List(ctx context.Context, orgID, projectID string) ([]domain.Repo, error)
+	Get(ctx context.Context, orgID, projectID, repoID string) (domain.Repo, error)
 	ForWebhook(ctx context.Context, repoID string) (domain.Repo, error)
 	ForWebhookName(ctx context.Context, provider, name string) (domain.Repo, error)
 	RecordPullRequest(ctx context.Context, pr domain.PullRequest) (domain.PullRequest, error)
@@ -27,16 +28,17 @@ type RepoService interface {
 
 type repoHandlers struct {
 	repos    RepoService
+	creds    RepoCredentialService
 	projects ProjectService
 	issuer   *auth.Issuer
 	log      *slog.Logger
 }
 
-func newRepoHandlers(repos RepoService, projects ProjectService, issuer *auth.Issuer, log *slog.Logger) *repoHandlers {
+func newRepoHandlers(repos RepoService, creds RepoCredentialService, projects ProjectService, issuer *auth.Issuer, log *slog.Logger) *repoHandlers {
 	if log == nil {
 		log = slog.New(slog.DiscardHandler)
 	}
-	return &repoHandlers{repos: repos, projects: projects, issuer: issuer, log: log}
+	return &repoHandlers{repos: repos, creds: creds, projects: projects, issuer: issuer, log: log}
 }
 
 func (h *repoHandlers) registerRoutes(mux *http.ServeMux) {
@@ -44,6 +46,14 @@ func (h *repoHandlers) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/orgs/{org}/projects/{project}/repos", h.list)
 	mux.HandleFunc("GET /api/v1/orgs/{org}/projects/{project}/pull-requests", h.pullRequests)
 	mux.HandleFunc("GET /api/v1/orgs/{org}/pull-requests/{pr}", h.pullRequest)
+}
+
+// registerCredentialRoutes is separate because the credential store is optional
+// in tests and in deployments that do not set AIP_SECRETS_KEY.
+func (h *repoHandlers) registerCredentialRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /api/v1/orgs/{org}/projects/{project}/repos/{repo}/credential", h.credential)
+	mux.HandleFunc("PUT /api/v1/orgs/{org}/projects/{project}/repos/{repo}/credential", h.setCredential)
+	mux.HandleFunc("DELETE /api/v1/orgs/{org}/projects/{project}/repos/{repo}/credential", h.deleteCredential)
 }
 
 func (h *repoHandlers) create(w http.ResponseWriter, r *http.Request) {

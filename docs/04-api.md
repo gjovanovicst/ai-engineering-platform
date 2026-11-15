@@ -147,6 +147,7 @@ Idempotency-Key: 9f1c2b7e-...
 | GET/POST | `/orgs/{org}/blueprints` | blueprint list / creation | ✓ |
 | POST | `.../blueprints/{bp}/versions` | new version | ✓ |
 | GET/POST | `.../projects/{project}/repos` | git link | ✓ |
+| GET/PUT/DELETE | `.../projects/{project}/repos/{repo}/credential` | per-repo token (owner/admin; never returned) | — |
 | GET | `/orgs/{org}/repos/{repo}/pull-requests` | PR list | — |
 | GET | `/orgs/{org}/pull-requests/{pr}` | PR detail: checks, files, review findings | — |
 | POST | `/orgs/{org}/pull-requests/{pr}/merge` | merge (human only; GitHub merge API) | ✓ |

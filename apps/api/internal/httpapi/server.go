@@ -44,6 +44,7 @@ type Deps struct {
 	Tasks                  TaskService
 	Runs                   RunService
 	Repos                  RepoService
+	RepoCredentials        RepoCredentialService
 	Analytics              AnalyticsService
 	Blueprints             BlueprintService
 	WebURL                 string
@@ -150,7 +151,7 @@ func NewRouter(d Deps) http.Handler {
 		newAuthHandlers(d.Auth, d.Issuer, d.Limits, d.Log).registerRoutes(mux)
 	}
 	if d.Projects != nil {
-		newProjectHandlers(d.Projects, d.Repos, d.Issuer, d.TestCommand, d.AgentBackend, d.GitHubToken, d.GitLabToken, d.GitHubApps, d.Objects, d.MergeQueue, d.ProjectAccess, d.GitHubAppConfigured, d.Log).registerRoutes(mux)
+		newProjectHandlers(d.Projects, d.Repos, d.Issuer, d.TestCommand, d.AgentBackend, d.GitHubToken, d.GitLabToken, d.GitHubApps, d.Objects, d.MergeQueue, d.ProjectAccess, d.GitHubAppConfigured, d.Log).withRepoTokens(d.RepoCredentials).registerRoutes(mux)
 	}
 	if d.Tasks != nil {
 		newTaskHandlers(d.Tasks, d.Projects, d.Issuer, d.Log).registerRoutes(mux)
@@ -159,7 +160,11 @@ func NewRouter(d Deps) http.Handler {
 		newRunHandlers(d.Runs, d.Projects, d.Tasks, d.Issuer, d.Log, d.Events, d.ProjectAccess, time.Duration(d.ApprovalReauthMinutes)*time.Minute).registerRoutes(mux)
 	}
 	if d.Repos != nil {
-		newRepoHandlers(d.Repos, d.Projects, d.Issuer, d.Log).registerRoutes(mux)
+		repos := newRepoHandlers(d.Repos, d.RepoCredentials, d.Projects, d.Issuer, d.Log)
+		repos.registerRoutes(mux)
+		if d.RepoCredentials != nil {
+			repos.registerCredentialRoutes(mux)
+		}
 		newWebhookHandlers(d.Repos, d.Tasks, d.Checks, nil, d.Log).
 			withAppSecret(d.GitHubAppWebhookSecret).
 			withGitHubApps(d.GitHubApps).registerRoutes(mux)

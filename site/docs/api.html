@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>API reference · AI Engineering Platform</title>
-<meta name="description" content="REST API reference: 123 operations and 59 schemas, generated from OpenAPI." />
+<meta name="description" content="REST API reference: 126 operations and 60 schemas, generated from OpenAPI." />
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="docs.css" />
 <script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
@@ -28,7 +28,7 @@
 </header>
 <div class="docs-layout">
   <aside class="docs-nav" aria-label="User guide">
-    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="pages/overview.html">Overview</a><a class="" href="pages/quickstart.html">Quickstart</a><a class="" href="pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>4</span></summary><div class="nav-items"><a class="" href="pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="pages/tasks-and-board.html">Tasks and board</a><a class="" href="pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="pages/pull-requests.html">Pull requests and merges</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="pages/quality.html">Quality gates</a><a class="" href="pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="pages/users-access.html">Users and access</a><a class="" href="pages/security-audit.html">Security and audit</a><a class="" href="pages/models-byok.html">Agents, models and BYOK</a><a class="" href="pages/backups-recovery.html">Backups and recovery</a><a class="" href="pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="pages/api-events.html">SSE event catalog</a><a class="" href="pages/api-basics.html">API basics</a></div></details><a class="nav-api active" href="api.html">API reference <span>REST</span></a></nav>
+    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="pages/overview.html">Overview</a><a class="" href="pages/quickstart.html">Quickstart</a><a class="" href="pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>5</span></summary><div class="nav-items"><a class="" href="pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="pages/tasks-and-board.html">Tasks and board</a><a class="" href="pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="pages/pull-requests.html">Pull requests and merges</a><a class="" href="pages/git-providers.html">Git providers</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="pages/quality.html">Quality gates</a><a class="" href="pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="pages/users-access.html">Users and access</a><a class="" href="pages/security-audit.html">Security and audit</a><a class="" href="pages/models-byok.html">Agents, models and BYOK</a><a class="" href="pages/backups-recovery.html">Backups and recovery</a><a class="" href="pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="pages/api-events.html">SSE event catalog</a><a class="" href="pages/api-basics.html">API basics</a></div></details><a class="nav-api active" href="api.html">API reference <span>REST</span></a></nav>
     <a class="nav-back" href="../index.html"><span aria-hidden="true">←</span> Back to product site</a>
     <p class="nav-note">AI Engineering Platform · User guide</p>
   </aside>
@@ -58,7 +58,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 <section id="operations" class="api-section"><h2>Operations</h2>
 <div class="api-tag-summary"><a href="#tag-auth">auth</a><span>16</span></div>
 <div class="api-tag-summary"><a href="#tag-orgs">orgs</a><span>18</span></div>
-<div class="api-tag-summary"><a href="#tag-projects">projects</a><span>27</span></div>
+<div class="api-tag-summary"><a href="#tag-projects">projects</a><span>30</span></div>
 <div class="api-tag-summary"><a href="#tag-tasks">tasks</a><span>7</span></div>
 <div class="api-tag-summary"><a href="#tag-runs">runs</a><span>10</span></div>
 <div class="api-tag-summary"><a href="#tag-approvals">approvals</a><span>2</span></div>
@@ -349,7 +349,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 </tbody></table></div>
 </article>
 </section>
-<section id="tag-projects" class="api-section"><div class="tag-head"><h2>projects</h2><span>27 operations</span></div>
+<section id="tag-projects" class="api-section"><div class="tag-head"><h2>projects</h2><span>30 operations</span></div>
 <article class="endpoint">
 <div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects</code><span class="opid">listProjects</span></div>
 <div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
@@ -400,6 +400,34 @@ curl -H "Authorization: Bearer $TOKEN" \
 <div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
 <tr><td><code>201</code></td><td>Connected</td><td><a href="#schema-repo"><code>Repo</code></a></td></tr>
 <tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects/{project}/repos/{repo}/credential</code><span class="opid">getRepoCredential</span></div>
+<p>Reports whether the repository has its own git credential. The token itself is never returned.</p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Credential status</td><td><a href="#schema-repocredential"><code>RepoCredential</code></a></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method put">PUT</span><code class="path">/orgs/{org}/projects/{project}/repos/{repo}/credential</code><span class="opid">setRepoCredential</span></div>
+<p>Stores an encrypted per-repository token (owner/admin only). Resolution order is: repository credential, GitHub App installation token, global provider token.</p>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>Stored</td><td><a href="#schema-repocredential"><code>RepoCredential</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+<tr><td><code>403</code></td><td></td><td></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method delete">DELETE</span><code class="path">/orgs/{org}/projects/{project}/repos/{repo}/credential</code><span class="opid">deleteRepoCredential</span></div>
+<p>Removes the repository credential and falls back to the GitHub App or global token.</p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Removed</td><td></td></tr>
+<tr><td><code>403</code></td><td></td><td></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
 </tbody></table></div>
 </article>
 <article class="endpoint">
@@ -1109,7 +1137,7 @@ adds the membership and returns a session.
 </tbody></table></div>
 </article>
 </section>
-<section id="schemas" class="api-section"><div class="tag-head"><h2>Schemas</h2><span>59 definitions</span></div>
+<section id="schemas" class="api-section"><div class="tag-head"><h2>Schemas</h2><span>60 definitions</span></div>
 <details class="schema" id="schema-problem"><summary><code>Problem</code><span>7 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>type</code> *</td><td><code>uri</code></td><td></td></tr><tr><td><code>title</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>status</code> *</td><td><code>integer</code></td><td></td></tr><tr><td><code>detail</code></td><td><code>string</code></td><td></td></tr><tr><td><code>instance</code></td><td><code>string</code></td><td></td></tr><tr><td><code>code</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>fields</code></td><td><code>array&lt;object&gt;</code></td><td></td></tr></tbody></table></div></details>
 <details class="schema" id="schema-tokenpair"><summary><code>TokenPair</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>access_token</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>refresh_token</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>expires_in</code> *</td><td><code>integer</code></td><td>seconds</td></tr></tbody></table></div></details>
 <details class="schema" id="schema-me"><summary><code>Me</code><span>2 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>user</code></td><td><a href="#schema-user"><code>User</code></a></td><td></td></tr><tr><td><code>orgs</code></td><td><code>array&lt;object&gt;</code></td><td></td></tr></tbody></table></div></details>
@@ -1145,6 +1173,7 @@ adds the membership and returns a session.
 <details class="schema" id="schema-member"><summary><code>Member</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>user_id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>email</code></td><td><code>email</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>role</code></td><td><a href="#schema-orgrole"><code>OrgRole</code></a></td><td></td></tr><tr><td><code>last_active_at</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
 <details class="schema" id="schema-provider"><summary><code>Provider</code><span>8 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>base_url</code></td><td><code>uri</code></td><td></td></tr><tr><td><code>enabled</code></td><td><code>boolean</code></td><td></td></tr><tr><td><code>model</code></td><td><code>string</code></td><td></td></tr><tr><td><code>kind</code></td><td><code>string</code></td><td></td></tr><tr><td><code>key_hint</code></td><td><code>string</code></td><td>last characters of the stored key, never the key</td></tr><tr><td><code>has_key</code></td><td><code>boolean</code></td><td>true if a secret is set (never returned)</td></tr></tbody></table></div></details>
 <details class="schema" id="schema-repo"><summary><code>Repo</code><span>6 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>provider</code></td><td><code>string</code></td><td></td></tr><tr><td><code>full_name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>default_branch</code></td><td><code>string</code></td><td></td></tr><tr><td><code>open_prs</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>last_sync_at</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-repocredential"><summary><code>RepoCredential</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>configured</code></td><td><code>boolean</code></td><td></td></tr><tr><td><code>hint</code></td><td><code>string</code></td><td>Last four characters of the token; never the token itself.</td></tr><tr><td><code>updated_at</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
 <details class="schema" id="schema-check"><summary><code>Check</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>state</code></td><td><code>string</code></td><td></td></tr><tr><td><code>meta</code></td><td><code>['string', 'null']</code></td><td></td></tr></tbody></table></div></details>
 <details class="schema" id="schema-pullrequest"><summary><code>PullRequest</code><span>9 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>number</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>title</code></td><td><code>string</code></td><td></td></tr><tr><td><code>url</code></td><td><code>uri</code></td><td></td></tr><tr><td><code>head</code></td><td><code>string</code></td><td></td></tr><tr><td><code>base</code></td><td><code>string</code></td><td></td></tr><tr><td><code>state</code></td><td><code>string</code></td><td></td></tr><tr><td><code>checks_summary</code></td><td><code>object</code></td><td></td></tr><tr><td><code>updated_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
 <details class="schema" id="schema-pullrequestdetail"><summary><code>PullRequestDetail</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
