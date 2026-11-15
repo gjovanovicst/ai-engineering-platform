@@ -327,3 +327,12 @@ func (r *statusRecorder) WriteHeader(status int) {
 	r.status = status
 	r.ResponseWriter.WriteHeader(status)
 }
+
+// Flush keeps Server-Sent Events working through the metrics middleware.
+// Without it the run event stream would buffer silently and the UI would never
+// see the events after the first buffer fills (for example await_approval).
+func (r *statusRecorder) Flush() {
+	if f, ok := r.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
