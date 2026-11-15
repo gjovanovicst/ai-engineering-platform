@@ -16,6 +16,7 @@ PG_CONTAINER=aip-e2e-postgres
 NETWORK=aip_default
 IMAGE=aip/sandbox:go1.25-node22
 REPOS=/tmp/aip-e2e-repos
+CREATED_NETWORK=0
 
 log() { printf '\n[e2e] %s\n' "$1"; }
 fail() { printf '\n[e2e] FAILED: %s\n' "$1" >&2; exit 1; }
@@ -25,6 +26,9 @@ cleanup() {
     return
   fi
   docker rm -f "$API_CONTAINER" "$WORKER_CONTAINER" "$GITLAB_CONTAINER" "$PG_CONTAINER" >/dev/null 2>&1 || true
+  if [ "$CREATED_NETWORK" = "1" ]; then
+    docker network rm "$NETWORK" >/dev/null 2>&1 || true
+  fi
 }
 trap cleanup EXIT
 
@@ -35,6 +39,10 @@ log "build binaries"
 
 log "start dependencies"
 cleanup
+if ! docker network inspect "$NETWORK" >/dev/null 2>&1; then
+  docker network create "$NETWORK" >/dev/null
+  CREATED_NETWORK=1
+fi
 docker run -d --name "$PG_CONTAINER" --network "$NETWORK" \
   -e POSTGRES_USER=aip -e POSTGRES_PASSWORD=aip -e POSTGRES_DB=aip \
   -v "$ROOT/deploy/postgres/00_roles.sql:/docker-entrypoint-initdb.d/00_roles.sql:ro" \
