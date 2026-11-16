@@ -16,12 +16,17 @@ type toolbox interface {
 	Grep(ctx context.Context, pattern string) (string, error)
 	Write(ctx context.Context, path, content string) error
 	Test(ctx context.Context) (string, error)
+	// Fetch downloads a Go module on the host and installs it in the sandbox's
+	// offline module cache.
+	Fetch(ctx context.Context, module, version string) (string, error)
 }
 
 type sandboxToolbox struct {
 	sandbox     sandbox.Sandbox
 	handle      sandbox.Handle
 	testCommand string
+	goBin       string
+	goproxy     string
 }
 
 func (t *sandboxToolbox) run(ctx context.Context, script string, args ...string) (string, error) {
@@ -70,6 +75,10 @@ func (t *sandboxToolbox) Write(ctx context.Context, path, content string) error 
 	return t.sandbox.WriteFile(ctx, t.handle, path, []byte(content))
 }
 
+func (t *sandboxToolbox) Fetch(ctx context.Context, module, version string) (string, error) {
+	return fetchModule(ctx, t.sandbox, t.handle, t.goBin, t.goproxy, module, version)
+}
+
 func (t *sandboxToolbox) Test(ctx context.Context) (string, error) {
 	command := strings.TrimSpace(t.testCommand)
 	if command == "" {
@@ -106,6 +115,12 @@ func toolSpecs(readOnly bool) []map[string]any {
 		specs = append(specs, fn("write_file", "Create or overwrite a file with the given content.", obj(map[string]any{
 			"path": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"},
 		}, "path", "content")))
+		specs = append(specs, fn("fetch_module",
+			"Download a Go module into the sandbox's offline module cache. The worker host fetches it; the sandbox has no network. Use this when go build or go test reports a missing module instead of vendoring or reimplementing it. Example: module golang.org/x/crypto, version v0.36.0.",
+			obj(map[string]any{
+				"module":  map[string]any{"type": "string", "description": "Go module path, e.g. golang.org/x/crypto"},
+				"version": map[string]any{"type": "string", "description": "module version, e.g. v0.36.0"},
+			}, "module", "version")))
 	}
 	return specs
 }

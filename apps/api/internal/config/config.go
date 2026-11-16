@@ -113,6 +113,8 @@ type Config struct {
 	LLMMaxAttempts          int
 	MaxActiveRuns           int
 	AgentMaxSteps           int
+	DepsGoBin               string
+	DepsGoproxy             string
 	RateLimitPerMin         int
 	S3Endpoint              string
 	S3Bucket                string
@@ -264,6 +266,8 @@ func Load() (*Config, error) {
 		LLMMaxAttempts:          3,
 		MaxActiveRuns:           5,
 		AgentMaxSteps:           24,
+		DepsGoBin:               get("AIP_DEPS_GO_BIN", "go"),
+		DepsGoproxy:             get("AIP_DEPS_GOPROXY", "https://proxy.golang.org,direct"),
 		RateLimitPerMin:         600,
 		S3Endpoint:              get("AIP_S3_ENDPOINT", ""),
 		S3Bucket:                get("AIP_S3_BUCKET", "aip-artifacts"),
