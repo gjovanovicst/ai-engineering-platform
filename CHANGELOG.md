@@ -10,6 +10,9 @@ All notable changes to this project. Dates are 2026.
   precedence over the GitHub App installation token and the global
   `AIP_GITHUB_TOKEN`; owner/admin-only API and Repositories UI, audit events,
   and a git-providers user guide (`docs/user/15-git-providers.md`).
+- **The approved plan reaches development**: the development run now receives the
+  planning run's plan (`run.Plan`), so the implementation agent works from the
+  approved steps instead of only the task text.
 - **Run failure UX**: the run API returns `failure_code`/`failure_detail`, the run
   page shows them with a **Retry task** button, and a failed run parks the task in
   `blocked` (instead of leaving it in progress) with the failure reason.

@@ -482,6 +482,13 @@ func (s *Service) Decide(ctx context.Context, orgID, approvalID, decision, reaso
 			})
 			if derr == nil {
 				developmentRunID = devRun.ID
+				// The development prompt includes run.Plan; without this copy the
+				// approved plan never reaches the implementation agent.
+				if len(run.Plan) > 0 {
+					if perr := s.store.SetPlan(ctx, run.OrgID, devRun.ID, run.Plan, ""); perr != nil {
+						s.log.Warn("runs: copy the approved plan to the development run", slog.Any("err", perr))
+					}
+				}
 				if eerr := s.enqueuer.Enqueue(ctx, devRun.ID, devRun.OrgID); eerr != nil {
 					s.log.Error("runs: enqueue development", slog.Any("err", eerr))
 				}
