@@ -73,6 +73,8 @@ All notable changes to this project. Dates are 2026.
 - Git push and clone errors redact the token embedded in the remote URL.
 - A failed branch push records a `pr.failed` event with the provider error
   instead of only a log warning.
+- GitHub rebase no longer sends an empty `expected_head_sha` (GitHub answered
+  422); an already up-to-date branch is treated as success.
 - Deterministic frozen context: tar metadata/order and agent type no longer change
   the hash (e2e no longer fails `context_changed`).
 - `GO-2026-4753`: upgraded goxmldsig to 1.6.0 (SAML signature bypass).

@@ -175,3 +175,61 @@ func TestGitHubPullRequestDiff(t *testing.T) {
 		t.Fatalf("diff=%q err=%v", diff, err)
 	}
 }
+
+func TestGitHubRebaseOmitsExpectedHeadSha(t *testing.T) {
+	t.Parallel()
+	var gotPath, gotBody string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		raw, _ := io.ReadAll(r.Body)
+		gotBody = string(raw)
+		w.WriteHeader(http.StatusAccepted)
+		_, _ = w.Write([]byte(`{"message":"Updating pull request branch"}`))
+	}))
+	defer server.Close()
+
+	p := NewGitHub("tok-1", "")
+	p.BaseURL = server.URL
+	p.Client = server.Client()
+	if err := p.RebasePullRequest(context.Background(), "o/r", 7); err != nil {
+		t.Fatal(err)
+	}
+	if gotPath != "/repos/o/r/pulls/7/update-branch" {
+		t.Fatalf("path = %q", gotPath)
+	}
+	if strings.Contains(gotBody, "expected_head_sha") {
+		t.Fatalf("must not send an empty expected_head_sha, body = %s", gotBody)
+	}
+}
+
+func TestGitHubRebaseTreatsUpToDateAsSuccess(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		_, _ = w.Write([]byte(`{"message":"Unable to update pull request branch: branch is already up to date"}`))
+	}))
+	defer server.Close()
+
+	p := NewGitHub("tok-1", "")
+	p.BaseURL = server.URL
+	p.Client = server.Client()
+	if err := p.RebasePullRequest(context.Background(), "o/r", 7); err != nil {
+		t.Fatalf("an up-to-date branch must not fail the queue: %v", err)
+	}
+}
+
+func TestGitHubRebaseReportsRealErrors(t *testing.T) {
+	t.Parallel()
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		_, _ = w.Write([]byte(`{"message":"expected head sha didn't match current head ref."}`))
+	}))
+	defer server.Close()
+
+	p := NewGitHub("tok-1", "")
+	p.BaseURL = server.URL
+	p.Client = server.Client()
+	if err := p.RebasePullRequest(context.Background(), "o/r", 7); err == nil {
+		t.Fatal("a real rebase error must be returned")
+	}
+}
