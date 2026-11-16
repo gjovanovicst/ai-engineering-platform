@@ -27,7 +27,8 @@ func reviewPrompt(diff string) string {
 		diff = diff[:reviewDiffLimit] + "\n[diff truncated]\n"
 	}
 	b.WriteString("The change under review is the latest development run's diff. Review THESE changes; " +
-		"the base repository alone is not the change.\n\n```diff\n")
+		"the base repository alone is not the change. Flag hand-written cryptography, " +
+		"reimplemented third-party libraries and agent-authored vendor code as findings.\n\n```diff\n")
 	b.WriteString(diff)
 	b.WriteString("\n```\n")
 	return b.String()

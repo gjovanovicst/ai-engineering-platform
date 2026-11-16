@@ -69,6 +69,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- A missing dependency in the offline sandbox is classified as
+  `dependency_missing` (instead of `test_gate_failed`); the development prompt
+  tells the agent to stop and report instead of reimplementing a library, and
+  the review flags hand-written cryptography and agent-authored vendor code.
 - `RepoMap` no longer panics on files without an extension (`LICENSE`,
   `Makefile`): they are skipped instead of sliced at index -1.
 - The run event stream (SSE) flushes through the metrics middleware again; the

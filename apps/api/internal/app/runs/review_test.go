@@ -11,6 +11,9 @@ func TestReviewPromptIncludesTheDevelopmentDiff(t *testing.T) {
 	if !strings.Contains(prompt, "diff --git a/main.go b/main.go") {
 		t.Fatalf("prompt does not contain the diff: %s", prompt)
 	}
+	if !strings.Contains(prompt, "hand-written cryptography") {
+		t.Fatal("prompt must ask the reviewer to flag hand-written cryptography")
+	}
 	if !strings.Contains(prompt, "THESE changes") {
 		t.Fatal("prompt must tell the agent to review the diff, not the base repository")
 	}

@@ -161,7 +161,9 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 	case string(domain.AgentDevelopment):
 		prompt += "\nYou are the DEVELOPMENT agent. Implement the task inside the repository with " +
 			"write_file and verify it with run_tests. Execute the whole approved plan; do not stop " +
-			"after one file or one step. When everything is implemented and the tests pass, finish " +
+			"after one file or one step. If a required dependency is not available in this offline " +
+			"sandbox, stop and report it in your final message; never reimplement a library and never " +
+			"write cryptography yourself. When everything is implemented and the tests pass, finish " +
 			"with the AIP_PROOF line described below.\n"
 	}
 	criteria := make([]string, 0, len(task.Acceptance))
