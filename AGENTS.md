@@ -87,6 +87,10 @@ Run-Id: <uuid>            # if it originated from an agent run
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `infra`.
 Scope = package or module (`tasks`, `runs`, `agent/sandbox`, `web/backlog`).
 
+Every `feat`, `fix` and `perf` PR updates `CHANGELOG.md` under Unreleased. CI
+enforces this; for a justified exception put `[skip-changelog]` in the PR
+title.
+
 The PR description contains 5 required sections: **What / Why / How tested / Risk and rollback /
 Screenshot** (for UI). Without them the PR is not ready for review.
 
