@@ -89,8 +89,8 @@ func fetchModule(ctx context.Context, sb sandbox.Sandbox, h sandbox.Handle, goBi
 		return "", fmt.Errorf("fetch module: copy archive: %w", err)
 	}
 	res, err := sb.Exec(ctx, h, []string{"sh", "-lc",
-		"mkdir -p " + moduleCacheDir + " && tar -xf /tmp/aip-mod.tar -C " + moduleCacheDir +
-			" && rm -f /tmp/aip-mod.tar"}, nil)
+		"mkdir -p " + moduleCacheDir + " && chmod -R u+w " + moduleCacheDir + " 2>/dev/null; " +
+			"tar -xf /tmp/aip-mod.tar -C " + moduleCacheDir + " && rm -f /tmp/aip-mod.tar"}, nil)
 	if err != nil {
 		return "", fmt.Errorf("fetch module: install: %w", err)
 	}
@@ -123,8 +123,13 @@ func tarModuleCache(root string) ([]byte, int, error) {
 			return herr
 		}
 		hdr.Name = filepath.ToSlash(rel)
+		// Go marks module files read-only; the sandbox must be able to write on
+		// top of them (locks, retries), so normalise the modes.
 		if d.IsDir() {
 			hdr.Name += "/"
+			hdr.Mode = 0o755
+		} else {
+			hdr.Mode = 0o644
 		}
 		if d.Type()&fs.ModeSymlink != 0 {
 			link, lerr := os.Readlink(p)

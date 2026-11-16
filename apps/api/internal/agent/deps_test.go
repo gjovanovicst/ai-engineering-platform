@@ -49,6 +49,7 @@ func TestFetchModuleInstallsTheModuleCache(t *testing.T) {
 mkdir -p "$GOMODCACHE/cache/download/example.com/x/@v" "$GOMODCACHE/example.com/x@v1.0.0"
 printf 'module example.com/x\n' > "$GOMODCACHE/example.com/x@v1.0.0/go.mod"
 printf 'package x\n' > "$GOMODCACHE/example.com/x@v1.0.0/x.go"
+chmod 444 "$GOMODCACHE/example.com/x@v1.0.0/x.go"
 printf '{"Path":"example.com/x","Version":"v1.0.0"}\n'
 `
 	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
@@ -72,6 +73,12 @@ printf '{"Path":"example.com/x","Version":"v1.0.0"}\n'
 	}
 	if !strings.Contains(strings.Join(flatten(sb.execs), " "), "tar -xf /tmp/aip-mod.tar -C /cache/gomod") {
 		t.Fatalf("archive was not extracted into the module cache: %v", sb.execs)
+	}
+	if mode := tarMode(t, []byte(raw), "example.com/x@v1.0.0/x.go"); mode != 0o644 {
+		t.Fatalf("file mode = %o, want 644 (writable in the sandbox)", mode)
+	}
+	if mode := tarMode(t, []byte(raw), "example.com/x@v1.0.0/"); mode != 0o755 {
+		t.Fatalf("dir mode = %o, want 755", mode)
 	}
 }
 
@@ -99,6 +106,23 @@ func tarNames(t *testing.T, archive []byte) map[string]bool {
 			t.Fatal(err)
 		}
 		names[hdr.Name] = true
+	}
+}
+
+func tarMode(t *testing.T, archive []byte, name string) int64 {
+	t.Helper()
+	tr := tar.NewReader(bytes.NewReader(archive))
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			t.Fatalf("%s not found in the archive", name)
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if hdr.Name == name {
+			return hdr.Mode
+		}
 	}
 }
 
