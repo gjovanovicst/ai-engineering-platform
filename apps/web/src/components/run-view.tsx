@@ -18,7 +18,9 @@ import {
   getRunVisual,
   getVisualBaseline,
   listRunArtifacts,
+  startRun,
   streamRunEvents,
+  transitionTask,
   type Approval,
   type Run,
   type RunArtifact,
@@ -41,6 +43,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
   const [run, setRun] = useState<Run | null>(null);
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
   const [approval, setApproval] = useState<Approval | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [showReject, setShowReject] = useState(false);
@@ -167,6 +170,27 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     }
   }
 
+  async function retry() {
+    if (!claims || !run) return;
+    setRetrying(true);
+    setError(null);
+    try {
+      // A failed run parks the task in blocked; older runs may still be in progress.
+      try {
+        await transitionTask(claims.org, run.project_id, run.task_id, "ready", "retry after a failed run");
+      } catch {
+        await transitionTask(claims.org, run.project_id, run.task_id, "blocked", "retry after a failed run");
+        await transitionTask(claims.org, run.project_id, run.task_id, "ready", "retry after a failed run");
+      }
+      const next = await startRun(claims.org, run.project_id, run.task_id);
+      router.push(`/projects/${run.project_id}/runs/${next.id}`);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not retry the task");
+    } finally {
+      setRetrying(false);
+    }
+  }
+
   return (
     <div>
       <nav aria-label="Breadcrumb" className="mb-1 text-xs text-text-muted">
@@ -233,6 +257,27 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
             })}
           </section>
         </>
+      ) : null}
+
+      {run?.status === "failed" ? (
+        <section aria-label="Run failure" className="mb-6 rounded-lg border border-status-danger/40 bg-status-danger/10 p-4">
+          <header className="mb-2 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-status-danger">Run failed</h2>
+              <p className="text-xs text-text-secondary">{run.failure_code || "unknown failure"}</p>
+            </div>
+            {claims ? (
+              <Button variant="secondary" loading={retrying} onClick={retry}>
+                Retry task
+              </Button>
+            ) : null}
+          </header>
+          {run.failure_detail ? (
+            <pre className="max-h-60 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-bg-surface p-3 font-mono text-[11px] text-text-secondary">
+              {run.failure_detail}
+            </pre>
+          ) : null}
+        </section>
       ) : null}
 
       {error ? (

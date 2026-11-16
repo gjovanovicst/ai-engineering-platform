@@ -10,6 +10,9 @@ All notable changes to this project. Dates are 2026.
   precedence over the GitHub App installation token and the global
   `AIP_GITHUB_TOKEN`; owner/admin-only API and Repositories UI, audit events,
   and a git-providers user guide (`docs/user/15-git-providers.md`).
+- **Run failure UX**: the run API returns `failure_code`/`failure_detail`, the run
+  page shows them with a **Retry task** button, and a failed run parks the task in
+  `blocked` (instead of leaving it in progress) with the failure reason.
 - **Configurable agent step budget**: `AIP_AGENT_MAX_STEPS` (default 24, range
   1-200) replaces the hard-coded 12-step tool-loop cap, and the development
   prompt now tells the agent to execute the whole approved plan before emitting
