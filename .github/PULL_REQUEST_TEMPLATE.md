@@ -30,4 +30,5 @@ Rollback: <!-- revert, flag, migration, restore path -->
 - [ ] tests cover the change (or explain why not)
 - [ ] no secrets, `.env`, keys or customer data
 - [ ] docs/OpenAPI updated when behaviour changes
+- [ ] `CHANGELOG.md` updated for `feat`/`fix`/`perf` (or `[skip-changelog]` in the title)
 - [ ] breaking: yes/no

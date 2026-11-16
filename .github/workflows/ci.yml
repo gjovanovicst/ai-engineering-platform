@@ -95,6 +95,36 @@ jobs:
             --ignore github.com/gjovanovicst/ai-engineering-platform \
             --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MPL-2.0,Unlicense,CC0-1.0,BlueOak-1.0.0
 
+  changelog:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: require a CHANGELOG entry for feat/fix/perf
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          case "$PR_TITLE" in
+            feat*|fix*|perf*) ;;
+            *) echo "not a feat/fix/perf PR; CHANGELOG not required"; exit 0 ;;
+          esac
+          if [[ "$PR_TITLE" == *"[skip-changelog]"* ]]; then
+            echo "skip-changelog requested in the title"
+            exit 0
+          fi
+          if git diff --name-only "$BASE_SHA" HEAD | grep -qx 'CHANGELOG.md'; then
+            echo "CHANGELOG.md updated"
+            exit 0
+          fi
+          echo "::error::update CHANGELOG.md for a feat/fix/perf change, or add [skip-changelog] to the PR title"
+          exit 1
+
   web:
     runs-on: ubuntu-latest
     steps:

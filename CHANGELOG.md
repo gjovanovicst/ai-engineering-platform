@@ -10,6 +10,10 @@ All notable changes to this project. Dates are 2026.
   precedence over the GitHub App installation token and the global
   `AIP_GITHUB_TOKEN`; owner/admin-only API and Repositories UI, audit events,
   and a git-providers user guide (`docs/user/15-git-providers.md`).
+- **Configurable agent step budget**: `AIP_AGENT_MAX_STEPS` (default 24, range
+  1-200) replaces the hard-coded 12-step tool-loop cap, and the development
+  prompt now tells the agent to execute the whole approved plan before emitting
+  `AIP_PROOF`.
 - **ASDLC flow**: task → plan approval → development → test/design gates → PR →
   CI/human approval → merge → metrics, with SSE run events.
 - **Enterprise controls**: project RBAC, append-only audit chain + witness, legal
@@ -59,6 +63,16 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- `RepoMap` no longer panics on files without an extension (`LICENSE`,
+  `Makefile`): they are skipped instead of sliced at index -1.
+- The run event stream (SSE) flushes through the metrics middleware again; the
+  UI was missing `run.awaiting_approval` and could not show plan approval.
+- The review agent receives the development diff and reviews the change, not the
+  cloned base repository; `acceptance_proof` and `review` artifacts are allowed
+  by the `run_artifacts` kind constraint.
+- Git push and clone errors redact the token embedded in the remote URL.
+- A failed branch push records a `pr.failed` event with the provider error
+  instead of only a log warning.
 - Deterministic frozen context: tar metadata/order and agent type no longer change
   the hash (e2e no longer fails `context_changed`).
 - `GO-2026-4753`: upgraded goxmldsig to 1.6.0 (SAML signature bypass).
