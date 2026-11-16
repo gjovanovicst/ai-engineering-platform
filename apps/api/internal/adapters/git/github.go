@@ -375,7 +375,9 @@ func (g *GitHub) RebasePullRequest(ctx context.Context, repo string, number int)
 		return err
 	}
 	url := fmt.Sprintf("%s/repos/%s/pulls/%d/update-branch", g.baseURL(), repo, number)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, strings.NewReader(`{"expected_head_sha":""}`))
+	// expected_head_sha is optional; sending an empty string makes GitHub answer
+	// 422 "expected head sha didn't match current head ref".
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, strings.NewReader(`{}`))
 	if err != nil {
 		return err
 	}
@@ -389,7 +391,14 @@ func (g *GitHub) RebasePullRequest(ctx context.Context, repo string, number int)
 	defer func() { _ = res.Body.Close() }()
 	if res.StatusCode >= 300 {
 		data, _ := io.ReadAll(io.LimitReader(res.Body, 4096))
-		return fmt.Errorf("github: rebase PR #%d: status %d: %s", number, res.StatusCode, strings.TrimSpace(string(data)))
+		message := strings.TrimSpace(string(data))
+		// A branch that already contains the base is not an error for the queue.
+		lower := strings.ToLower(message)
+		if res.StatusCode == http.StatusUnprocessableEntity &&
+			(strings.Contains(lower, "up to date") || strings.Contains(lower, "no new commits") || strings.Contains(lower, "no changes")) {
+			return nil
+		}
+		return fmt.Errorf("github: rebase PR #%d: status %d: %s", number, res.StatusCode, message)
 	}
 	return nil
 }
