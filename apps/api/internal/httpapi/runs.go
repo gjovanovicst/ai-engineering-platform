@@ -478,6 +478,10 @@ func runJSON(run domain.Run) map[string]any {
 	if run.TraceID != "" {
 		out["trace_id"] = run.TraceID
 	}
+	if run.FailureCode != "" {
+		out["failure_code"] = run.FailureCode
+		out["failure_detail"] = run.FailureDetail
+	}
 	if len(run.Plan) > 0 {
 		out["plan"] = json.RawMessage(run.Plan)
 	}

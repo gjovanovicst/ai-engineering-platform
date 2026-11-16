@@ -289,16 +289,11 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 		w.log.Error("runs: execute", slog.Any("err", err))
 		return nil
 	}
-	// A failed planning run must not leave the task in planning: park it in
-	// blocked (one transition away from ready) with the reason.
-	if final.AgentType == string(domain.AgentPlanning) && final.Status == domain.RunFailed {
-		if task, terr := w.tasks.Get(ctx, run.OrgID, run.ProjectID, run.TaskID); terr == nil && task.Status == domain.TaskPlanning {
-			if terr := task.Transition(domain.TaskBlocked, domain.TransitionOptions{
-				Actor: domain.ActorSystem, Reason: "planning failed: " + final.FailureCode,
-			}); terr == nil {
-				_, _ = w.tasks.UpdateStatus(ctx, task)
-			}
-		}
+	// A failed run must not leave the task in planning, in progress or review:
+	// park it in blocked (one transition away from ready) with the reason, so
+	// the board is truthful and a retry is one click away.
+	if final.Status == domain.RunFailed {
+		w.blockTaskAfterFailure(ctx, final)
 	}
 
 	// ASDLC §2: a successful development run moves the task to review.
@@ -312,4 +307,30 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 		}
 	}
 	return nil
+}
+
+// blockTaskAfterFailure parks the run's task in blocked with the failure code.
+// A terminal task (done, canceled) or one that cannot transition is skipped.
+func (w *JobWorker) blockTaskAfterFailure(ctx context.Context, run domain.Run) {
+	task, err := w.tasks.Get(ctx, run.OrgID, run.ProjectID, run.TaskID)
+	if err != nil || task.Status.Terminal() || task.Status == domain.TaskBlocked {
+		return
+	}
+	reason := "run failed"
+	if run.FailureCode != "" {
+		reason += ": " + run.FailureCode
+	}
+	if run.FailureDetail != "" {
+		reason += " — " + truncate(run.FailureDetail, 300)
+	}
+	if terr := task.Transition(domain.TaskBlocked, domain.TransitionOptions{
+		Actor: domain.ActorSystem, Reason: reason,
+	}); terr != nil {
+		return
+	}
+	if _, uerr := w.tasks.UpdateStatus(ctx, task); uerr != nil {
+		w.log.Warn("runs: block task after failure", slog.Any("err", uerr))
+		return
+	}
+	_ = w.store.AppendEvent(ctx, run.OrgID, run.ID, "task.blocked", "system", map[string]any{"reason": reason})
 }

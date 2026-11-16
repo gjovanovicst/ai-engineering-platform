@@ -21,6 +21,7 @@ type fakeStore struct {
 	review   []byte
 	approval *Approval
 	decided  int
+	plans    map[string][]byte
 }
 
 func newFakeStore() *fakeStore { return &fakeStore{runs: map[string]domain.Run{}} }
@@ -51,7 +52,13 @@ func (f *fakeStore) Events(context.Context, string, string) ([]Event, error) { r
 func (f *fakeStore) EventsAfter(context.Context, string, string, int64) ([]Event, error) {
 	return f.events, nil
 }
-func (f *fakeStore) SetPlan(context.Context, string, string, []byte, string) error { return nil }
+func (f *fakeStore) SetPlan(_ context.Context, _, runID string, plan []byte, _ string) error {
+	if f.plans == nil {
+		f.plans = map[string][]byte{}
+	}
+	f.plans[runID] = plan
+	return nil
+}
 func (f *fakeStore) SetDiff(context.Context, string, string, []byte, string) error { return nil }
 func (f *fakeStore) AddApprovalVote(context.Context, string, string, string, string, string) error {
 	return nil
@@ -115,6 +122,13 @@ type fakeExecutor struct{ called chan string }
 func (f *fakeExecutor) Execute(_ context.Context, _ domain.Run, prompt string, _ []string, _ string, _ []string, _ []string, _ []ContextSource, _, _, _ string, _ float64, _ []visualdiff.Rect, _ int, _ []string, _ []string, _ []string, _ []PluginCheck) (domain.Run, error) {
 	f.called <- prompt
 	return domain.Run{}, nil
+}
+
+type fakeEnqueuer struct{ enqueued []string }
+
+func (f *fakeEnqueuer) Enqueue(_ context.Context, runID, _ string) error {
+	f.enqueued = append(f.enqueued, runID)
+	return nil
 }
 
 func readyTask() domain.Task {
@@ -278,5 +292,34 @@ func TestContextHashIgnoresAgentType(t *testing.T) {
 	b := buildContextManifest(run, []string{"a.go"}, nil, "", nil)
 	if a.hash != b.hash {
 		t.Fatal("agent type must not change the context hash")
+	}
+}
+
+func TestDecideCopiesTheApprovedPlanToTheDevelopmentRun(t *testing.T) {
+	t.Parallel()
+	store := newFakeStore()
+	plan := []byte(`{"steps":["create the schema"],"files":["0001_init.up.sql"],"risks":[]}`)
+	store.runs["run-1"] = domain.Run{
+		ID: "run-1", OrgID: "o", ProjectID: "p", TaskID: "t1",
+		AgentType: "planning", Status: domain.RunAwaitingApproval, Plan: plan,
+	}
+	store.approval = &Approval{ID: "a1", Type: "plan", Status: "pending", RunID: "run-1", OrgID: "o"}
+	enqueuer := &fakeEnqueuer{}
+	svc, err := New(store, fakeTasks{task: readyTask()}, &fakeExecutor{}, enqueuer, nil, slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, devID, err := svc.Decide(context.Background(), "o", "a1", "approved", "", "u1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if devID == "" {
+		t.Fatal("approval did not start a development run")
+	}
+	if got := string(store.plans[devID]); got != string(plan) {
+		t.Fatalf("development run plan = %q, want the approved plan", got)
+	}
+	if len(enqueuer.enqueued) != 1 || enqueuer.enqueued[0] != devID {
+		t.Fatalf("enqueued = %v, want the development run", enqueuer.enqueued)
 	}
 }
