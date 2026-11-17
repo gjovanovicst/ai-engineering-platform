@@ -25,10 +25,22 @@ type Finding struct {
 	Line string
 }
 
-// Scan inspects added diff lines. Placeholders and documented examples are ignored.
+// allowSecret is the opt-out pragma for deliberate test fixtures and generated
+// examples; it must sit on the same added line or the added line above.
+const allowSecret = "aip:allow-secret"
+
+var placeholderMarkers = []string{
+	"example", "redacted", "placeholder", "xxx", "your_", "changeme",
+	"never-issued", "never_issued", "not-a-secret", "not_a_secret",
+	"dummy", "fake", "fixture",
+}
+
+// Scan inspects added diff lines. Placeholders, documented examples and lines
+// carrying the aip:allow-secret pragma are ignored.
 func Scan(diff string) []Finding {
 	var out []Finding
 	path := ""
+	previous := ""
 	for _, raw := range strings.Split(diff, "\n") {
 		if strings.HasPrefix(raw, "+++ b/") {
 			path = strings.TrimPrefix(raw, "+++ b/")
@@ -39,11 +51,22 @@ func Scan(diff string) []Finding {
 		}
 		line := strings.TrimSpace(strings.TrimPrefix(raw, "+"))
 		lower := strings.ToLower(line)
-		if strings.Contains(lower, "example") || strings.Contains(lower, "redacted") ||
-			strings.Contains(lower, "placeholder") || strings.Contains(lower, "xxx") ||
-			strings.Contains(lower, "your_") || strings.Contains(lower, "changeme") {
+		if strings.Contains(lower, allowSecret) || strings.Contains(strings.ToLower(previous), allowSecret) {
+			previous = line
 			continue
 		}
+		placeholder := false
+		for _, marker := range placeholderMarkers {
+			if strings.Contains(lower, marker) {
+				placeholder = true
+				break
+			}
+		}
+		if placeholder {
+			previous = line
+			continue
+		}
+		previous = line
 		for _, pattern := range patterns {
 			if pattern.re.MatchString(line) {
 				out = append(out, Finding{Path: path, Kind: pattern.name, Line: truncate(line, 160)})

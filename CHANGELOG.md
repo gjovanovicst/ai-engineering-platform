@@ -10,6 +10,10 @@ All notable changes to this project. Dates are 2026.
   precedence over the GitHub App installation token and the global
   `AIP_GITHUB_TOKEN`; owner/admin-only API and Repositories UI, audit events,
   and a git-providers user guide (`docs/user/15-git-providers.md`).
+- **Offline dependency fetch**: development agents can call `fetch_module` to have
+  the worker host download a Go module (through `AIP_DEPS_GOPROXY`, checksum
+  verified) into the sandbox's module cache, so tasks that need a module no longer
+  require a manual vendor PR. The sandbox stays offline.
 - **The approved plan reaches development**: the development run now receives the
   planning run's plan (`run.Plan`), so the implementation agent works from the
   approved steps instead of only the task text.
@@ -69,6 +73,19 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- The tool loop reserves the final model step for a final answer (tools are
+  not offered on that step), so the agent emits the required `AIP_*` line
+  instead of spending every step on tools and failing `acceptance_unproven`.
+- The review sees diffs up to 200 KB (was 60 KB) and gets a changed-file index;
+  a truncated diff carries a caveat. The T-4 diff (126 KB) had its handler hunks
+  cut off, which produced two false major findings.
+- The secret scanner ignores deliberate test fixtures (`never-issued`, `dummy`,
+  `fake`, `fixture`, …) and lines carrying the `aip:allow-secret` pragma, so a
+  fake token in a test no longer fails the run; real-looking tokens still fail.
+- A missing dependency in the offline sandbox is classified as
+  `dependency_missing` (instead of `test_gate_failed`); the development prompt
+  tells the agent to stop and report instead of reimplementing a library, and
+  the review flags hand-written cryptography and agent-authored vendor code.
 - `RepoMap` no longer panics on files without an extension (`LICENSE`,
   `Makefile`): they are skipped instead of sliced at index -1.
 - The run event stream (SSE) flushes through the metrics middleware again; the

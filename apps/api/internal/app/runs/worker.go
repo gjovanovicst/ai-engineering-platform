@@ -161,7 +161,11 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 	case string(domain.AgentDevelopment):
 		prompt += "\nYou are the DEVELOPMENT agent. Implement the task inside the repository with " +
 			"write_file and verify it with run_tests. Execute the whole approved plan; do not stop " +
-			"after one file or one step. When everything is implemented and the tests pass, finish " +
+			"after one file or one step. If a Go module is missing, call fetch_module with its path " +
+			"and version (for example golang.org/x/crypto v0.36.0): the worker host downloads it " +
+			"into the offline module cache, then run `go mod tidy` and retry. Never reimplement a " +
+			"library or write cryptography yourself; if fetch_module fails, stop and report it in " +
+			"your final message. When everything is implemented and the tests pass, finish " +
 			"with the AIP_PROOF line described below.\n"
 	}
 	criteria := make([]string, 0, len(task.Acceptance))

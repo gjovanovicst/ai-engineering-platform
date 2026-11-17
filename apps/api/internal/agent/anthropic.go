@@ -26,7 +26,9 @@ type AnthropicBackend struct {
 	// MCP adds namespaced MCP tools to the Messages loop.
 	MCP *MCPManager
 	// MCPConfig is the trusted AIP_MCP_SERVERS JSON for this backend.
-	MCPConfig string
+	MCPConfig string // GoBin and Goproxy configure the host-side module fetch (fetch_module).
+	GoBin     string
+	Goproxy   string
 }
 
 // Name implements Backend.
@@ -62,6 +64,12 @@ func (b *AnthropicBackend) Run(ctx context.Context, spec Spec, emit func(Event) 
 	}
 	handle, err := b.Sandbox.Create(ctx, sandbox.Spec{
 		Image: b.Image, Workdir: "/workspace", NetworkDisabled: true, Timeout: spec.Timeout,
+		Env: map[string]string{
+			"GOMODCACHE": moduleCacheDir,
+			"GOPROXY":    "off",
+			"GOSUMDB":    "off",
+			"GOFLAGS":    "-mod=mod",
+		},
 	})
 	if err != nil {
 		return Result{}, fmt.Errorf("agent: create sandbox: %w", err)
@@ -79,7 +87,10 @@ func (b *AnthropicBackend) Run(ctx context.Context, spec Spec, emit func(Event) 
 	_, _ = b.Sandbox.Exec(ctx, handle, []string{"sh", "-lc",
 		"git config user.email aip@local && git config user.name aip"}, nil)
 
-	tools := toolbox(&sandboxToolbox{sandbox: b.Sandbox, handle: handle, testCommand: spec.TestCommand})
+	tools := toolbox(&sandboxToolbox{
+		sandbox: b.Sandbox, handle: handle, testCommand: spec.TestCommand,
+		goBin: b.GoBin, goproxy: b.Goproxy,
+	})
 	mcpManager, mcpFailures := StartMCPIsolated(ctx, b.Sandbox, b.Image, mustMCPServers(effectiveMCPConfig(spec.MCPConfig, b.MCPConfig)))
 	if mcpManager != nil {
 		defer mcpManager.Close()
@@ -155,6 +166,9 @@ func (b *AnthropicBackend) Run(ctx context.Context, spec Spec, emit func(Event) 
 			if terr != nil {
 				output = "error: " + terr.Error()
 			}
+			if call.Name == "fetch_module" {
+				_ = emit(Event{Type: "dependency.fetch", Text: truncateText(output, 200)})
+			}
 			results = append(results, anthBlock{Type: "tool_result", ToolUseID: call.ID, Content: output})
 		}
 		messages = append(messages, anthMessage{Role: "user", Content: results})
@@ -199,6 +213,8 @@ func (b *AnthropicBackend) execute(ctx context.Context, tools toolbox, call anth
 		Path    string `json:"path"`
 		Pattern string `json:"pattern"`
 		Content string `json:"content"`
+		Module  string `json:"module"`
+		Version string `json:"version"`
 	}
 	if len(call.Input) > 0 {
 		if err := json.Unmarshal(call.Input, &args); err != nil {
@@ -219,6 +235,11 @@ func (b *AnthropicBackend) execute(ctx context.Context, tools toolbox, call anth
 		return "written", tools.Write(ctx, args.Path, args.Content)
 	case "run_tests":
 		return tools.Test(ctx)
+	case "fetch_module":
+		if readOnly {
+			return "", fmt.Errorf("fetch_module is not available to this agent")
+		}
+		return tools.Fetch(ctx, args.Module, args.Version)
 	default:
 		if manager != nil && strings.HasPrefix(call.Name, "mcp__") {
 			return manager.Call(ctx, call.Name, call.Input)

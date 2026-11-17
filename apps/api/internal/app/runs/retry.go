@@ -38,6 +38,19 @@ func retryCorrection(reason string) string {
 // classifyTestFailure is deliberately conservative: unknown failures are code.
 func classifyTestFailure(output string) string {
 	lower := strings.ToLower(output)
+	// A missing dependency is not a test failure the agent can fix by retrying:
+	// the sandbox is offline by design and the platform has to prepare it.
+	for _, marker := range []string{
+		"no required module provides package", "missing go.sum entry",
+		"cannot find module providing package", "cannot find package",
+		"module lookup disabled", "no matching versions for query",
+		"npm err! code enotfound", "npm err! network", "getaddrinfo enotfound",
+		"could not resolve dependency",
+	} {
+		if strings.Contains(lower, marker) {
+			return "dependency"
+		}
+	}
 	for _, marker := range []string{"flaky", "flaked", "intermittent"} {
 		if strings.Contains(lower, marker) {
 			return "flaky"

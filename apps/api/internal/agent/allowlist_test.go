@@ -15,6 +15,9 @@ func TestToolAllowlistHidesWriteForReadOnlyAgents(t *testing.T) {
 	if readOnly["write_file"] {
 		t.Fatal("read-only agents must not see write_file")
 	}
+	if readOnly["fetch_module"] {
+		t.Fatal("read-only agents must not fetch modules")
+	}
 	for _, want := range []string{"read_file", "list_files", "grep", "run_tests"} {
 		if !readOnly[want] {
 			t.Fatalf("read-only tools missing %q", want)
@@ -22,5 +25,11 @@ func TestToolAllowlistHidesWriteForReadOnlyAgents(t *testing.T) {
 	}
 	if !names(false)["write_file"] {
 		t.Fatal("development agents need write_file")
+	}
+	if !names(false)["fetch_module"] {
+		t.Fatal("development agents need fetch_module")
+	}
+	if names(true)["fetch_module"] {
+		t.Fatal("read-only agents must not fetch modules")
 	}
 }

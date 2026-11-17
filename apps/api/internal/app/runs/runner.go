@@ -470,10 +470,17 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 			_ = r.store.AppendEvent(context.WithoutCancel(ctx), run.OrgID, run.ID, "test.classified", "system",
 				map[string]any{"class": class})
 			code := "test_gate_failed"
-			if class == "infra" {
+			detail := truncate(result.TestOutput, 2000)
+			switch class {
+			case "infra":
 				code = "test_infra"
+			case "dependency":
+				code = "dependency_missing"
+				detail = "the offline sandbox cannot install a required dependency; " +
+					"prepare it on the host and retry (see the dependency-preparation story)\n\n" +
+					detail
 			}
-			return r.fail(ctx, run, code, truncate(result.TestOutput, 2000))
+			return r.fail(ctx, run, code, detail)
 		}
 	}
 

@@ -11,6 +11,9 @@ func TestReviewPromptIncludesTheDevelopmentDiff(t *testing.T) {
 	if !strings.Contains(prompt, "diff --git a/main.go b/main.go") {
 		t.Fatalf("prompt does not contain the diff: %s", prompt)
 	}
+	if !strings.Contains(prompt, "hand-written cryptography") {
+		t.Fatal("prompt must ask the reviewer to flag hand-written cryptography")
+	}
 	if !strings.Contains(prompt, "THESE changes") {
 		t.Fatal("prompt must tell the agent to review the diff, not the base repository")
 	}
@@ -39,5 +42,17 @@ func TestReviewPromptTruncatesHugeDiffs(t *testing.T) {
 	}
 	if len(prompt) > reviewDiffLimit+500 {
 		t.Fatalf("prompt length %d exceeds the cap", len(prompt))
+	}
+}
+
+func TestReviewPromptListsChangedFiles(t *testing.T) {
+	t.Parallel()
+	diff := "diff --git a/apps/api/internal/auth/password.go b/apps/api/internal/auth/password.go\n+++ b/apps/api/internal/auth/password.go\n+x\n" +
+		"diff --git a/apps/api/internal/httpapi/changes.go b/apps/api/internal/httpapi/changes.go\n+++ b/apps/api/internal/httpapi/changes.go\n+y\n"
+	prompt := reviewPrompt(diff)
+	if !strings.Contains(prompt, "Changed files (2):") ||
+		!strings.Contains(prompt, "- apps/api/internal/auth/password.go") ||
+		!strings.Contains(prompt, "- apps/api/internal/httpapi/changes.go") {
+		t.Fatalf("prompt does not index the changed files: %s", prompt)
 	}
 }

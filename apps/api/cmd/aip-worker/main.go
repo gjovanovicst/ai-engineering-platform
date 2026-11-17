@@ -333,6 +333,7 @@ func main() {
 			return &agent.ToolLoopBackend{
 				Sandbox: driver, Image: cfg.SandboxImage,
 				BaseURL: provider.BaseURL, APIKey: key, Model: provider.Model, MaxSteps: cfg.AgentMaxSteps,
+				GoBin: cfg.DepsGoBin, Goproxy: cfg.DepsGoproxy,
 				MCPConfig: cfg.MCPConfig,
 			}, nil
 		})

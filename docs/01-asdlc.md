@@ -110,6 +110,13 @@ The human: `approve` / `request_changes` / `reject`. Without this there is no `i
 - lint/`go vet`/`tsc --noEmit` clean.
 The thresholds are in the blueprint (`test_strategy.gates`), not hardcoded.
 
+The development diff is also scanned for credentials before the PR. Deliberate
+test fixtures and generated examples must be recognisable: the scanner ignores
+placeholder values (`example`, `redacted`, `never-issued`, `dummy`, `fake`, …)
+and lines carrying the pragma `aip:allow-secret` on the same line or the added
+line above. A real-looking token without the pragma fails the run with
+`secret_detected`.
+
 ### G3 · PR approval (human + agent review)
 The agent review produces findings classified `blocker | major | minor | nit`.
 A `blocker` must be resolved or explicitly waived (with a reason). The merge is done by a human or

@@ -29,6 +29,9 @@ type ToolLoopBackend struct {
 	Model    string
 	MaxSteps int
 	Client   *http.Client
+	// GoBin and Goproxy configure the host-side module fetch (fetch_module).
+	GoBin   string
+	Goproxy string
 	// MCP, when set, adds namespaced MCP tools to the loop.
 	MCP *MCPManager
 	// MCPConfig is the trusted AIP_MCP_SERVERS JSON for this backend.
@@ -69,6 +72,12 @@ func (b *ToolLoopBackend) Run(ctx context.Context, spec Spec, emit func(Event) e
 	}
 	handle, err := b.Sandbox.Create(ctx, sandbox.Spec{
 		Image: b.Image, Workdir: "/workspace", NetworkDisabled: true, Timeout: spec.Timeout,
+		Env: map[string]string{
+			"GOMODCACHE": moduleCacheDir,
+			"GOPROXY":    "off",
+			"GOSUMDB":    "off",
+			"GOFLAGS":    "-mod=mod",
+		},
 	})
 	if err != nil {
 		return Result{}, fmt.Errorf("agent: create sandbox: %w", err)
@@ -86,7 +95,10 @@ func (b *ToolLoopBackend) Run(ctx context.Context, spec Spec, emit func(Event) e
 	_, _ = b.Sandbox.Exec(ctx, handle, []string{"sh", "-lc",
 		"git config user.email aip@local && git config user.name aip"}, nil)
 
-	tools := toolbox(&sandboxToolbox{sandbox: b.Sandbox, handle: handle, testCommand: spec.TestCommand})
+	tools := toolbox(&sandboxToolbox{
+		sandbox: b.Sandbox, handle: handle, testCommand: spec.TestCommand,
+		goBin: b.GoBin, goproxy: b.Goproxy,
+	})
 	mcpManager, mcpFailures := StartMCPIsolated(ctx, b.Sandbox, b.Image, mustMCPServers(effectiveMCPConfig(spec.MCPConfig, b.MCPConfig)))
 	if mcpManager != nil {
 		defer mcpManager.Close()
@@ -134,7 +146,14 @@ func (b *ToolLoopBackend) Run(ctx context.Context, spec Spec, emit func(Event) e
 			usage.Model = model
 			return usage, err
 		}
-		content, calls, usageStep, err := b.chat(ctx, model, messages, spec.ReadOnly, mcpManager)
+		allowTools := true
+		if step == maxSteps-1 {
+			// Reserve the last model step for a final answer: without this the
+			// agent can spend every step on tools and never emit AIP_PROOF.
+			allowTools = false
+			messages = append(messages, chatMessage{Role: "user", Content: "This is your final step. Stop calling tools and write your final answer now. If the task asks for a machine-readable final line (AIP_PLAN, AIP_REVIEW or AIP_PROOF), include it exactly once."})
+		}
+		content, calls, usageStep, err := b.chat(ctx, model, messages, spec.ReadOnly, mcpManager, allowTools)
 		if err != nil {
 			return Result{}, err
 		}
@@ -158,6 +177,9 @@ func (b *ToolLoopBackend) Run(ctx context.Context, spec Spec, emit func(Event) e
 			output, terr := b.execute(ctx, tools, call, spec.ReadOnly, mcpManager)
 			if terr != nil {
 				output = "error: " + terr.Error()
+			}
+			if call.Function.Name == "fetch_module" {
+				_ = emit(Event{Type: "dependency.fetch", Text: truncateText(output, 200)})
 			}
 			messages = append(messages, chatMessage{Role: "tool", ToolCallID: call.ID, Content: output})
 		}
@@ -204,6 +226,8 @@ func (b *ToolLoopBackend) execute(ctx context.Context, tools toolbox, call toolC
 		Path    string `json:"path"`
 		Pattern string `json:"pattern"`
 		Content string `json:"content"`
+		Module  string `json:"module"`
+		Version string `json:"version"`
 	}
 	if raw := strings.TrimSpace(call.Function.Arguments); raw != "" {
 		if err := json.Unmarshal([]byte(raw), &args); err != nil {
@@ -224,6 +248,11 @@ func (b *ToolLoopBackend) execute(ctx context.Context, tools toolbox, call toolC
 		return "written", tools.Write(ctx, args.Path, args.Content)
 	case "run_tests":
 		return tools.Test(ctx)
+	case "fetch_module":
+		if readOnly {
+			return "", fmt.Errorf("fetch_module is not available to this agent")
+		}
+		return tools.Fetch(ctx, args.Module, args.Version)
 	default:
 		if manager != nil && strings.HasPrefix(call.Function.Name, "mcp__") {
 			return manager.Call(ctx, call.Function.Name, json.RawMessage(call.Function.Arguments))
@@ -246,8 +275,13 @@ func (b *ToolLoopBackend) diff(ctx context.Context, handle sandbox.Handle) (stri
 	return res.Stdout, nil
 }
 
-func (b *ToolLoopBackend) chat(ctx context.Context, model string, messages []chatMessage, readOnly bool, manager *MCPManager) (string, []toolCall, Result, error) {
-	payload, err := json.Marshal(map[string]any{"model": model, "messages": messages, "tools": appendMCPTools(toolSpecs(readOnly), manager), "tool_choice": "auto"})
+func (b *ToolLoopBackend) chat(ctx context.Context, model string, messages []chatMessage, readOnly bool, manager *MCPManager, allowTools bool) (string, []toolCall, Result, error) {
+	request := map[string]any{"model": model, "messages": messages}
+	if allowTools {
+		request["tools"] = appendMCPTools(toolSpecs(readOnly), manager)
+		request["tool_choice"] = "auto"
+	}
+	payload, err := json.Marshal(request)
 	if err != nil {
 		return "", nil, Result{}, err
 	}
