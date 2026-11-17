@@ -1,19 +1,32 @@
 name: image-release
 
+# Builds, signs and attests the three images. A tag vX.Y.Z publishes versioned
+# images (plus latest) and opens a GitHub Release from docs/releases/<tag>.md;
+# a push to main publishes sha/edge images for the development channel.
 on:
   push:
     branches: [main]
     tags: ["v*"]
 
 permissions:
-  contents: read
+  contents: write
   packages: write
   id-token: write
   attestations: write
 
 jobs:
-  build-sign:
+  images:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            file: deploy/api/Dockerfile
+          - name: web
+            file: deploy/web/Dockerfile
+          - name: sandbox
+            file: deploy/sandbox/Dockerfile
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -22,21 +35,48 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.name }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
+            type=raw,value=edge,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
       - id: build
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: deploy/api/Dockerfile
+          file: ${{ matrix.file }}
           push: true
-          tags: ghcr.io/${{ github.repository }}/api:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           provenance: true
           sbom: true
+          # Next.js inlines NEXT_PUBLIC_* at build time. Set the repository
+          # variable AIP_WEB_API_URL before tagging so the published web image
+          # points at your API; the default targets a local compose stack.
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.AIP_WEB_API_URL || 'http://localhost:18080' }}
       - uses: sigstore/cosign-installer@v3
       - name: sign the image digest (keyless)
-        run: cosign sign --yes ghcr.io/${{ github.repository }}/api@${{ steps.build.outputs.digest }}
-      - name: verify
+        run: cosign sign --yes ghcr.io/${{ github.repository }}/${{ matrix.name }}@${{ steps.build.outputs.digest }}
+      - name: verify the signature
         run: |
           cosign verify \
             --certificate-identity-regexp "^https://github.com/${{ github.repository }}/" \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-            ghcr.io/${{ github.repository }}/api@${{ steps.build.outputs.digest }}
+            ghcr.io/${{ github.repository }}/${{ matrix.name }}@${{ steps.build.outputs.digest }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: softprops/action-gh-release@v2
+        with:
+          body_path: docs/releases/${{ github.ref_name }}.md
+          fail_on_unmatched_files: false

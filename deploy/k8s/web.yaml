@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aip-web
+  namespace: aip
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: aip-web }
+  template:
+    metadata:
+      labels: { app: aip-web }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: web
+          # Build this image with NEXT_PUBLIC_API_URL set (see .github/workflows/image-release.yml):
+          # Next.js inlines the public API URL at build time, so the env below is informational only.
+          image: ghcr.io/example/aip-web:latest
+          ports: [{ containerPort: 3000, name: http }]
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              valueFrom:
+                configMapKeyRef: { name: aip-config, key: NEXT_PUBLIC_API_URL }
+          readinessProbe:
+            httpGet: { path: /login, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /login, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { cpu: 1, memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aip-web
+  namespace: aip
+spec:
+  selector: { app: aip-web }
+  ports:
+    - port: 80
+      targetPort: http

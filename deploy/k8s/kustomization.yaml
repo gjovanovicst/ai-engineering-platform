@@ -5,6 +5,7 @@ resources:
   - namespace.yaml
   - configmap.yaml
   - api.yaml
+  - web.yaml
   - worker.yaml
   - worker-rbac.yaml
   - backup-configmap.yaml
