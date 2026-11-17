@@ -74,6 +74,13 @@ All notable changes to this project. Dates are 2026.
 - Per-org worker fairness uses Postgres advisory-lock slots
   (`AIP_ORG_MAX_CONCURRENT_RUNS`).
 
+### Security
+
+- The web dev/test toolchain was patched: vitest 2.1.9 → 3.2.7 (the UI-server
+  advisory) and a tinypool `^2.1.2` override (the prototype-pollution RCE).
+  `pnpm audit --prod` is clean; the remaining advisories are dev-only (vitest
+  mocks, picomatch) and tracked.
+
 ### Fixed
 
 - The run page refreshes on `awaiting_approval`, so a finished planning run

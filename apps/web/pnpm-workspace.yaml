@@ -7,3 +7,6 @@
 # not needed for the Next build or vitest.
 overrides:
   postcss: 8.5.31
+  # vitest 3 pins tinypool 2.0, which has the prototype-pollution RCE advisories;
+  # 2.1.2 is the patched release in the same major.
+  tinypool: ^2.1.2
