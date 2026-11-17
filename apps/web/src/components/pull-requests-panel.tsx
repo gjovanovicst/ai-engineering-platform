@@ -168,15 +168,23 @@ function ChecksForPR({ orgID, prID }: { orgID: string; prID: string }) {
   if (items.length === 0) return null;
   return (
     <span className="flex flex-wrap gap-1">
-      {items.map((check) => (
-        <span
-          key={check.name}
-          title={`${check.name}: ${check.status} (${check.duration_ms} ms)`}
-          className={`rounded px-1.5 py-0.5 text-[11px] ${checkStyles[check.status] ?? ""}`}
-        >
-          {check.status === "passed" ? "✓" : check.status === "failed" ? "✕" : "…"} {check.name}
-        </span>
-      ))}
+      {items.map((check) => {
+        const badge = (
+          <span
+            title={`${check.name}: ${check.status} (${check.duration_ms} ms)`}
+            className={`rounded px-1.5 py-0.5 text-[11px] ${checkStyles[check.status] ?? ""}`}
+          >
+            {check.status === "passed" ? "✓" : check.status === "failed" ? "✕" : "…"} {check.name}
+          </span>
+        );
+        return check.url ? (
+          <a key={check.name} href={check.url} target="_blank" rel="noreferrer" title="Open the CI job">
+            {badge}
+          </a>
+        ) : (
+          <span key={check.name}>{badge}</span>
+        );
+      })}
     </span>
   );
 }

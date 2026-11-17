@@ -10,6 +10,9 @@ All notable changes to this project. Dates are 2026.
   precedence over the GitHub App installation token and the global
   `AIP_GITHUB_TOKEN`; owner/admin-only API and Repositories UI, audit events,
   and a git-providers user guide (`docs/user/15-git-providers.md`).
+- **CI check links**: check results keep the CI job URL (migration 0078); the PR
+  checks panel links each check to its job page, so a failed check can be opened
+  even when the check output is empty.
 - **Offline dependency fetch**: development agents can call `fetch_module` to have
   the worker host download a Go module (through `AIP_DEPS_GOPROXY`, checksum
   verified) into the sandbox's module cache, so tasks that need a module no longer

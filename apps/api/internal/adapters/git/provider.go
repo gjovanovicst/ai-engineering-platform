@@ -37,6 +37,9 @@ type WebhookEvent struct {
 	CheckOutput     string
 	CheckDurationMS int
 	CommitSHA       string
+	// CheckURL is the provider page of the check (the CI job), so a failed
+	// check can be opened even when the check has no output text.
+	CheckURL string
 }
 
 // Provider is implemented by github.Provider and gitlab.Provider.

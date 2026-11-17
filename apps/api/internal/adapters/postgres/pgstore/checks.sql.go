@@ -29,9 +29,9 @@ func (q *Queries) CountFailedChecks(ctx context.Context, arg CountFailedChecksPa
 }
 
 const insertRunCheck = `-- name: InsertRunCheck :one
-INSERT INTO test_results (org_id, run_id, name, status, output)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, org_id, repo_id, pull_request_id, run_id, name, status, output, duration_ms, commit_sha, created_at, updated_at
+INSERT INTO test_results (org_id, run_id, name, status, output, url)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, org_id, repo_id, pull_request_id, run_id, name, status, output, duration_ms, commit_sha, created_at, updated_at, url
 `
 
 type InsertRunCheckParams struct {
@@ -40,6 +40,7 @@ type InsertRunCheckParams struct {
 	Name   string
 	Status CheckStatus
 	Output string
+	Url    string
 }
 
 func (q *Queries) InsertRunCheck(ctx context.Context, arg InsertRunCheckParams) (TestResult, error) {
@@ -49,6 +50,7 @@ func (q *Queries) InsertRunCheck(ctx context.Context, arg InsertRunCheckParams) 
 		arg.Name,
 		arg.Status,
 		arg.Output,
+		arg.Url,
 	)
 	var i TestResult
 	err := row.Scan(
@@ -64,12 +66,13 @@ func (q *Queries) InsertRunCheck(ctx context.Context, arg InsertRunCheckParams) 
 		&i.CommitSha,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Url,
 	)
 	return i, err
 }
 
 const listChecksForPullRequest = `-- name: ListChecksForPullRequest :many
-SELECT id, org_id, repo_id, pull_request_id, run_id, name, status, output, duration_ms, commit_sha, created_at, updated_at FROM test_results WHERE org_id = $1 AND pull_request_id = $2 ORDER BY name
+SELECT id, org_id, repo_id, pull_request_id, run_id, name, status, output, duration_ms, commit_sha, created_at, updated_at, url FROM test_results WHERE org_id = $1 AND pull_request_id = $2 ORDER BY name
 `
 
 type ListChecksForPullRequestParams struct {
@@ -99,6 +102,7 @@ func (q *Queries) ListChecksForPullRequest(ctx context.Context, arg ListChecksFo
 			&i.CommitSha,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Url,
 		); err != nil {
 			return nil, err
 		}
@@ -111,7 +115,7 @@ func (q *Queries) ListChecksForPullRequest(ctx context.Context, arg ListChecksFo
 }
 
 const listChecksForRun = `-- name: ListChecksForRun :many
-SELECT id, org_id, repo_id, pull_request_id, run_id, name, status, output, duration_ms, commit_sha, created_at, updated_at FROM test_results WHERE org_id = $1 AND run_id = $2 ORDER BY name
+SELECT id, org_id, repo_id, pull_request_id, run_id, name, status, output, duration_ms, commit_sha, created_at, updated_at, url FROM test_results WHERE org_id = $1 AND run_id = $2 ORDER BY name
 `
 
 type ListChecksForRunParams struct {
@@ -141,6 +145,7 @@ func (q *Queries) ListChecksForRun(ctx context.Context, arg ListChecksForRunPara
 			&i.CommitSha,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Url,
 		); err != nil {
 			return nil, err
 		}
@@ -173,12 +178,13 @@ func (q *Queries) RequiredChecksForPR(ctx context.Context, arg RequiredChecksFor
 }
 
 const upsertCheckResult = `-- name: UpsertCheckResult :one
-INSERT INTO test_results (org_id, repo_id, pull_request_id, run_id, name, status, output, duration_ms, commit_sha)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO test_results (org_id, repo_id, pull_request_id, run_id, name, status, output, duration_ms, commit_sha, url)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ON CONFLICT (pull_request_id, name)
 DO UPDATE SET status = EXCLUDED.status, output = EXCLUDED.output,
-              duration_ms = EXCLUDED.duration_ms, commit_sha = EXCLUDED.commit_sha, updated_at = now()
-RETURNING id, org_id, repo_id, pull_request_id, run_id, name, status, output, duration_ms, commit_sha, created_at, updated_at
+              duration_ms = EXCLUDED.duration_ms, commit_sha = EXCLUDED.commit_sha,
+              url = EXCLUDED.url, updated_at = now()
+RETURNING id, org_id, repo_id, pull_request_id, run_id, name, status, output, duration_ms, commit_sha, created_at, updated_at, url
 `
 
 type UpsertCheckResultParams struct {
@@ -191,6 +197,7 @@ type UpsertCheckResultParams struct {
 	Output        string
 	DurationMs    int32
 	CommitSha     string
+	Url           string
 }
 
 func (q *Queries) UpsertCheckResult(ctx context.Context, arg UpsertCheckResultParams) (TestResult, error) {
@@ -204,6 +211,7 @@ func (q *Queries) UpsertCheckResult(ctx context.Context, arg UpsertCheckResultPa
 		arg.Output,
 		arg.DurationMs,
 		arg.CommitSha,
+		arg.Url,
 	)
 	var i TestResult
 	err := row.Scan(
@@ -219,6 +227,7 @@ func (q *Queries) UpsertCheckResult(ctx context.Context, arg UpsertCheckResultPa
 		&i.CommitSha,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Url,
 	)
 	return i, err
 }

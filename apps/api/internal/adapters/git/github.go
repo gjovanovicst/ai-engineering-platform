@@ -125,6 +125,8 @@ func (g *GitHub) ParseWebhook(r *http.Request, body []byte) (WebhookEvent, error
 				Output     struct {
 					Summary string `json:"summary"`
 				} `json:"output"`
+				DetailsURL   string `json:"details_url"`
+				HTMLURL      string `json:"html_url"`
 				PullRequests []struct {
 					Number int `json:"number"`
 				} `json:"pull_requests"`
@@ -144,6 +146,7 @@ func (g *GitHub) ParseWebhook(r *http.Request, body []byte) (WebhookEvent, error
 			Kind: "check_run", Repo: check.Repository.FullName, Number: number,
 			CheckName: check.CheckRun.Name, CheckStatus: mapConclusion(check.CheckRun.Status, check.CheckRun.Conclusion),
 			CheckOutput: check.CheckRun.Output.Summary, CommitSHA: check.CheckRun.HeadSHA,
+			CheckURL: firstNonEmpty(check.CheckRun.DetailsURL, check.CheckRun.HTMLURL),
 		}, nil
 	}
 
@@ -182,6 +185,15 @@ func (g *GitHub) client() *http.Client {
 }
 
 // mapConclusion normalises a GitHub check_run status/conclusion.
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
+}
+
 func mapConclusion(status, conclusion string) string {
 	switch conclusion {
 	case "success":
@@ -305,6 +317,7 @@ func (g *GitHub) listActionJobs(ctx context.Context, do func(string) ([]byte, er
 				Conclusion  string     `json:"conclusion"`
 				StartedAt   *time.Time `json:"started_at"`
 				CompletedAt *time.Time `json:"completed_at"`
+				HTMLURL     string     `json:"html_url"`
 			} `json:"jobs"`
 		}
 		if err := json.Unmarshal(jobBody, &jobs); err != nil {
@@ -318,6 +331,7 @@ func (g *GitHub) listActionJobs(ctx context.Context, do func(string) ([]byte, er
 			byName[job.Name] = WebhookEvent{
 				Kind: "check_run", Repo: repo, Number: number, CheckName: job.Name,
 				CheckStatus: mapConclusion(job.Status, job.Conclusion), CheckDurationMS: duration, CommitSHA: sha,
+				CheckURL: job.HTMLURL,
 			}
 		}
 	}
