@@ -83,7 +83,7 @@ jobs:
         run: go install golang.org/x/vuln/cmd/govulncheck@latest
       - name: install web dependencies (license inventory)
         working-directory: apps/web
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: dependency scans
         run: make security
       - name: install go-licenses
@@ -142,7 +142,7 @@ jobs:
       - name: install
         if: hashFiles('apps/web/package.json') != ''
         working-directory: apps/web
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: lint + typecheck + build + test
         if: hashFiles('apps/web/package.json') != ''
         working-directory: apps/web

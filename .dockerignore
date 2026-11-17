@@ -1,0 +1,13 @@
+.git
+.cache
+.env
+.env.*
+!.env.example
+jwt.pem
+HANDOFF.local.md
+**/node_modules
+**/.next
+site
+design
+docs
+extensions

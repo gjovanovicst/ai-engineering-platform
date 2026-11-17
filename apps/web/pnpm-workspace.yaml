@@ -1,5 +1,12 @@
-allowBuilds:
-  esbuild: true
-  unrs-resolver: true
+# pnpm settings live here in pnpm 10+ (the package.json "pnpm" field is no
+# longer read). The lockfile records the postcss override, so a frozen install
+# must see the same value.
+#
+# Installs in CI and in the web image pass --ignore-scripts: esbuild and
+# unrs-resolver ship prebuilt platform binaries and their install scripts are
+# not needed for the Next build or vitest.
 overrides:
-  postcss: "8.5.31"
+  postcss: 8.5.31
+  # vitest 3 pins tinypool 2.0, which has the prototype-pollution RCE advisories;
+  # 2.1.2 is the patched release in the same major.
+  tinypool: ^2.1.2

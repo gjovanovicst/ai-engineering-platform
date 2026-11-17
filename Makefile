@@ -142,8 +142,8 @@ sandbox-image: ## build the agent sandbox image (Go + Node + git + ripgrep)
 compose-up: ## postgres, redis, minio, mailhog
 	docker compose up -d postgres redis minio mailhog
 
-web-install: ## install web dependencies (pnpm)
-	cd apps/web && pnpm install
+web-install: ## install web dependencies (pnpm; no dependency build scripts)
+	cd apps/web && pnpm install --frozen-lockfile --ignore-scripts
 
 web-dev: ## run Next.js on :3000
 	cd apps/web && pnpm dev

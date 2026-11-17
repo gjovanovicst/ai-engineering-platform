@@ -7,7 +7,8 @@ data:
   AIP_ENV: production
   AIP_HTTP_ADDR: ":8080"
   AIP_WEB_URL: "https://aip.example.com"
-  AIP_API_URL: "https://aip.example.com"
+  AIP_API_URL: "https://api.aip.example.com"
+  NEXT_PUBLIC_API_URL: "https://api.aip.example.com"
   AIP_LOG_LEVEL: info
   AIP_SANDBOX_DRIVER: k8s
   AIP_SANDBOX_NAMESPACE: aip

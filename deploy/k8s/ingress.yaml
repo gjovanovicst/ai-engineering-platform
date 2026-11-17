@@ -8,10 +8,19 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-    - hosts: [aip.example.com]
+    - hosts: [aip.example.com, api.aip.example.com]
       secretName: aip-tls
   rules:
     - host: aip.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: aip-web
+                port: { number: 80 }
+    - host: api.aip.example.com
       http:
         paths:
           - path: /

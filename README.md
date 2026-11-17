@@ -4,6 +4,9 @@ A platform where AI agents execute the complete software lifecycle: from idea an
 blueprint, through backlog, planning, implementation and testing, to review,
 merge and deploy, with a human at the checkpoints and a full audit trail.
 
+> **New here?** Start with the [quickstart](docs/quickstart.md) for a local
+> docker-compose setup, then read the documentation below.
+
 > **The backend is Go.** The frontend is Next.js (App Router). The database is PostgreSQL. This is not
 > a preference that can change mid-flight. See [ADR-0001](docs/adr/README.md).
 
