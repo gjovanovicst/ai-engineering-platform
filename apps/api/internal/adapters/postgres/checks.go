@@ -30,7 +30,7 @@ func (s *CheckStore) Upsert(ctx context.Context, orgID, repoID, prID, runID stri
 		row, err := s.q.WithTx(tx).UpsertCheckResult(ctx, pgstore.UpsertCheckResultParams{
 			OrgID: toUUID(orgID), RepoID: optionalUUID(repoID), PullRequestID: optionalUUID(prID),
 			RunID: optionalUUID(runID), Name: c.Name, Status: pgstore.CheckStatus(c.Status),
-			Output: c.Output, DurationMs: int32(c.DurationMS), CommitSha: c.CommitSHA, //nolint:gosec // durations
+			Output: c.Output, DurationMs: int32(c.DurationMS), CommitSha: c.CommitSHA, Url: c.URL, //nolint:gosec // durations
 		})
 		if err != nil {
 			return err
@@ -83,7 +83,7 @@ func (s *CheckStore) InsertForRun(ctx context.Context, orgID, runID string, c ch
 	err := db.WithOrg(ctx, s.pool, orgID, func(ctx context.Context, tx pgx.Tx) error {
 		row, err := s.q.WithTx(tx).InsertRunCheck(ctx, pgstore.InsertRunCheckParams{
 			OrgID: toUUID(orgID), RunID: optionalUUID(runID), Name: c.Name,
-			Status: pgstore.CheckStatus(c.Status), Output: c.Output,
+			Status: pgstore.CheckStatus(c.Status), Output: c.Output, Url: c.URL,
 		})
 		if err != nil {
 			return err
@@ -133,6 +133,7 @@ func checkFromRow(row pgstore.TestResult) checks.Check {
 	return checks.Check{
 		ID: uuidString(row.ID), Name: row.Name, Status: string(row.Status),
 		Output: row.Output, DurationMS: int(row.DurationMs), CommitSHA: row.CommitSha,
+		URL: row.Url,
 	}
 }
 

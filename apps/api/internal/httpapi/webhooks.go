@@ -205,7 +205,7 @@ func (h *webhookHandlers) processEvent(ctx context.Context, repo domain.Repo, ev
 			if pr, perr := h.repos.PullRequestForMerge(ctx, repo.OrgID, repo.ID, event.Number); perr == nil {
 				if _, cerr := h.checks.Record(ctx, repo.OrgID, repo.ID, pr.ID, "", checks.Check{
 					Name: event.CheckName, Status: event.CheckStatus, Output: event.CheckOutput,
-					DurationMS: event.CheckDurationMS, CommitSHA: event.CommitSHA,
+					DurationMS: event.CheckDurationMS, CommitSHA: event.CommitSHA, URL: event.CheckURL,
 				}); cerr != nil {
 					h.log.Warn("webhooks.check", slog.Any("err", cerr))
 				} else {

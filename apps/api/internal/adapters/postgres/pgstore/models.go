@@ -727,6 +727,7 @@ type TestResult struct {
 	CommitSha     string
 	CreatedAt     pgtype.Timestamptz
 	UpdatedAt     pgtype.Timestamptz
+	Url           string
 }
 
 type UsageLedger struct {

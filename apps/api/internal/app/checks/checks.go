@@ -18,6 +18,9 @@ type Check struct {
 	Output     string
 	DurationMS int
 	CommitSHA  string
+	// URL is where the check ran (the CI job page); it lets the UI link a
+	// failure to its log when the check output is empty.
+	URL string
 }
 
 // Store persists check results.

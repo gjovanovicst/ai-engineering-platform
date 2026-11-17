@@ -13,6 +13,7 @@ func TestGitHubParsesCheckRun(t *testing.T) {
 		"action":"completed",
 		"check_run":{"name":"test (go)","status":"completed","conclusion":"success",
 			"head_sha":"abc123","output":{"summary":"ok"},
+			"details_url":"https://github.com/acme/repo/actions/runs/1",
 			"pull_requests":[{"number":7}]},
 		"repository":{"full_name":"acme/repo"}
 	}`
@@ -27,6 +28,9 @@ func TestGitHubParsesCheckRun(t *testing.T) {
 	}
 	if event.CheckName != "test (go)" || event.CommitSHA != "abc123" {
 		t.Fatalf("event = %+v", event)
+	}
+	if event.CheckURL != "https://github.com/acme/repo/actions/runs/1" {
+		t.Fatalf("check url = %q", event.CheckURL)
 	}
 }
 

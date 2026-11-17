@@ -872,6 +872,7 @@ export type CheckResult = {
   output: string;
   duration_ms: number;
   commit_sha: string;
+  url?: string;
 };
 
 export function listPullRequestChecks(orgID: string, prID: string) {
