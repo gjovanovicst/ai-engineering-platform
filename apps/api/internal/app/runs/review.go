@@ -2,14 +2,17 @@ package runs
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/gjovanovicst/ai-engineering-platform/internal/domain"
 )
 
 // reviewDiffLimit bounds how much of the development diff is sent to the
-// review model; larger diffs are truncated with a marker.
-const reviewDiffLimit = 60000
+// review model; larger diffs are truncated with a marker and a caveat. The T-4
+// diff was 126 KB: the old 60 KB limit cut off the handler that proves the
+// self-approval rule, so the review reported two false majors.
+const reviewDiffLimit = 200000
 
 // reviewPrompt frames a review around the development diff. Reviewing the base
 // repository instead of the change is a known failure mode (the agent then
@@ -23,8 +26,21 @@ func reviewPrompt(diff string) string {
 			"stating that nothing was delivered; do not review the base repository as the change.\n")
 		return b.String()
 	}
-	if len(diff) > reviewDiffLimit {
+	files := changedFiles(diff)
+	truncated := len(diff) > reviewDiffLimit
+	if truncated {
 		diff = diff[:reviewDiffLimit] + "\n[diff truncated]\n"
+	}
+	if len(files) > 0 {
+		b.WriteString("Changed files (" + strconv.Itoa(len(files)) + "):\n")
+		for _, file := range files {
+			b.WriteString("- " + file + "\n")
+		}
+		b.WriteString("\n")
+	}
+	if truncated {
+		b.WriteString("The diff below is truncated at the review limit. Do not report files or hunks " +
+			"that are not shown, and do not claim that a file is missing when it may be past the limit.\n\n")
 	}
 	b.WriteString("The change under review is the latest development run's diff. Review THESE changes; " +
 		"the base repository alone is not the change. Flag hand-written cryptography, " +
@@ -32,6 +48,21 @@ func reviewPrompt(diff string) string {
 	b.WriteString(diff)
 	b.WriteString("\n```\n")
 	return b.String()
+}
+
+// changedFiles lists the paths in a diff, in order.
+func changedFiles(diff string) []string {
+	var files []string
+	for _, line := range strings.Split(diff, "\n") {
+		if !strings.HasPrefix(line, "diff --git a/") {
+			continue
+		}
+		rest := strings.TrimPrefix(line, "diff --git a/")
+		if idx := strings.Index(rest, " b/"); idx > 0 {
+			files = append(files, rest[:idx])
+		}
+	}
+	return files
 }
 
 // developmentDiff returns the latest development diff for the run's task.

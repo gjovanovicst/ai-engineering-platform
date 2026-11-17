@@ -44,3 +44,15 @@ func TestReviewPromptTruncatesHugeDiffs(t *testing.T) {
 		t.Fatalf("prompt length %d exceeds the cap", len(prompt))
 	}
 }
+
+func TestReviewPromptListsChangedFiles(t *testing.T) {
+	t.Parallel()
+	diff := "diff --git a/apps/api/internal/auth/password.go b/apps/api/internal/auth/password.go\n+++ b/apps/api/internal/auth/password.go\n+x\n" +
+		"diff --git a/apps/api/internal/httpapi/changes.go b/apps/api/internal/httpapi/changes.go\n+++ b/apps/api/internal/httpapi/changes.go\n+y\n"
+	prompt := reviewPrompt(diff)
+	if !strings.Contains(prompt, "Changed files (2):") ||
+		!strings.Contains(prompt, "- apps/api/internal/auth/password.go") ||
+		!strings.Contains(prompt, "- apps/api/internal/httpapi/changes.go") {
+		t.Fatalf("prompt does not index the changed files: %s", prompt)
+	}
+}

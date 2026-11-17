@@ -76,6 +76,9 @@ All notable changes to this project. Dates are 2026.
 - The tool loop reserves the final model step for a final answer (tools are
   not offered on that step), so the agent emits the required `AIP_*` line
   instead of spending every step on tools and failing `acceptance_unproven`.
+- The review sees diffs up to 200 KB (was 60 KB) and gets a changed-file index;
+  a truncated diff carries a caveat. The T-4 diff (126 KB) had its handler hunks
+  cut off, which produced two false major findings.
 - The secret scanner ignores deliberate test fixtures (`never-issued`, `dummy`,
   `fake`, `fixture`, …) and lines carrying the `aip:allow-secret` pragma, so a
   fake token in a test no longer fails the run; real-looking tokens still fail.
