@@ -147,6 +147,10 @@ Stories live in **GitHub Issues**, with labels the agent can filter:
 
 Detailed story pickup rules: [AGENTS.md §9](../AGENTS.md#9-backlog-how-an-agent-picks-up-a-story).
 
+New stories use the **Story** issue template (`.github/ISSUE_TEMPLATE/story.yml`),
+which encodes the Definition of Ready. Create or update the labels with
+`make labels` (`scripts/sync-labels.sh`; the token needs **Issues: write**).
+
 ## 9. Definition of "ready for the first commit"
 
 - [ ] `go mod init github.com/gjovanovicst/ai-engineering-platform` (or the agreed path)

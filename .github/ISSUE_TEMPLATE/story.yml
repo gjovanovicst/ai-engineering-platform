@@ -1,0 +1,92 @@
+name: Story
+description: A backlog item that meets the ASDLC Definition of Ready
+title: "story: "
+labels: ["story", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A story is picked up only when the Definition of Ready is met **and**
+        the `ready` label is added (see `AGENTS.md` §1 and §9). Keep it small:
+        one story per PR.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why does this story exist? What is hard or impossible today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Packages and files that change
+      description: List the paths (e.g. apps/api/internal/app/..., apps/web/src/...).
+      placeholder: |
+        - apps/api/internal/...
+        - apps/web/src/...
+    validations:
+      required: true
+
+  - type: textarea
+    id: contract
+    attributes:
+      label: Endpoint / schema changes
+      description: New or changed endpoint, migration, and whether it is a breaking change.
+      placeholder: "GET /api/v1/...; migration 00NN_...; breaking: no"
+
+  - type: textarea
+    id: ui
+    attributes:
+      label: UI states (if this touches the web)
+      description: Which of loading / empty / error / ready are new or changed?
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Given … when … then … — one line per criterion.
+      placeholder: |
+        - Given a … when … then …
+    validations:
+      required: true
+
+  - type: textarea
+    id: proof
+    attributes:
+      label: The test that proves it
+      description: Test name and path. A test that would fail if the invariant broke.
+      placeholder: "TestFoo in apps/api/internal/.../foo_test.go"
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What this story explicitly does not do.
+    validations:
+      required: true
+
+  - type: textarea
+    id: rollback
+    attributes:
+      label: Rollback
+      description: Migration? Feature flag? Revert? What happens to existing data?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: dor
+    attributes:
+      label: Definition of Ready
+      options:
+        - label: The files list is complete.
+          required: true
+        - label: The test that proves it is named.
+          required: true
+        - label: Out of scope is explicit.
+          required: true
+        - label: Rollback is described.
+          required: true
