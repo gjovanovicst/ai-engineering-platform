@@ -188,3 +188,27 @@ func TestToolLoopRunsTheTestCommand(t *testing.T) {
 func (s *toolSandbox) StartProcess(context.Context, sandbox.Handle, []string, map[string]string) (sandbox.Process, error) {
 	return nil, fmt.Errorf("not supported in tests")
 }
+
+func TestFinalStepChatOmitsTools(t *testing.T) {
+	t.Parallel()
+	var body map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		_, _ = w.Write([]byte(`{"choices":[{"message":{"content":"AIP_PROOF: {\"evidence\":[]}"}}]}`))
+	}))
+	defer srv.Close()
+	b := &ToolLoopBackend{BaseURL: srv.URL, Model: "m"}
+	content, calls, _, err := b.chat(context.Background(), "m", []chatMessage{{Role: "user", Content: "finish"}}, false, nil, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := body["tools"]; ok {
+		t.Fatal("the final step must not offer tools")
+	}
+	if _, ok := body["tool_choice"]; ok {
+		t.Fatal("the final step must not force a tool choice")
+	}
+	if len(calls) != 0 || !strings.Contains(content, "AIP_PROOF") {
+		t.Fatalf("content = %q, calls = %v", content, calls)
+	}
+}

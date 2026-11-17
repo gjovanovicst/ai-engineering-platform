@@ -73,6 +73,9 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- The tool loop reserves the final model step for a final answer (tools are
+  not offered on that step), so the agent emits the required `AIP_*` line
+  instead of spending every step on tools and failing `acceptance_unproven`.
 - A missing dependency in the offline sandbox is classified as
   `dependency_missing` (instead of `test_gate_failed`); the development prompt
   tells the agent to stop and report instead of reimplementing a library, and

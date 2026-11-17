@@ -146,7 +146,14 @@ func (b *ToolLoopBackend) Run(ctx context.Context, spec Spec, emit func(Event) e
 			usage.Model = model
 			return usage, err
 		}
-		content, calls, usageStep, err := b.chat(ctx, model, messages, spec.ReadOnly, mcpManager)
+		allowTools := true
+		if step == maxSteps-1 {
+			// Reserve the last model step for a final answer: without this the
+			// agent can spend every step on tools and never emit AIP_PROOF.
+			allowTools = false
+			messages = append(messages, chatMessage{Role: "user", Content: "This is your final step. Stop calling tools and write your final answer now. If the task asks for a machine-readable final line (AIP_PLAN, AIP_REVIEW or AIP_PROOF), include it exactly once."})
+		}
+		content, calls, usageStep, err := b.chat(ctx, model, messages, spec.ReadOnly, mcpManager, allowTools)
 		if err != nil {
 			return Result{}, err
 		}
@@ -268,8 +275,13 @@ func (b *ToolLoopBackend) diff(ctx context.Context, handle sandbox.Handle) (stri
 	return res.Stdout, nil
 }
 
-func (b *ToolLoopBackend) chat(ctx context.Context, model string, messages []chatMessage, readOnly bool, manager *MCPManager) (string, []toolCall, Result, error) {
-	payload, err := json.Marshal(map[string]any{"model": model, "messages": messages, "tools": appendMCPTools(toolSpecs(readOnly), manager), "tool_choice": "auto"})
+func (b *ToolLoopBackend) chat(ctx context.Context, model string, messages []chatMessage, readOnly bool, manager *MCPManager, allowTools bool) (string, []toolCall, Result, error) {
+	request := map[string]any{"model": model, "messages": messages}
+	if allowTools {
+		request["tools"] = appendMCPTools(toolSpecs(readOnly), manager)
+		request["tool_choice"] = "auto"
+	}
+	payload, err := json.Marshal(request)
 	if err != nil {
 		return "", nil, Result{}, err
 	}
