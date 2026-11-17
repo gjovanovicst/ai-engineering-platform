@@ -16,7 +16,7 @@ GOFILES := $(shell find $(API_DIR) -name '*.go' -not -path '*/.cache/*')
 
 .PHONY: help build test test-integration lint fmt fmt-check vet generate oapi-check security check dev run-api run-worker sandbox-image e2e backup restore-check pilot-check loadtest loadtest-k6 \
         web-install web-dev web-check \
-        migrate-up migrate-down migrate-status seed bootstrap keygen tools tools-check \
+        migrate-up migrate-down migrate-status seed bootstrap keygen tools tools-check labels \
         compose-up compose-down clean
 
 help: ## show available commands
@@ -92,6 +92,9 @@ migrate-down: ## roll back the last migration
 
 seed: ## insert demo data
 	@set -a; [ -f .env ] && . ./.env; set +a; cd $(API_DIR) && go run ./cmd/aipctl seed
+
+labels: ## create or update the GitHub backlog labels (needs AIP_GITHUB_TOKEN)
+	scripts/sync-labels.sh
 
 bootstrap: ## first owner account + organization
 	@set -a; [ -f .env ] && . ./.env; set +a; cd $(API_DIR) && go run ./cmd/aipctl bootstrap
