@@ -113,6 +113,18 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
         const status = event.data.payload?.status;
         if (typeof status === "string") {
           setRun((current) => (current ? { ...current, status } : current));
+          // A planning run parks in awaiting_approval, which is not terminal:
+          // the stream stays open, so the plan only arrived on reload. Refresh
+          // the run here so the plan and the approval panel appear live.
+          if (status === "awaiting_approval") {
+            getRun(claims.org, runId)
+              .then((next) => {
+                if (!controller.signal.aborted) setRun(next);
+              })
+              .catch(() => {
+                // keep the last known state
+              });
+          }
         }
       },
       controller.signal,

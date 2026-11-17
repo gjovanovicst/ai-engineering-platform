@@ -76,6 +76,9 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- The run page refreshes on `awaiting_approval`, so a finished planning run
+  shows its plan and approval panel without a manual reload (the SSE stream does
+  not close for a non-terminal state).
 - The tool loop reserves the final model step for a final answer (tools are
   not offered on that step), so the agent emits the required `AIP_*` line
   instead of spending every step on tools and failing `acceptance_unproven`.
