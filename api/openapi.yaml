@@ -950,6 +950,28 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /orgs/{org}/runs/{run}/fix-review:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/RunParam"
+    post:
+      tags: [runs]
+      operationId: fixReviewRun
+      description: |
+        Starts a development run that fixes the blocker findings of a finished
+        review on the existing pull request: the same approved plan and branch;
+        the review re-runs after the fix.
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      responses:
+        "202":
+          description: A fix development run was queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Run" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
   /orgs/{org}/runs/{run}/events:
     parameters:
       - { $ref: "#/components/parameters/OrgParam" }

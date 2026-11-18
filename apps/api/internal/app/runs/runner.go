@@ -298,6 +298,13 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 	var workspace []byte
 	if r.workspace != nil {
 		archive, werr := r.workspace.Clone(runCtx, run.OrgID, run.ProjectID)
+		if run.FixOfRunID != "" {
+			if bc, ok := r.workspace.(interface {
+				CloneRef(ctx context.Context, orgID, projectID, ref string) ([]byte, error)
+			}); ok {
+				archive, werr = bc.CloneRef(runCtx, run.OrgID, run.ProjectID, fixBranch(run))
+			}
+		}
 		if werr != nil {
 			r.log.Error("runs: clone workspace", slog.Any("err", werr))
 			failed, ferr := r.fail(runCtx, run, "workspace_clone_failed", "could not clone the project repository")

@@ -1,6 +1,6 @@
 -- name: CreateRun :one
-INSERT INTO runs (org_id, project_id, task_id, agent_type, status, model, budget, frozen_context_hash, frozen_context_sources)
-VALUES ($1, $2, $3, $4, 'queued', $5, $6, $7, $8)
+INSERT INTO runs (org_id, project_id, task_id, agent_type, status, model, budget, frozen_context_hash, frozen_context_sources, fix_of_run_id)
+VALUES ($1, $2, $3, $4, 'queued', $5, $6, $7, $8, $9)
 RETURNING *;
 
 -- name: GetRun :one

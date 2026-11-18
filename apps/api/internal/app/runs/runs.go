@@ -619,6 +619,100 @@ func retryTask(_ context.Context, task *domain.Task) error {
 	})
 }
 
+// FixReviewInput identifies the review run whose blockers should be fixed.
+type FixReviewInput struct {
+	OrgID string
+	RunID string
+	Actor string
+}
+
+// FixReview starts a development run that fixes the blockers of a review on
+// the existing pull request: the same approved plan, the same branch (the
+// development run's), and the review findings in the prompt.
+func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run, error) {
+	review, err := s.store.Get(ctx, in.OrgID, in.RunID)
+	if err != nil {
+		return domain.Run{}, err
+	}
+	if review.AgentType != string(domain.AgentReview) {
+		return domain.Run{}, &domain.TransitionError{
+			From: domain.TaskStatus(review.AgentType), To: domain.TaskStatus(domain.RunQueued),
+			Detail: "only review runs can be fixed",
+		}
+	}
+	if review.Status != domain.RunSucceeded {
+		return domain.Run{}, &domain.TransitionError{
+			From: domain.TaskStatus(review.Status), To: domain.TaskStatus(domain.RunQueued),
+			Detail: "only a finished review can be fixed",
+		}
+	}
+	if reviewBlockers(review.Review) == 0 {
+		return domain.Run{}, fmt.Errorf("%w: the review has no blocker findings", domain.ErrValidation)
+	}
+	dev, err := s.store.LatestRun(ctx, in.OrgID, review.TaskID, string(domain.AgentDevelopment))
+	if err != nil {
+		return domain.Run{}, fmt.Errorf("find the development run: %w", err)
+	}
+	if dev.Status != domain.RunSucceeded {
+		return domain.Run{}, &domain.TransitionError{
+			From: domain.TaskStatus(dev.Status), To: domain.TaskStatus(domain.RunQueued),
+			Detail: "the pull request's development run has not finished",
+		}
+	}
+	if len(dev.Plan) == 0 {
+		return domain.Run{}, fmt.Errorf("%w: the development run has no approved plan", domain.ErrValidation)
+	}
+	task, err := s.tasks.Get(ctx, in.OrgID, review.ProjectID, review.TaskID)
+	if err != nil {
+		return domain.Run{}, err
+	}
+	if task.Status.Terminal() {
+		return domain.Run{}, &domain.TransitionError{
+			From: task.Status, To: domain.TaskInProgress,
+			Detail: "the task is already closed (the pull request may be merged)",
+		}
+	}
+	if err := retryTask(ctx, &task); err != nil {
+		return domain.Run{}, err
+	}
+	created, err := s.store.Create(ctx, domain.Run{
+		OrgID: review.OrgID, ProjectID: review.ProjectID, TaskID: review.TaskID,
+		AgentType: string(domain.AgentDevelopment), Status: domain.RunQueued,
+		Model: dev.Model, Budget: dev.Budget, FixOfRunID: dev.ID,
+		FrozenContextHash: dev.FrozenContextHash, FrozenContextSources: dev.FrozenContextSources,
+	})
+	if err != nil {
+		return domain.Run{}, err
+	}
+	if err := s.store.SetPlan(ctx, in.OrgID, created.ID, dev.Plan, ""); err != nil {
+		return domain.Run{}, err
+	}
+	if _, err := s.tasks.UpdateStatus(ctx, task); err != nil {
+		return domain.Run{}, err
+	}
+	if s.enqueuer != nil {
+		if err := s.enqueuer.Enqueue(ctx, created.ID, created.OrgID); err != nil {
+			return domain.Run{}, err
+		}
+	}
+	_ = s.store.AppendEvent(ctx, in.OrgID, created.ID, "run.fix_requested", "user",
+		map[string]any{"from_run": dev.ID, "review_run": review.ID, "actor": in.Actor})
+	return created, nil
+}
+
+// fixBranch is the branch a run publishes to. A fix run updates the branch of
+// the development run it fixes; every other run gets its own branch.
+func fixBranch(run domain.Run) string {
+	id := run.ID
+	if run.FixOfRunID != "" {
+		id = run.FixOfRunID
+	}
+	if len(id) > 8 {
+		id = id[:8]
+	}
+	return "aip/" + id
+}
+
 // EventsAfter returns events after a sequence number (SSE replay).
 func (s *Service) EventsAfter(ctx context.Context, orgID, id string, after int64) ([]Event, error) {
 	return s.store.EventsAfter(ctx, orgID, id, after)

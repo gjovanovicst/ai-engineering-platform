@@ -73,12 +73,15 @@ type Run struct {
 	FrozenContextHash    string
 	FrozenContextSources string
 	TraceID              string
-	FailureCode          string
-	FailureDetail        string
-	CancelRequestedAt    *time.Time
-	StartedAt            *time.Time
-	FinishedAt           *time.Time
-	CreatedAt            time.Time
+	// FixOfRunID is set on a review-fix run: the development run whose pull
+	// request it updates (the same branch and PR).
+	FixOfRunID        string
+	FailureCode       string
+	FailureDetail     string
+	CancelRequestedAt *time.Time
+	StartedAt         *time.Time
+	FinishedAt        *time.Time
+	CreatedAt         time.Time
 }
 
 var runTransitions = map[RunStatus][]RunStatus{

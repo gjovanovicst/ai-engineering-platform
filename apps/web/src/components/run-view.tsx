@@ -20,6 +20,7 @@ import {
   listRunArtifacts,
   startRun,
   retryRun,
+  fixReview,
   streamRunEvents,
   transitionTask,
   type Approval,
@@ -46,6 +47,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
   const [retryingDev, setRetryingDev] = useState(false);
+  const [fixing, setFixing] = useState(false);
   const [approval, setApproval] = useState<Approval | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [showReject, setShowReject] = useState(false);
@@ -195,6 +197,20 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
       setError(err instanceof ApiError ? err.message : "Could not retry the development run");
     } finally {
       setRetryingDev(false);
+    }
+  }
+
+  async function fixReviewFindings() {
+    if (!claims || !run) return;
+    setFixing(true);
+    setError(null);
+    try {
+      const next = await fixReview(claims.org, run.id);
+      router.push(`/projects/${run.project_id}/runs/${next.id}`);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not start the fix run");
+    } finally {
+      setFixing(false);
     }
   }
 
@@ -475,7 +491,14 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
         <section className="mb-6 rounded-lg border border-border bg-bg-surface">
           <header className="flex items-center justify-between border-b border-border px-4 py-3">
             <h2 className="text-sm font-semibold">Review findings</h2>
-            <span className="text-xs text-text-muted">{run.review.findings.length}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-text-muted">{run.review.findings.length}</span>
+              {claims && run.review.findings.some((finding) => finding.severity === "blocker") ? (
+                <Button variant="secondary" loading={fixing} onClick={fixReviewFindings}>
+                  Fix review findings
+                </Button>
+              ) : null}
+            </div>
           </header>
           <ul className="divide-y divide-border">
             {run.review.findings.map((finding, index) => (

@@ -50,6 +50,7 @@ func (s *RunStore) Create(ctx context.Context, r domain.Run) (domain.Run, error)
 		row, err := q.CreateRun(ctx, pgstore.CreateRunParams{
 			OrgID: toUUID(r.OrgID), ProjectID: toUUID(r.ProjectID), TaskID: toUUID(r.TaskID),
 			AgentType: r.AgentType, Model: r.Model, Budget: budget, FrozenContextHash: r.FrozenContextHash, FrozenContextSources: r.FrozenContextSources,
+			FixOfRunID: toUUID(r.FixOfRunID),
 		})
 		if err != nil {
 			return mapUnique(err)
@@ -219,6 +220,9 @@ func runFromRow(row pgstore.Run) domain.Run {
 		Model: row.Model, Plan: row.Plan, CreatedAt: row.CreatedAt.Time,
 		ContextHash: row.ContextHash, FrozenContextHash: row.FrozenContextHash,
 		FrozenContextSources: row.FrozenContextSources, TraceID: row.TraceID,
+	}
+	if row.FixOfRunID.Valid {
+		r.FixOfRunID = uuidString(row.FixOfRunID)
 	}
 	if len(row.Budget) > 0 {
 		_ = json.Unmarshal(row.Budget, &r.Budget)
