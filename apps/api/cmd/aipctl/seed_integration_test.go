@@ -15,7 +15,7 @@ import (
 	"github.com/gjovanovicst/ai-engineering-platform/migrations"
 )
 
-func migratedPool(t *testing.T) (*pgxpool.Pool, context.Context) {
+func migratedPool(t *testing.T) (*pgxpool.Pool, *pgxpool.Pool, context.Context) {
 	t.Helper()
 	appDSN := os.Getenv("AIP_TEST_DB_DSN")
 	migDSN := os.Getenv("AIP_TEST_DB_MIGRATOR_DSN")
@@ -27,25 +27,54 @@ func migratedPool(t *testing.T) (*pgxpool.Pool, context.Context) {
 	if err := db.Migrate(ctx, migDSN, migrations.FS, "up"); err != nil {
 		t.Fatalf("migrate up: %v", err)
 	}
-	pool, err := db.Connect(ctx, appDSN)
+	app, err := db.Connect(ctx, appDSN)
 	if err != nil {
-		t.Fatalf("connect: %v", err)
+		t.Fatalf("connect app: %v", err)
 	}
+	t.Cleanup(app.Close)
+	migrator, err := db.Connect(ctx, migDSN)
+	if err != nil {
+		t.Fatalf("connect migrator: %v", err)
+	}
+	t.Cleanup(migrator.Close)
 	t.Cleanup(func() {
-		pool.Close()
 		if err := db.Migrate(context.Background(), migDSN, migrations.FS, "down"); err != nil {
 			t.Logf("migrate down: %v", err)
 		}
 	})
-	return pool, ctx
+	return app, migrator, ctx
+}
+
+// deleteDemoData removes the seeded rows. The integration database is shared
+// by the packages (cmd/aipctl runs before internal/...), and the session test
+// inserts an org with the same "acme" slug, so a leftover demo org would make
+// it fail.
+func deleteDemoData(t *testing.T, migrator *pgxpool.Pool, ctx context.Context, s seedSummary) {
+	t.Helper()
+	stmts := []struct {
+		sql  string
+		args []any
+	}{
+		{`DELETE FROM tasks WHERE project_id IN (SELECT id FROM projects WHERE org_id=$1)`, []any{s.OrgID}},
+		{`DELETE FROM projects WHERE org_id=$1`, []any{s.OrgID}},
+		{`DELETE FROM memberships WHERE org_id=$1`, []any{s.OrgID}},
+		{`DELETE FROM users WHERE id=$1`, []any{s.UserID}},
+		{`DELETE FROM orgs WHERE id=$1`, []any{s.OrgID}},
+	}
+	for _, stmt := range stmts {
+		if _, err := migrator.Exec(ctx, stmt.sql, stmt.args...); err != nil {
+			t.Errorf("cleanup demo data: %v", err)
+		}
+	}
 }
 
 func TestSeedCreatesTheDemoDataset(t *testing.T) {
-	pool, ctx := migratedPool(t)
+	pool, migrator, ctx := migratedPool(t)
 	summary, err := seedDemoData(ctx, pool, "correct horse battery")
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() { deleteDemoData(t, migrator, ctx, summary) })
 	if summary.OrgID == "" || summary.UserID == "" || summary.ProjectID == "" {
 		t.Fatalf("incomplete summary: %+v", summary)
 	}
@@ -91,11 +120,12 @@ func TestSeedCreatesTheDemoDataset(t *testing.T) {
 }
 
 func TestSeedIsIdempotent(t *testing.T) {
-	pool, ctx := migratedPool(t)
+	pool, migrator, ctx := migratedPool(t)
 	first, err := seedDemoData(ctx, pool, "correct horse battery")
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() { deleteDemoData(t, migrator, ctx, first) })
 	second, err := seedDemoData(ctx, pool, "correct horse battery")
 	if err != nil {
 		t.Fatal(err)
