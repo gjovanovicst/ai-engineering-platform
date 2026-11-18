@@ -114,7 +114,7 @@ func projectFromRow(row pgstore.Project) domain.Project {
 		DesignStandardID:      uuidString(row.DesignSystemID),
 		DesignStandardVersion: intFromPtr(row.DesignStandardVersion),
 		RequiredChecks:        row.RequiredChecks,
-		E2ECommand:            row.E2eCommand, VisualCommand: row.VisualCommand, MCPServers: row.McpServers,
+		E2ECommand:            row.E2eCommand, TestCommand: row.TestCommand, VisualCommand: row.VisualCommand, MCPServers: row.McpServers,
 		VisualThreshold: row.VisualThreshold, VisualMasks: row.VisualMasks,
 		PolicyMaxDiffBytes: int(row.PolicyMaxDiffBytes), PolicyForbiddenPaths: row.PolicyForbiddenPaths, PolicyChangeWindow: row.PolicyChangeWindow, PolicyAllowedModels: row.PolicyAllowedModels, PolicyAllowedTools: row.PolicyAllowedTools, PolicyRequiredApprovals: int(row.PolicyRequiredApprovals), PluginChecks: row.PluginChecks,
 		Status:    domain.ProjectStatus(row.Status),
@@ -258,6 +258,34 @@ func (s *ProjectStore) SetE2ECommand(ctx context.Context, orgID, id, command str
 		return nil
 	})
 	return out, err
+}
+
+// SetTestCommand stores the project test command.
+func (s *ProjectStore) SetTestCommand(ctx context.Context, orgID, id, command string) (domain.Project, error) {
+	var out domain.Project
+	err := db.WithOrg(ctx, s.pool, orgID, func(ctx context.Context, tx pgx.Tx) error {
+		row, err := s.q.WithTx(tx).SetProjectTestCommand(ctx, pgstore.SetProjectTestCommandParams{
+			ID: toUUID(id), OrgID: toUUID(orgID), TestCommand: command,
+		})
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return domain.ErrNotFound
+			}
+			return err
+		}
+		out = projectFromRow(row)
+		return nil
+	})
+	return out, err
+}
+
+// TestCommand returns the project's test command (empty means the global one).
+func (s *ProjectStore) TestCommand(ctx context.Context, orgID, projectID string) (string, error) {
+	project, err := s.Get(ctx, orgID, projectID)
+	if err != nil {
+		return "", err
+	}
+	return project.TestCommand, nil
 }
 
 // E2ECommand returns the project's e2e command.

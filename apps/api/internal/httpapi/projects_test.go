@@ -94,6 +94,10 @@ func (f *fakeProjectService) SetE2ECommand(context.Context, string, string, stri
 	return domain.Project{}, f.err
 }
 
+func (f *fakeProjectService) SetTestCommand(context.Context, string, string, string) (domain.Project, error) {
+	return domain.Project{}, f.err
+}
+
 func (f *fakeProjectService) ReplaceComponents(context.Context, string, string, string, []projects.ComponentSelection) (int, error) {
 	return 0, f.err
 }

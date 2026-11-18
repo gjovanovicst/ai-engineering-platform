@@ -119,7 +119,7 @@ func (f fakeTasks) UpdateStatus(_ context.Context, t domain.Task) (domain.Task, 
 
 type fakeExecutor struct{ called chan string }
 
-func (f *fakeExecutor) Execute(_ context.Context, _ domain.Run, prompt string, _ []string, _ string, _ []string, _ []string, _ []ContextSource, _, _, _ string, _ float64, _ []visualdiff.Rect, _ int, _ []string, _ []string, _ []string, _ []PluginCheck) (domain.Run, error) {
+func (f *fakeExecutor) Execute(_ context.Context, _ domain.Run, prompt string, _ []string, _ string, _ []string, _ []string, _ []ContextSource, _, _, _, _ string, _ float64, _ []visualdiff.Rect, _ int, _ []string, _ []string, _ []string, _ []PluginCheck) (domain.Run, error) {
 	f.called <- prompt
 	return domain.Run{}, nil
 }

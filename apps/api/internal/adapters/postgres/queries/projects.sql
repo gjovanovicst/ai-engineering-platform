@@ -23,6 +23,11 @@ UPDATE projects SET e2e_command = $3, updated_at = now()
 WHERE id = $1 AND org_id = $2
 RETURNING *;
 
+-- name: SetProjectTestCommand :one
+UPDATE projects SET test_command = $3, updated_at = now()
+WHERE id = $1 AND org_id = $2
+RETURNING *;
+
 -- name: SetProjectVisualCommand :one
 UPDATE projects SET visual_command = $3, updated_at = now()
 WHERE id = $1 AND org_id = $2

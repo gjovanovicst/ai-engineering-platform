@@ -90,6 +90,7 @@ export type Project = {
   status: string;
   required_checks?: string[];
   e2e_command?: string;
+  test_command?: string;
   visual_command?: string;
   mcp_servers?: string;
   policy_max_diff_bytes?: number;
@@ -1100,6 +1101,13 @@ export function getProjectPreflight(orgID: string, projectID: string) {
   return request<{ ready: boolean; status: string; checks: PreflightCheck[] }>(
     `/api/v1/orgs/${orgID}/projects/${projectID}/preflight`,
   );
+}
+
+export function setProjectTestCommand(orgID: string, projectID: string, command: string) {
+  return request<Project>(`/api/v1/orgs/${orgID}/projects/${projectID}/test-command`, {
+    method: "PUT",
+    body: JSON.stringify({ command }),
+  });
 }
 
 export function setProjectVisual(orgID: string, projectID: string, command: string) {

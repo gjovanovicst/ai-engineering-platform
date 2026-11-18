@@ -94,7 +94,7 @@ type Merger interface {
 
 // Executor performs the work of a run (implemented by the agent runner).
 type Executor interface {
-	Execute(ctx context.Context, run domain.Run, prompt string, contextRules []string, designRef string, forbiddenImports []string, criteria []string, sources []ContextSource, e2eCommand string, visualCommand string, mcpConfig string, visualThreshold float64, visualMasks []visualdiff.Rect, policyMaxDiff int, forbiddenPaths []string, allowedModels []string, allowedTools []string, pluginChecks []PluginCheck) (domain.Run, error)
+	Execute(ctx context.Context, run domain.Run, prompt string, contextRules []string, designRef string, forbiddenImports []string, criteria []string, sources []ContextSource, e2eCommand string, visualCommand string, mcpConfig string, testCommand string, visualThreshold float64, visualMasks []visualdiff.Rect, policyMaxDiff int, forbiddenPaths []string, allowedModels []string, allowedTools []string, pluginChecks []PluginCheck) (domain.Run, error)
 }
 
 // Service coordinates runs.
@@ -232,7 +232,7 @@ func (s *Service) Start(ctx context.Context, in StartInput) (domain.Run, error) 
 			s.mu.Unlock()
 			cancel()
 		}()
-		_, _ = s.executor.Execute(runCtx, run, prompt, nil, "", nil, nil, nil, "", "", "", 0.01, nil, 0, nil, nil, nil, nil)
+		_, _ = s.executor.Execute(runCtx, run, prompt, nil, "", nil, nil, nil, "", "", "", "", 0.01, nil, 0, nil, nil, nil, nil)
 	}()
 
 	return run, nil

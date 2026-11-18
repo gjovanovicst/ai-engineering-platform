@@ -14,7 +14,7 @@ import (
 const createProject = `-- name: CreateProject :one
 INSERT INTO projects (org_id, name, slug, description, status, blueprint_id)
 VALUES ($1, $2, $3, $4, 'active', $5)
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type CreateProjectParams struct {
@@ -68,6 +68,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
@@ -87,7 +88,7 @@ func (q *Queries) DeleteProject(ctx context.Context, arg DeleteProjectParams) er
 }
 
 const getProject = `-- name: GetProject :one
-SELECT id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id FROM projects
+SELECT id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command FROM projects
 WHERE id = $1 AND org_id = $2 AND archived_at IS NULL
 `
 
@@ -133,12 +134,13 @@ func (q *Queries) GetProject(ctx context.Context, arg GetProjectParams) (Project
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
 
 const listProjects = `-- name: ListProjects :many
-SELECT id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id FROM projects
+SELECT id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command FROM projects
 WHERE org_id = $1 AND archived_at IS NULL
 ORDER BY created_at DESC, id DESC
 LIMIT $2
@@ -192,6 +194,7 @@ func (q *Queries) ListProjects(ctx context.Context, arg ListProjectsParams) ([]P
 			&i.PolicyRequiredApprovals,
 			&i.PluginChecks,
 			&i.AgentPluginID,
+			&i.TestCommand,
 		); err != nil {
 			return nil, err
 		}
@@ -206,7 +209,7 @@ func (q *Queries) ListProjects(ctx context.Context, arg ListProjectsParams) ([]P
 const setProjectAllowedModels = `-- name: SetProjectAllowedModels :one
 UPDATE projects SET policy_allowed_models = COALESCE($3::text[], '{}'), updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type SetProjectAllowedModelsParams struct {
@@ -252,6 +255,7 @@ func (q *Queries) SetProjectAllowedModels(ctx context.Context, arg SetProjectAll
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
@@ -259,7 +263,7 @@ func (q *Queries) SetProjectAllowedModels(ctx context.Context, arg SetProjectAll
 const setProjectAllowedTools = `-- name: SetProjectAllowedTools :one
 UPDATE projects SET policy_allowed_tools = COALESCE($3::text[], '{}'), updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type SetProjectAllowedToolsParams struct {
@@ -305,6 +309,7 @@ func (q *Queries) SetProjectAllowedTools(ctx context.Context, arg SetProjectAllo
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
@@ -312,7 +317,7 @@ func (q *Queries) SetProjectAllowedTools(ctx context.Context, arg SetProjectAllo
 const setProjectChangeWindow = `-- name: SetProjectChangeWindow :one
 UPDATE projects SET policy_change_window = $3, updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type SetProjectChangeWindowParams struct {
@@ -358,6 +363,7 @@ func (q *Queries) SetProjectChangeWindow(ctx context.Context, arg SetProjectChan
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
@@ -365,7 +371,7 @@ func (q *Queries) SetProjectChangeWindow(ctx context.Context, arg SetProjectChan
 const setProjectE2ECommand = `-- name: SetProjectE2ECommand :one
 UPDATE projects SET e2e_command = $3, updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type SetProjectE2ECommandParams struct {
@@ -411,6 +417,7 @@ func (q *Queries) SetProjectE2ECommand(ctx context.Context, arg SetProjectE2ECom
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
@@ -418,7 +425,7 @@ func (q *Queries) SetProjectE2ECommand(ctx context.Context, arg SetProjectE2ECom
 const setProjectMCP = `-- name: SetProjectMCP :one
 UPDATE projects SET mcp_servers = $3, updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type SetProjectMCPParams struct {
@@ -464,6 +471,7 @@ func (q *Queries) SetProjectMCP(ctx context.Context, arg SetProjectMCPParams) (P
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
@@ -471,7 +479,7 @@ func (q *Queries) SetProjectMCP(ctx context.Context, arg SetProjectMCPParams) (P
 const setProjectPluginChecks = `-- name: SetProjectPluginChecks :one
 UPDATE projects SET plugin_checks = $3, updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type SetProjectPluginChecksParams struct {
@@ -517,6 +525,7 @@ func (q *Queries) SetProjectPluginChecks(ctx context.Context, arg SetProjectPlug
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
@@ -524,7 +533,7 @@ func (q *Queries) SetProjectPluginChecks(ctx context.Context, arg SetProjectPlug
 const setProjectPolicy = `-- name: SetProjectPolicy :one
 UPDATE projects SET policy_max_diff_bytes = $3, policy_forbidden_paths = COALESCE($4::text[], '{}'), updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type SetProjectPolicyParams struct {
@@ -576,6 +585,7 @@ func (q *Queries) SetProjectPolicy(ctx context.Context, arg SetProjectPolicyPara
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
@@ -583,7 +593,7 @@ func (q *Queries) SetProjectPolicy(ctx context.Context, arg SetProjectPolicyPara
 const setProjectRequiredApprovals = `-- name: SetProjectRequiredApprovals :one
 UPDATE projects SET policy_required_approvals = $3, updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type SetProjectRequiredApprovalsParams struct {
@@ -629,6 +639,61 @@ func (q *Queries) SetProjectRequiredApprovals(ctx context.Context, arg SetProjec
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
+	)
+	return i, err
+}
+
+const setProjectTestCommand = `-- name: SetProjectTestCommand :one
+UPDATE projects SET test_command = $3, updated_at = now()
+WHERE id = $1 AND org_id = $2
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
+`
+
+type SetProjectTestCommandParams struct {
+	ID          pgtype.UUID
+	OrgID       pgtype.UUID
+	TestCommand string
+}
+
+func (q *Queries) SetProjectTestCommand(ctx context.Context, arg SetProjectTestCommandParams) (Project, error) {
+	row := q.db.QueryRow(ctx, setProjectTestCommand, arg.ID, arg.OrgID, arg.TestCommand)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.OrgID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.BlueprintID,
+		&i.BlueprintVersion,
+		&i.TechStack,
+		&i.Status,
+		&i.ArchivedAt,
+		&i.ModuleMap,
+		&i.TestGates,
+		&i.ToolPolicy,
+		&i.DesignSystemID,
+		&i.BlueprintSha256,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.RequiredChecks,
+		&i.TaskSeq,
+		&i.DesignStandardVersion,
+		&i.E2eCommand,
+		&i.VisualCommand,
+		&i.McpServers,
+		&i.VisualThreshold,
+		&i.VisualMasks,
+		&i.PolicyMaxDiffBytes,
+		&i.PolicyForbiddenPaths,
+		&i.PolicyChangeWindow,
+		&i.PolicyAllowedModels,
+		&i.PolicyAllowedTools,
+		&i.PolicyRequiredApprovals,
+		&i.PluginChecks,
+		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
@@ -636,7 +701,7 @@ func (q *Queries) SetProjectRequiredApprovals(ctx context.Context, arg SetProjec
 const setProjectVisualCommand = `-- name: SetProjectVisualCommand :one
 UPDATE projects SET visual_command = $3, updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type SetProjectVisualCommandParams struct {
@@ -682,6 +747,7 @@ func (q *Queries) SetProjectVisualCommand(ctx context.Context, arg SetProjectVis
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
@@ -689,7 +755,7 @@ func (q *Queries) SetProjectVisualCommand(ctx context.Context, arg SetProjectVis
 const setProjectVisualPolicy = `-- name: SetProjectVisualPolicy :one
 UPDATE projects SET visual_threshold = $3, visual_masks = $4, updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type SetProjectVisualPolicyParams struct {
@@ -741,6 +807,7 @@ func (q *Queries) SetProjectVisualPolicy(ctx context.Context, arg SetProjectVisu
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
@@ -748,7 +815,7 @@ func (q *Queries) SetProjectVisualPolicy(ctx context.Context, arg SetProjectVisu
 const updateProjectRequiredChecks = `-- name: UpdateProjectRequiredChecks :one
 UPDATE projects SET required_checks = $3, updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type UpdateProjectRequiredChecksParams struct {
@@ -794,6 +861,7 @@ func (q *Queries) UpdateProjectRequiredChecks(ctx context.Context, arg UpdatePro
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }

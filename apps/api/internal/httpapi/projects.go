@@ -34,6 +34,7 @@ type ProjectService interface {
 	ListComponents(ctx context.Context, orgID, projectID string) ([]projects.ProjectComponent, error)
 	ReplaceComponents(ctx context.Context, orgID, projectID, actorID string, selections []projects.ComponentSelection) (int, error)
 	SetE2ECommand(ctx context.Context, orgID, id, command string) (domain.Project, error)
+	SetTestCommand(ctx context.Context, orgID, id, command string) (domain.Project, error)
 	SetVisualCommand(ctx context.Context, orgID, id, command string) (domain.Project, error)
 	SetMCPConfig(ctx context.Context, orgID, id, config string) (domain.Project, error)
 	SetVisualPolicy(ctx context.Context, orgID, id string, threshold float64, masks string) (domain.Project, error)
@@ -122,6 +123,7 @@ func (h *projectHandlers) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/orgs/{org}/projects/{project}", h.get)
 	mux.HandleFunc("PUT /api/v1/orgs/{org}/projects/{project}/required-checks", h.updateRequiredChecks)
 	mux.HandleFunc("PUT /api/v1/orgs/{org}/projects/{project}/e2e", h.setE2ECommand)
+	mux.HandleFunc("PUT /api/v1/orgs/{org}/projects/{project}/test-command", h.setTestCommand)
 	mux.HandleFunc("PUT /api/v1/orgs/{org}/projects/{project}/visual", h.setVisualCommand)
 	mux.HandleFunc("PUT /api/v1/orgs/{org}/projects/{project}/mcp", h.setMCPConfig)
 	mux.HandleFunc("POST /api/v1/orgs/{org}/projects/{project}/protection", h.protectBranch)
@@ -285,6 +287,36 @@ func (h *projectHandlers) setE2ECommand(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, projectJSON(project))
 }
 
+func (h *projectHandlers) setTestCommand(w http.ResponseWriter, r *http.Request) {
+	claims, ok := h.authorize(w, r, "admin")
+	if !ok {
+		return
+	}
+	var req struct {
+		Command string `json:"command"`
+	}
+	if !decode(w, r, 1<<20, &req) {
+		return
+	}
+	req.Command = strings.TrimSpace(req.Command)
+	if len(req.Command) > 500 || strings.ContainsAny(req.Command, "\n\r") {
+		writeProblem(w, http.StatusBadRequest, "validation_failed", "the test command must be one line of at most 500 characters")
+		return
+	}
+	project, err := h.svc.SetTestCommand(r.Context(), claims.OrgID, r.PathValue("project"), req.Command)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrNotFound):
+			writeProblem(w, http.StatusNotFound, "not_found", "project not found")
+		default:
+			h.log.Error("projects.test_command", slog.Any("err", err))
+			writeProblem(w, http.StatusInternalServerError, "internal", "could not save the test command")
+		}
+		return
+	}
+	writeJSON(w, http.StatusOK, projectJSON(project))
+}
+
 func (h *projectHandlers) protectBranch(w http.ResponseWriter, r *http.Request) {
 	claims, ok := h.authorize(w, r, "admin")
 	if !ok {
@@ -428,6 +460,7 @@ func projectJSON(p domain.Project) map[string]any {
 		"description":               p.Description,
 		"required_checks":           p.RequiredChecks,
 		"e2e_command":               p.E2ECommand,
+		"test_command":              p.TestCommand,
 		"visual_command":            p.VisualCommand,
 		"mcp_servers":               p.MCPServers,
 		"agent_plugin_id":           p.AgentPluginID,

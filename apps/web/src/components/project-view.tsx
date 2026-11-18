@@ -32,6 +32,7 @@ import {
   setProjectStandard,
   startRun,
   setProjectE2E,
+  setProjectTestCommand,
   setProjectVisual,
   setProjectMCP,
   setProjectPolicy,
@@ -76,6 +77,8 @@ export function ProjectView({ projectId }: { projectId: string }) {
   const [checksError, setChecksError] = useState<string | null>(null);
   const [e2eCommand, setE2ECommand] = useState("");
   const [e2eError, setE2EError] = useState<string | null>(null);
+  const [testCommand, setTestCommand] = useState("");
+  const [testError, setTestError] = useState<string | null>(null);
   const [visualCommand, setVisualCommand] = useState("");
   const [visualError, setVisualError] = useState<string | null>(null);
   const [mcpConfig, setMCPConfig] = useState("");
@@ -304,12 +307,23 @@ export function ProjectView({ projectId }: { projectId: string }) {
     },
     onError: (err) => setE2EError(err instanceof ApiError ? err.message : "Could not save the e2e command"),
   });
+  const saveTestCommand = useMutation({
+    mutationFn: (command: string) => setProjectTestCommand(claims!.org, projectId, command),
+    onSuccess: () => {
+      setTestError(null);
+      queryClient.invalidateQueries({ queryKey: ["project", claims?.org, projectId] });
+    },
+    onError: (err) => setTestError(err instanceof ApiError ? err.message : "Could not save the test command"),
+  });
   useEffect(() => {
     setChecks(requiredKey);
   }, [requiredKey]);
   useEffect(() => {
     setE2ECommand(project.data?.e2e_command ?? "");
   }, [project.data?.e2e_command]);
+  useEffect(() => {
+    setTestCommand(project.data?.test_command ?? "");
+  }, [project.data?.test_command]);
   useEffect(() => {
     setVisualCommand(project.data?.visual_command ?? "");
   }, [project.data?.visual_command]);
@@ -750,6 +764,27 @@ export function ProjectView({ projectId }: { projectId: string }) {
             <Button variant="secondary" loading={saveE2E.isPending} onClick={() => saveE2E.mutate(e2eCommand)}>Save</Button>
           </div>
           {e2eError ? <p role="alert" className="mt-2 text-xs text-status-danger">{e2eError}</p> : null}
+        </section>
+      ) : null}
+
+      {tab === "delivery" && deliveryTab === "checks" && claims ? (
+        <section className="mt-5 rounded-lg border border-border bg-bg-surface p-4">
+          <h2 className="text-sm font-semibold">Test command</h2>
+          <p className="mt-1 text-xs text-text-secondary">
+            The gate command the agent must pass (unit and integration tests). A failure blocks the PR.
+            Leave empty to use the global AIP_TEST_COMMAND.
+          </p>
+          <div className="mt-2 flex flex-wrap items-end gap-2">
+            <input
+              aria-label="Test command"
+              value={testCommand}
+              onChange={(e) => setTestCommand(e.target.value)}
+              placeholder="go test ./... && cd apps/web && pnpm test"
+              className="h-9 min-w-[240px] flex-1 rounded-md border border-border bg-bg-surface px-3 font-mono text-xs"
+            />
+            <Button variant="secondary" loading={saveTestCommand.isPending} onClick={() => saveTestCommand.mutate(testCommand)}>Save</Button>
+          </div>
+          {testError ? <p role="alert" className="mt-2 text-xs text-status-danger">{testError}</p> : null}
         </section>
       ) : null}
 

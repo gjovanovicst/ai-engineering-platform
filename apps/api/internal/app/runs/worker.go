@@ -68,6 +68,7 @@ type ProjectStandardReader interface {
 	DesignStandard(ctx context.Context, orgID, projectID string) (projects.ProjectStandard, error)
 	E2ECommand(ctx context.Context, orgID, projectID string) (string, error)
 	VisualCommand(ctx context.Context, orgID, projectID string) (string, error)
+	TestCommand(ctx context.Context, orgID, projectID string) (string, error)
 	MCPConfig(ctx context.Context, orgID, projectID string) (string, error)
 	VisualPolicy(ctx context.Context, orgID, projectID string) (float64, string, error)
 	Policy(ctx context.Context, orgID, projectID string) (int, []string, error)
@@ -251,6 +252,7 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 	}
 
 	e2eCommand := ""
+	testCommand := ""
 	visualCommand := ""
 	mcpConfig := ""
 	visualThreshold := 0.01
@@ -263,6 +265,9 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 	if w.projects != nil {
 		if cmd, err := w.projects.E2ECommand(ctx, run.OrgID, run.ProjectID); err == nil {
 			e2eCommand = cmd
+		}
+		if cmd, err := w.projects.TestCommand(ctx, run.OrgID, run.ProjectID); err == nil {
+			testCommand = cmd
 		}
 		if cmd, err := w.projects.VisualCommand(ctx, run.OrgID, run.ProjectID); err == nil {
 			visualCommand = cmd
@@ -288,7 +293,7 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 			pluginChecks, _ = ParsePluginChecks(raw)
 		}
 	}
-	final, err := w.runner.Execute(ctx, run, prompt, contextRules, designRef, forbiddenImports, criteria, sources, e2eCommand, visualCommand, mcpConfig, visualThreshold, visualMasks, policyMaxDiff, forbiddenPaths, allowedModels, allowedTools, pluginChecks)
+	final, err := w.runner.Execute(ctx, run, prompt, contextRules, designRef, forbiddenImports, criteria, sources, e2eCommand, visualCommand, mcpConfig, testCommand, visualThreshold, visualMasks, policyMaxDiff, forbiddenPaths, allowedModels, allowedTools, pluginChecks)
 	if err != nil {
 		w.log.Error("runs: execute", slog.Any("err", err))
 		return nil

@@ -3,6 +3,7 @@ package projects
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/gjovanovicst/ai-engineering-platform/internal/domain"
@@ -87,6 +88,10 @@ func (f *fakeStore) SetE2ECommand(_ context.Context, _, _, command string) (doma
 	return domain.Project{E2ECommand: command}, nil
 }
 
+func (f *fakeStore) SetTestCommand(_ context.Context, _, _, command string) (domain.Project, error) {
+	return domain.Project{TestCommand: command}, nil
+}
+
 func (f *fakeStore) ReplaceComponents(context.Context, string, string, string, []ComponentSelection) (int, error) {
 	return 0, nil
 }
@@ -119,6 +124,25 @@ func TestCreateRejectsInvalidProject(t *testing.T) {
 	_, err = svc.Create(context.Background(), CreateInput{OrgID: "org-1", Name: ""})
 	if !errors.Is(err, domain.ErrValidation) {
 		t.Fatalf("err = %v, want ErrValidation", err)
+	}
+}
+
+func TestSetTestCommandTrimsAndValidates(t *testing.T) {
+	t.Parallel()
+	svc, err := New(&fakeStore{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	project, err := svc.SetTestCommand(context.Background(), "org-1", "proj-1", "  make check  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if project.TestCommand != "make check" {
+		t.Fatalf("test command = %q, want %q", project.TestCommand, "make check")
+	}
+	long := strings.Repeat("x", 501)
+	if _, err := svc.SetTestCommand(context.Background(), "org-1", "proj-1", long); err == nil {
+		t.Fatal("expected a validation error for a command longer than 500 characters")
 	}
 }
 

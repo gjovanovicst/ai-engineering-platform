@@ -222,7 +222,16 @@ func (r *Runner) watchCancellation(ctx context.Context, cancel context.CancelFun
 	}
 }
 
-func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, contextRules []string, designRef string, forbiddenImports []string, criteria []string, sources []ContextSource, e2eCommand, visualCommand, mcpConfig string, visualThreshold float64, visualMasks []visualdiff.Rect, policyMaxDiff int, forbiddenPaths []string, allowedModels []string, allowedTools []string, pluginChecks []PluginCheck) (domain.Run, error) {
+// effectiveTestCommand prefers the project's test command and falls back to
+// the global AIP_TEST_COMMAND.
+func effectiveTestCommand(global, project string) string {
+	if strings.TrimSpace(project) != "" {
+		return project
+	}
+	return global
+}
+
+func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, contextRules []string, designRef string, forbiddenImports []string, criteria []string, sources []ContextSource, e2eCommand, visualCommand, mcpConfig, testCommand string, visualThreshold float64, visualMasks []visualdiff.Rect, policyMaxDiff int, forbiddenPaths []string, allowedModels []string, allowedTools []string, pluginChecks []PluginCheck) (domain.Run, error) {
 	ctx, span := otel.Tracer("aip/runs").Start(ctx, "run.execute",
 		trace.WithAttributes(
 			attribute.String("run.id", run.ID),
@@ -345,7 +354,7 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 			Prompt:      agentPrompt,
 			Model:       run.Model,
 			Timeout:     30 * time.Minute,
-			TestCommand: r.testCommand,
+			TestCommand: effectiveTestCommand(r.testCommand, testCommand),
 			// Only development runs publish a branch.
 			CaptureWorkspace: run.AgentType == string(domain.AgentDevelopment),
 			Workspace:        workspace,
