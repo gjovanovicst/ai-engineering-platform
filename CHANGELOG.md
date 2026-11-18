@@ -6,6 +6,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **CI-fix runs**: a failed check on the pull-request page gains **Fix CI**;
+  `POST /orgs/{org}/pull-requests/{pr}/checks/{check}/fix` starts a development
+  run on the same plan and branch with the check log in the prompt (fetched on
+  the host with the repository token). The review and the checks re-run.
+
 - **Review-fix runs**: `POST /orgs/{org}/runs/{run}/fix-review` starts a
   development run that fixes the blocker findings of a finished review on the
   **existing pull request** (the same approved plan and branch; the review

@@ -2189,6 +2189,11 @@ type RotateProviderKeyJSONBody struct {
 	ApiKey *string `json:"api_key,omitempty"`
 }
 
+// FixFailedCheckParams defines parameters for FixFailedCheck.
+type FixFailedCheckParams struct {
+	IdempotencyKey IdempotencyKeyParam `json:"Idempotency-Key"`
+}
+
 // WaiveFindingJSONBody defines parameters for WaiveFinding.
 type WaiveFindingJSONBody struct {
 	Reason string `json:"reason"`

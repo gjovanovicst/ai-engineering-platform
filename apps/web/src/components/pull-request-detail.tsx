@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
-import { ensureSession, getPullRequest, listPullRequestChecks, type CheckResult } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { ensureSession, getPullRequest, listPullRequestChecks, fixFailedCheck, type CheckResult } from "@/lib/api";
 
 const stateStyles: Record<string, string> = {
   open: "bg-status-warning/10 text-status-warning",
@@ -12,6 +14,15 @@ const stateStyles: Record<string, string> = {
 };
 
 export function PullRequestDetailView({ projectId, prId }: { projectId: string; prId: string }) {
+  const router = useRouter();
+  const fix = useMutation({
+    mutationFn: async (checkId: string) => {
+      const session = await ensureSession();
+      if (!session) throw new Error("not signed in");
+      return fixFailedCheck(session.org, prId, checkId);
+    },
+    onSuccess: (run) => router.push(`/projects/${run.project_id}/runs/${run.id}`),
+  });
   const query = useQuery({
     queryKey: ["pull-request", prId],
     queryFn: async () => {
@@ -65,8 +76,17 @@ export function PullRequestDetailView({ projectId, prId }: { projectId: string; 
         ) : (
           <ul className="divide-y divide-border">
             {checks.map((check: CheckResult) => (
-              <li key={check.name} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+              <li key={check.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
                 <span className="font-mono text-xs">{check.name}</span>
+                {check.status === "failed" ? (
+                  <Button
+                    variant="secondary"
+                    loading={fix.isPending && fix.variables === check.id}
+                    onClick={() => fix.mutate(check.id)}
+                  >
+                    Fix CI
+                  </Button>
+                ) : null}
                 <span className={`ml-auto rounded px-2 py-0.5 text-xs ${
                   check.status === "passed"
                     ? "bg-status-success/10 text-status-success"
@@ -80,6 +100,11 @@ export function PullRequestDetailView({ projectId, prId }: { projectId: string; 
             ))}
           </ul>
         )}
+        {fix.isError ? (
+          <p role="alert" className="border-t border-border px-4 py-2 text-xs text-status-danger">
+            {fix.error instanceof Error ? fix.error.message : "Could not start the fix run"}
+          </p>
+        ) : null}
       </section>
     </div>
   );

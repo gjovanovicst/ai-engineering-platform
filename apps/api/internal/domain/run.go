@@ -75,7 +75,11 @@ type Run struct {
 	TraceID              string
 	// FixOfRunID is set on a review-fix run: the development run whose pull
 	// request it updates (the same branch and PR).
-	FixOfRunID        string
+	FixOfRunID string
+	// FixKind names what a fix run repairs ("review" or "ci"); FixContext is
+	// the CI check log for a "ci" fix.
+	FixKind           string
+	FixContext        []byte
 	FailureCode       string
 	FailureDetail     string
 	CancelRequestedAt *time.Time

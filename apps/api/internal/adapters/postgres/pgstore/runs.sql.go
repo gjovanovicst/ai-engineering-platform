@@ -64,9 +64,9 @@ func (q *Queries) CreateApproval(ctx context.Context, arg CreateApprovalParams) 
 }
 
 const createRun = `-- name: CreateRun :one
-INSERT INTO runs (org_id, project_id, task_id, agent_type, status, model, budget, frozen_context_hash, frozen_context_sources, fix_of_run_id)
-VALUES ($1, $2, $3, $4, 'queued', $5, $6, $7, $8, $9)
-RETURNING id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id
+INSERT INTO runs (org_id, project_id, task_id, agent_type, status, model, budget, frozen_context_hash, frozen_context_sources, fix_of_run_id, fix_kind, fix_context)
+VALUES ($1, $2, $3, $4, 'queued', $5, $6, $7, $8, $9, $10, $11)
+RETURNING id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id, fix_kind, fix_context
 `
 
 type CreateRunParams struct {
@@ -79,6 +79,8 @@ type CreateRunParams struct {
 	FrozenContextHash    string
 	FrozenContextSources string
 	FixOfRunID           pgtype.UUID
+	FixKind              string
+	FixContext           *string
 }
 
 func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, error) {
@@ -92,6 +94,8 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 		arg.FrozenContextHash,
 		arg.FrozenContextSources,
 		arg.FixOfRunID,
+		arg.FixKind,
+		arg.FixContext,
 	)
 	var i Run
 	err := row.Scan(
@@ -122,6 +126,8 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 		&i.FrozenContextSources,
 		&i.TraceID,
 		&i.FixOfRunID,
+		&i.FixKind,
+		&i.FixContext,
 	)
 	return i, err
 }
@@ -257,7 +263,7 @@ func (q *Queries) GetApproval(ctx context.Context, arg GetApprovalParams) (GetAp
 }
 
 const getRun = `-- name: GetRun :one
-SELECT id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id FROM runs WHERE id = $1 AND org_id = $2
+SELECT id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id, fix_kind, fix_context FROM runs WHERE id = $1 AND org_id = $2
 `
 
 type GetRunParams struct {
@@ -296,6 +302,8 @@ func (q *Queries) GetRun(ctx context.Context, arg GetRunParams) (Run, error) {
 		&i.FrozenContextSources,
 		&i.TraceID,
 		&i.FixOfRunID,
+		&i.FixKind,
+		&i.FixContext,
 	)
 	return i, err
 }
@@ -352,7 +360,7 @@ func (q *Queries) LatestReviewForTask(ctx context.Context, arg LatestReviewForTa
 }
 
 const latestRunForProject = `-- name: LatestRunForProject :one
-SELECT id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id FROM runs
+SELECT id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id, fix_kind, fix_context FROM runs
 WHERE org_id = $1 AND project_id = $2 AND agent_type = 'development'
 ORDER BY created_at DESC LIMIT 1
 `
@@ -393,12 +401,14 @@ func (q *Queries) LatestRunForProject(ctx context.Context, arg LatestRunForProje
 		&i.FrozenContextSources,
 		&i.TraceID,
 		&i.FixOfRunID,
+		&i.FixKind,
+		&i.FixContext,
 	)
 	return i, err
 }
 
 const latestRunForTask = `-- name: LatestRunForTask :one
-SELECT id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id FROM runs
+SELECT id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id, fix_kind, fix_context FROM runs
 WHERE org_id = $1 AND task_id = $2 AND agent_type = $3 AND status = 'succeeded'
 ORDER BY created_at DESC LIMIT 1
 `
@@ -440,6 +450,8 @@ func (q *Queries) LatestRunForTask(ctx context.Context, arg LatestRunForTaskPara
 		&i.FrozenContextSources,
 		&i.TraceID,
 		&i.FixOfRunID,
+		&i.FixKind,
+		&i.FixContext,
 	)
 	return i, err
 }
@@ -580,7 +592,7 @@ func (q *Queries) ListRunEventsAfter(ctx context.Context, arg ListRunEventsAfter
 }
 
 const listRuns = `-- name: ListRuns :many
-SELECT id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id FROM runs WHERE org_id = $1 ORDER BY created_at DESC LIMIT $2
+SELECT id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id, fix_kind, fix_context FROM runs WHERE org_id = $1 ORDER BY created_at DESC LIMIT $2
 `
 
 type ListRunsParams struct {
@@ -625,6 +637,8 @@ func (q *Queries) ListRuns(ctx context.Context, arg ListRunsParams) ([]Run, erro
 			&i.FrozenContextSources,
 			&i.TraceID,
 			&i.FixOfRunID,
+			&i.FixKind,
+			&i.FixContext,
 		); err != nil {
 			return nil, err
 		}
@@ -637,7 +651,7 @@ func (q *Queries) ListRuns(ctx context.Context, arg ListRunsParams) ([]Run, erro
 }
 
 const listRunsForTask = `-- name: ListRunsForTask :many
-SELECT id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id FROM runs WHERE org_id = $1 AND task_id = $2 ORDER BY created_at DESC LIMIT $3
+SELECT id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id, fix_kind, fix_context FROM runs WHERE org_id = $1 AND task_id = $2 ORDER BY created_at DESC LIMIT $3
 `
 
 type ListRunsForTaskParams struct {
@@ -683,6 +697,8 @@ func (q *Queries) ListRunsForTask(ctx context.Context, arg ListRunsForTaskParams
 			&i.FrozenContextSources,
 			&i.TraceID,
 			&i.FixOfRunID,
+			&i.FixKind,
+			&i.FixContext,
 		); err != nil {
 			return nil, err
 		}
@@ -695,7 +711,7 @@ func (q *Queries) ListRunsForTask(ctx context.Context, arg ListRunsForTaskParams
 }
 
 const lockRun = `-- name: LockRun :one
-SELECT id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id FROM runs WHERE id = $1 AND org_id = $2 FOR UPDATE
+SELECT id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id, fix_kind, fix_context FROM runs WHERE id = $1 AND org_id = $2 FOR UPDATE
 `
 
 type LockRunParams struct {
@@ -734,6 +750,8 @@ func (q *Queries) LockRun(ctx context.Context, arg LockRunParams) (Run, error) {
 		&i.FrozenContextSources,
 		&i.TraceID,
 		&i.FixOfRunID,
+		&i.FixKind,
+		&i.FixContext,
 	)
 	return i, err
 }
@@ -875,7 +893,7 @@ UPDATE runs
 SET status = $3, current_phase = $4, failure_code = $5, failure_detail = $6,
     cancel_requested_at = $7, started_at = $8, finished_at = $9
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id
+RETURNING id, org_id, project_id, task_id, agent_type, status, current_phase, model, budget, spent, failure_code, failure_detail, cancel_requested_at, started_at, finished_at, created_at, plan, plan_sha256, diff, diff_sha256, review, acceptance_proof, context_hash, frozen_context_hash, frozen_context_sources, trace_id, fix_of_run_id, fix_kind, fix_context
 `
 
 type UpdateRunStatusParams struct {
@@ -931,6 +949,8 @@ func (q *Queries) UpdateRunStatus(ctx context.Context, arg UpdateRunStatusParams
 		&i.FrozenContextSources,
 		&i.TraceID,
 		&i.FixOfRunID,
+		&i.FixKind,
+		&i.FixContext,
 	)
 	return i, err
 }

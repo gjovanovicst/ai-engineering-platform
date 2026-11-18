@@ -300,6 +300,17 @@ func main() {
 	merger.RepoTokenFunc = func(ctx context.Context, repo domain.Repo) (string, error) {
 		return repoCredentialService.Token(ctx, repo.OrgID, repo.ID)
 	}
+	runService.WithCheckList(checkService).
+		WithPullRequests(repoStore).
+		WithCheckLogs(&gitadapters.CheckLogs{
+			Repos:     repoStore,
+			Tokens:    merger.Tokens,
+			TokenFunc: merger.TokenFunc,
+			RepoTokenFunc: func(ctx context.Context, repo domain.Repo) (string, error) {
+				return repoCredentialService.Token(ctx, repo.OrgID, repo.ID)
+			},
+			APIURL: cfg.GitHubAPIURL,
+		})
 	orgCryptoStore := postgres.NewOrgCryptoStore(pool)
 	orgCryptoService := orgcrypto.New(orgCryptoStore, providerCipher)
 	secretsKey := cfg.SecretsKey

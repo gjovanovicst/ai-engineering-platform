@@ -182,7 +182,7 @@ func (q *Queries) ListOrgRepos(ctx context.Context, arg ListOrgReposParams) ([]L
 }
 
 const listOrgRuns = `-- name: ListOrgRuns :many
-SELECT r.id, r.org_id, r.project_id, r.task_id, r.agent_type, r.status, r.current_phase, r.model, r.budget, r.spent, r.failure_code, r.failure_detail, r.cancel_requested_at, r.started_at, r.finished_at, r.created_at, r.plan, r.plan_sha256, r.diff, r.diff_sha256, r.review, r.acceptance_proof, r.context_hash, r.frozen_context_hash, r.frozen_context_sources, r.trace_id, r.fix_of_run_id, COALESCE(t.ref, '') AS task_ref, COALESCE(t.title, '') AS task_title
+SELECT r.id, r.org_id, r.project_id, r.task_id, r.agent_type, r.status, r.current_phase, r.model, r.budget, r.spent, r.failure_code, r.failure_detail, r.cancel_requested_at, r.started_at, r.finished_at, r.created_at, r.plan, r.plan_sha256, r.diff, r.diff_sha256, r.review, r.acceptance_proof, r.context_hash, r.frozen_context_hash, r.frozen_context_sources, r.trace_id, r.fix_of_run_id, r.fix_kind, r.fix_context, COALESCE(t.ref, '') AS task_ref, COALESCE(t.title, '') AS task_title
 FROM runs r LEFT JOIN tasks t ON t.id = r.task_id
 WHERE r.org_id = $1
   AND ($2::text = '' OR r.status = $2)
@@ -225,6 +225,8 @@ type ListOrgRunsRow struct {
 	FrozenContextSources string
 	TraceID              string
 	FixOfRunID           pgtype.UUID
+	FixKind              string
+	FixContext           *string
 	TaskRef              string
 	TaskTitle            string
 }
@@ -271,6 +273,8 @@ func (q *Queries) ListOrgRuns(ctx context.Context, arg ListOrgRunsParams) ([]Lis
 			&i.FrozenContextSources,
 			&i.TraceID,
 			&i.FixOfRunID,
+			&i.FixKind,
+			&i.FixContext,
 			&i.TaskRef,
 			&i.TaskTitle,
 		); err != nil {

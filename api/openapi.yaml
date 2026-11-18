@@ -972,6 +972,29 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /orgs/{org}/pull-requests/{pr}/checks/{check}/fix:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { name: pr, in: path, required: true, schema: { type: string } }
+      - { name: check, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [runs]
+      operationId: fixFailedCheck
+      description: |
+        Starts a development run that fixes a failed CI check on the existing
+        pull request: the same approved plan and branch, with the check log in
+        the prompt.
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      responses:
+        "202":
+          description: A fix development run was queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Run" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
   /orgs/{org}/runs/{run}/events:
     parameters:
       - { $ref: "#/components/parameters/OrgParam" }

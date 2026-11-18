@@ -879,6 +879,7 @@ export function seedDesignRegistry(orgID: string) {
 }
 
 export type CheckResult = {
+  id: string;
   name: string;
   status: "pending" | "running" | "passed" | "failed";
   output: string;
@@ -889,6 +890,12 @@ export type CheckResult = {
 
 export function listPullRequestChecks(orgID: string, prID: string) {
   return request<{ data: CheckResult[] }>(`/api/v1/orgs/${orgID}/pull-requests/${prID}/checks`);
+}
+
+export function fixFailedCheck(orgID: string, prID: string, checkID: string) {
+  return request<Run>(`/api/v1/orgs/${orgID}/pull-requests/${prID}/checks/${checkID}/fix`, {
+    method: "POST",
+  });
 }
 
 export function listRunChecks(orgID: string, runID: string) {
