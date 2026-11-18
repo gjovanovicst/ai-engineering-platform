@@ -267,6 +267,9 @@ func main() {
 		OrgTokenFunc:  orgTokenFunc,
 		RepoTokenFunc: publisher.RepoTokenFunc,
 		CloneBases:    publisher.CloneBases,
+		NPMDeps:       cfg.NPMDeps,
+		PnpmBin:       cfg.PnpmBin,
+		Log:           logger,
 	}
 
 	objectStore, oerr := artifacts.New(ctx, cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Region, cfg.S3Bucket, cfg.S3UseSSL)

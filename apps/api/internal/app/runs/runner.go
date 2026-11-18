@@ -307,6 +307,9 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 			return failed, nil
 		}
 		workspace = archive
+		if workspaceHasNodeModules(archive) {
+			_ = r.store.AppendEvent(runCtx, run.OrgID, run.ID, "dependency.fetch", "system", map[string]any{"manager": "npm"})
+		}
 	}
 
 	if len(workspace) > 0 {
@@ -924,6 +927,21 @@ func tarFiles(archive []byte) []string {
 
 // hashWorkspace hashes sorted file paths and contents, ignoring tar metadata
 // (mtime, ordering) so two clones of the same tree have the same identity.
+// workspaceHasNodeModules reports whether the workspace archive carries
+// installed web dependencies (the host-side npm fetch).
+func workspaceHasNodeModules(archive []byte) bool {
+	tr := tar.NewReader(bytes.NewReader(archive))
+	for {
+		hdr, err := tr.Next()
+		if err != nil {
+			return false
+		}
+		if strings.HasPrefix(hdr.Name, "node_modules/") || strings.Contains(hdr.Name, "/node_modules/") {
+			return true
+		}
+	}
+}
+
 func hashWorkspace(archive []byte) string {
 	type entry struct{ path, hash string }
 	entries := make([]entry, 0)

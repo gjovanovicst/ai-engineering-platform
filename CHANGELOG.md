@@ -6,6 +6,13 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Web dependencies in the offline sandbox**: when a repository has a
+  `pnpm-lock.yaml` (root or `apps/web/`), the worker installs the locked
+  dependencies on the host (`pnpm install --frozen-lockfile --ignore-scripts`)
+  and the sandbox receives `node_modules` with the workspace. A
+  `dependency.fetch` run event records it; `AIP_DEPS_NPM` (default on) and
+  `AIP_PNPM_BIN` control the preparation.
+
 - **Per-project test command**: `projects.test_command` overrides the global
   `AIP_TEST_COMMAND` (a Go API + Node web repository needs both toolchains in
   one gate). Delivery → Checks gains a test command field, the API exposes

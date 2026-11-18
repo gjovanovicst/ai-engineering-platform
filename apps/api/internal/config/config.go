@@ -66,6 +66,8 @@ type Config struct {
 	SandboxNamespace        string
 	AgentCommand            string
 	TestCommand             string
+	NPMDeps                 bool
+	PnpmBin                 string
 	GitHubToken             string
 	GitLabToken             string
 	GiteaToken              string
@@ -214,6 +216,8 @@ func Load() (*Config, error) {
 		SandboxImage:         get("AIP_SANDBOX_IMAGE", "aip/sandbox:go1.25-node22"),
 		AgentCommand:         get("AIP_AGENT_COMMAND", "echo 'agent backend not configured'"),
 		TestCommand:          get("AIP_TEST_COMMAND", ""),
+		NPMDeps:              getBool("AIP_DEPS_NPM", true),
+		PnpmBin:              get("AIP_PNPM_BIN", "pnpm"),
 		GitHubToken:          get("AIP_GITHUB_TOKEN", get("GITHUB_TOKEN", "")),
 		GitLabToken:          get("AIP_GITLAB_TOKEN", get("GITLAB_TOKEN", "")),
 		GitHubAPIURL:         get("AIP_GITHUB_API_URL", "https://api.github.com"),

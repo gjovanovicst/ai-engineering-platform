@@ -7,10 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gjovanovicst/ai-engineering-platform/internal/domain"
 )
@@ -29,6 +31,12 @@ type Cloner struct {
 	OrgTokenFunc func(ctx context.Context, orgID, provider string) (string, error)
 	CloneBases   map[string]string
 	GitBin       string
+	// NPMDeps installs the repository's locked web dependencies on the host
+	// before the workspace archive is built, so the offline sandbox can run
+	// pnpm test/build. PnpmBin selects the pnpm binary.
+	NPMDeps bool
+	PnpmBin string
+	Log     *slog.Logger
 }
 
 // Clone implements runs.WorkspaceProvider. A project without a repo returns
@@ -79,6 +87,13 @@ func (c *Cloner) Clone(ctx context.Context, orgID, projectID string) ([]byte, er
 		}
 	}
 
+	if c.NPMDeps {
+		if installed, derr := prepareNodeModules(ctx, dir, c.PnpmBin, 5*time.Minute); derr != nil {
+			c.log().Warn("git: web dependencies not prepared; the run continues without node_modules", slog.Any("err", derr))
+		} else if installed {
+			c.log().Info("git: web dependencies prepared for the offline sandbox")
+		}
+	}
 	return tarDir(dir)
 }
 
@@ -95,6 +110,13 @@ func (c *Cloner) runClone(ctx context.Context, url, dir, branch string) error {
 		return fmt.Errorf("git: clone %s: %w: %s", url, err, strings.TrimSpace(string(out)))
 	}
 	return nil
+}
+
+func (c *Cloner) log() *slog.Logger {
+	if c.Log != nil {
+		return c.Log
+	}
+	return slog.New(slog.DiscardHandler)
 }
 
 func (c *Cloner) bin() string {
