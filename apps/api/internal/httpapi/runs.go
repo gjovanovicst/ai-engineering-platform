@@ -24,6 +24,7 @@ type RunService interface {
 	Events(ctx context.Context, orgID, id string) ([]runs.Event, error)
 	EventsAfter(ctx context.Context, orgID, id string, after int64) ([]runs.Event, error)
 	Cancel(ctx context.Context, orgID, id string) (domain.Run, error)
+	Retry(ctx context.Context, in runs.RetryInput) (domain.Run, error)
 	PendingApprovals(ctx context.Context, orgID string, limit int) ([]runs.Approval, error)
 	Decide(ctx context.Context, orgID, approvalID, decision, reason, userID string) (domain.Run, string, error)
 	ListForTask(ctx context.Context, orgID, taskID string, limit int) ([]domain.Run, error)
@@ -59,6 +60,7 @@ func (h *runHandlers) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/orgs/{org}/runs/{run}", h.get)
 	mux.HandleFunc("GET /api/v1/orgs/{org}/runs/{run}/events", h.events)
 	mux.HandleFunc("POST /api/v1/orgs/{org}/runs/{run}/cancel", h.cancel)
+	mux.HandleFunc("POST /api/v1/orgs/{org}/runs/{run}/retry", h.retry)
 	mux.HandleFunc("GET /api/v1/orgs/{org}/projects/{project}/mcp-tools", h.mcpTools)
 	mux.HandleFunc("GET /api/v1/orgs/{org}/approvals", h.approvals)
 	mux.HandleFunc("POST /api/v1/orgs/{org}/approvals/{approval}/decision", h.decide)
@@ -435,6 +437,42 @@ func (h *runHandlers) decide(w http.ResponseWriter, r *http.Request) {
 		out["development_run_id"] = developmentRunID
 	}
 	writeJSON(w, http.StatusOK, out)
+}
+
+func (h *runHandlers) retry(w http.ResponseWriter, r *http.Request) {
+	claims, ok := h.authorize(w, r, "member")
+	if !ok {
+		return
+	}
+	current, cerr := h.svc.Get(r.Context(), claims.OrgID, r.PathValue("run"))
+	if cerr != nil {
+		writeProblem(w, http.StatusNotFound, "not_found", "run not found")
+		return
+	}
+	if !h.canAccessRun(r.Context(), claims, current.ProjectID, true) {
+		writeProblem(w, http.StatusForbidden, "forbidden", "you are not a member of this project")
+		return
+	}
+	run, err := h.svc.Retry(r.Context(), runs.RetryInput{
+		OrgID: claims.OrgID, RunID: r.PathValue("run"), Actor: claims.Subject,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrNotFound):
+			writeProblem(w, http.StatusNotFound, "not_found", "run not found")
+		case errors.Is(err, domain.ErrValidation):
+			writeProblem(w, http.StatusBadRequest, "validation_failed", err.Error())
+		case errors.Is(err, domain.ErrConflict):
+			writeProblem(w, http.StatusConflict, "conflict", err.Error())
+		case errors.Is(err, domain.ErrInvalidTransition):
+			writeProblem(w, http.StatusConflict, "invalid_transition", err.Error())
+		default:
+			h.log.Error("runs.retry", slog.Any("err", err))
+			writeProblem(w, http.StatusInternalServerError, "internal", "could not retry the run")
+		}
+		return
+	}
+	writeJSON(w, http.StatusAccepted, runJSON(run))
 }
 
 func (h *runHandlers) cancel(w http.ResponseWriter, r *http.Request) {

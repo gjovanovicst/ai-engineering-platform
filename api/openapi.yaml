@@ -900,6 +900,28 @@ paths:
               schema: { $ref: "#/components/schemas/Run" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /orgs/{org}/runs/{run}/retry:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/RunParam"
+    post:
+      tags: [runs]
+      operationId: retryRun
+      description: |
+        Starts a new development run with the failed run's approved plan. No
+        planning run and no new plan approval are needed; the task returns to
+        `in_progress` and the new run is queued.
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      responses:
+        "202":
+          description: A new development run was queued with the same plan
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Run" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
   /orgs/{org}/runs/{run}/events:
     parameters:
       - { $ref: "#/components/parameters/OrgParam" }

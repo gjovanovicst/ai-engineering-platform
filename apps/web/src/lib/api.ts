@@ -274,6 +274,11 @@ export function startRun(orgID: string, projectID: string, taskRef: string) {
   );
 }
 
+/** Retry a failed development run with its approved plan (no new planning run). */
+export function retryRun(orgID: string, runID: string) {
+  return request<Run>(`/api/v1/orgs/${orgID}/runs/${runID}/retry`, { method: "POST" });
+}
+
 export function listApprovals(orgID: string) {
   return request<{ data: Approval[] }>(`/api/v1/orgs/${orgID}/approvals`);
 }

@@ -26,6 +26,9 @@ func (f *fakeRunService) LatestForProject(context.Context, string, string) (doma
 func (f *fakeRunService) Start(context.Context, runs.StartInput) (domain.Run, error) {
 	return domain.Run{ID: "run-1", Status: domain.RunQueued}, nil
 }
+func (f *fakeRunService) Retry(context.Context, runs.RetryInput) (domain.Run, error) {
+	return domain.Run{ID: "run-2", Status: domain.RunQueued, AgentType: "development"}, nil
+}
 func (f *fakeRunService) Get(context.Context, string, string) (domain.Run, error) {
 	return domain.Run{ID: "run-1", Status: domain.RunSucceeded}, nil
 }

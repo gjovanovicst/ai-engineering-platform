@@ -2,6 +2,16 @@
 
 All notable changes to this project. Dates are 2026.
 
+## Unreleased
+
+### Added
+
+- **Retry a failed development run with its approved plan**:
+  `POST /api/v1/orgs/{org}/runs/{run}/retry` queues a new development run with
+  the failed run's plan, moves the task back to `in_progress` and records a
+  `run.retried` event — no planning run and no new approval. The run failure
+  panel gains a "Retry development" action.
+
 ## 0.1.0 — 2026-11-17
 
 ### Added

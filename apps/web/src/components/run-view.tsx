@@ -19,6 +19,7 @@ import {
   getVisualBaseline,
   listRunArtifacts,
   startRun,
+  retryRun,
   streamRunEvents,
   transitionTask,
   type Approval,
@@ -44,6 +45,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState(false);
+  const [retryingDev, setRetryingDev] = useState(false);
   const [approval, setApproval] = useState<Approval | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [showReject, setShowReject] = useState(false);
@@ -182,6 +184,20 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     }
   }
 
+  async function retryDevelopment() {
+    if (!claims || !run) return;
+    setRetryingDev(true);
+    setError(null);
+    try {
+      const next = await retryRun(claims.org, run.id);
+      router.push(`/projects/${run.project_id}/runs/${next.id}`);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not retry the development run");
+    } finally {
+      setRetryingDev(false);
+    }
+  }
+
   async function retry() {
     if (!claims || !run) return;
     setRetrying(true);
@@ -279,9 +295,16 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
               <p className="text-xs text-text-secondary">{run.failure_code || "unknown failure"}</p>
             </div>
             {claims ? (
-              <Button variant="secondary" loading={retrying} onClick={retry}>
-                Retry task
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                {run.agent_type === "development" && run.plan ? (
+                  <Button loading={retryingDev} onClick={retryDevelopment}>
+                    Retry development
+                  </Button>
+                ) : null}
+                <Button variant="secondary" loading={retrying} onClick={retry}>
+                  Retry task
+                </Button>
+              </div>
             ) : null}
           </header>
           {run.failure_detail ? (
