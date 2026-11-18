@@ -73,3 +73,24 @@ it as `dependency_missing` if the module is still absent.
 This is not an egress allowlist: the proxy traffic happens on the worker host,
 outside the sandbox. The per-run egress proxy above remains the design for tools
 that need arbitrary network access.
+
+## Host-side npm fetch (implemented)
+
+The web follows the same rule: the sandbox stays offline, and the **worker
+host** installs the repository's locked dependencies before the workspace is
+archived. When a repository has `pnpm-lock.yaml` (at the root or in `apps/web/`)
+and `AIP_DEPS_NPM` is on (the default), the cloner runs
+
+```sh
+pnpm install --frozen-lockfile --ignore-scripts
+```
+
+on the host, in the directory with the lockfile, and the resulting
+`node_modules` becomes part of the workspace archive the sandbox extracts. The
+agent can then run `pnpm test`, `next build` or `eslint` offline.
+
+The install is best-effort: a failure is logged, the run continues without
+`node_modules`, and the test gate reports the failure. A `dependency.fetch` run
+event (`manager: npm`) records that the workspace carries web dependencies.
+`AIP_PNPM_BIN` selects the pnpm binary (default `pnpm`); `AIP_DEPS_NPM=false`
+turns the preparation off.
