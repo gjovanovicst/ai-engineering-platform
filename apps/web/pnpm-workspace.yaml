@@ -7,6 +7,9 @@
 # not needed for the Next build or vitest.
 overrides:
   postcss: 8.5.31
-  # vitest 3 pins tinypool 2.0, which has the prototype-pollution RCE advisories;
-  # 2.1.2 is the patched release in the same major.
+  # vitest 4 still allows tinypool 2.0, which has the prototype-pollution RCE
+  # advisories; 2.1.2 is the patched release in the same major.
   tinypool: ^2.1.2
+  # @typescript-eslint 8.72 pulls minimatch 10.2.6, which has the globparts
+  # DoS advisory; 8.73 uses minimatch ^11.0.1. The range stays in 8.x.
+  "@typescript-eslint/typescript-estree": ^8.73.0
