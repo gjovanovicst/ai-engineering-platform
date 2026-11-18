@@ -51,6 +51,7 @@ func (s *RunStore) Create(ctx context.Context, r domain.Run) (domain.Run, error)
 			OrgID: toUUID(r.OrgID), ProjectID: toUUID(r.ProjectID), TaskID: toUUID(r.TaskID),
 			AgentType: r.AgentType, Model: r.Model, Budget: budget, FrozenContextHash: r.FrozenContextHash, FrozenContextSources: r.FrozenContextSources,
 			FixOfRunID: toUUID(r.FixOfRunID),
+			FixKind:    r.FixKind, FixContext: optionalString(r.FixContext),
 		})
 		if err != nil {
 			return mapUnique(err)
@@ -223,6 +224,10 @@ func runFromRow(row pgstore.Run) domain.Run {
 	}
 	if row.FixOfRunID.Valid {
 		r.FixOfRunID = uuidString(row.FixOfRunID)
+	}
+	r.FixKind = row.FixKind
+	if row.FixContext != nil {
+		r.FixContext = []byte(*row.FixContext)
 	}
 	if len(row.Budget) > 0 {
 		_ = json.Unmarshal(row.Budget, &r.Budget)
@@ -522,4 +527,13 @@ func (s *RunStore) CountApprovalVotes(ctx context.Context, orgID, approvalID str
 		return err
 	})
 	return int(count), err
+}
+
+// optionalString maps a byte slice to a nullable text column.
+func optionalString(b []byte) *string {
+	if len(b) == 0 {
+		return nil
+	}
+	v := string(b)
+	return &v
 }

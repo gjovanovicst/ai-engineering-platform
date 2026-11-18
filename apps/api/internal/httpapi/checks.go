@@ -76,7 +76,7 @@ func checkJSON(items []checks.Check) []map[string]any {
 	data := make([]map[string]any, 0, len(items))
 	for _, check := range items {
 		data = append(data, map[string]any{
-			"name": check.Name, "status": check.Status, "output": check.Output,
+			"id": check.ID, "name": check.Name, "status": check.Status, "output": check.Output,
 			"duration_ms": check.DurationMS, "commit_sha": check.CommitSHA, "url": check.URL,
 		})
 	}

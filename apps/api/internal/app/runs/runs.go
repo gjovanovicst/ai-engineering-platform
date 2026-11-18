@@ -107,6 +107,9 @@ type Service struct {
 	mergeQueue    *mergequeue.Service
 	windows       ChangeWindowReader
 	checks        CheckGate
+	checkList     CheckReader
+	pullRequests  PullRequestReader
+	checkLogs     CheckLogFetcher
 	maxActiveRuns int
 	log           *slog.Logger
 

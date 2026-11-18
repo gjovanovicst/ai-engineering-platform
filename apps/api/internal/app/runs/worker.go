@@ -205,10 +205,14 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 	if len(run.Plan) > 0 {
 		prompt += "\nApproved plan:\n" + string(run.Plan) + "\n"
 	}
-	// A review-fix run keeps the approved plan and fixes the blockers of the
-	// latest review on the existing pull request (the runner clones its branch).
+	// A fix run keeps the approved plan and fixes the review findings (or the
+	// failed CI check log) on the existing pull request; the runner clones its
+	// branch.
 	if run.FixOfRunID != "" {
-		if findings, ferr := w.store.LatestReviewForTask(ctx, run.OrgID, run.TaskID); ferr == nil && len(findings) > 0 {
+		if run.FixKind == "ci" && len(run.FixContext) > 0 {
+			prompt += "\nThe CI check failed on the existing pull request. Fix the build; " +
+				"do not re-plan and do not rewrite unrelated code. The check log:\n" + string(run.FixContext) + "\n"
+		} else if findings, ferr := w.store.LatestReviewForTask(ctx, run.OrgID, run.TaskID); ferr == nil && len(findings) > 0 {
 			prompt += "\nThe review found these issues. Fix every blocker on the existing pull request; " +
 				"do not re-plan and do not rewrite unrelated code:\n" + string(findings) + "\n"
 		}
