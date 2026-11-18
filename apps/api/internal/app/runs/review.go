@@ -2,6 +2,7 @@ package runs
 
 import (
 	"context"
+	"encoding/json"
 	"strconv"
 	"strings"
 
@@ -48,6 +49,26 @@ func reviewPrompt(diff string) string {
 	b.WriteString(diff)
 	b.WriteString("\n```\n")
 	return b.String()
+}
+
+// reviewBlockers counts the findings a human marked as blockers: only they
+// make a pull request require a fix before the merge.
+func reviewBlockers(raw []byte) int {
+	var payload struct {
+		Findings []struct {
+			Severity string `json:"severity"`
+		} `json:"findings"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return 0
+	}
+	n := 0
+	for _, f := range payload.Findings {
+		if strings.EqualFold(f.Severity, "blocker") {
+			n++
+		}
+	}
+	return n
 }
 
 // changedFiles lists the paths in a diff, in order.

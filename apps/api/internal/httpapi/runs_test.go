@@ -29,6 +29,9 @@ func (f *fakeRunService) Start(context.Context, runs.StartInput) (domain.Run, er
 func (f *fakeRunService) Retry(context.Context, runs.RetryInput) (domain.Run, error) {
 	return domain.Run{ID: "run-2", Status: domain.RunQueued, AgentType: "development"}, nil
 }
+func (f *fakeRunService) FixReview(context.Context, runs.FixReviewInput) (domain.Run, error) {
+	return domain.Run{ID: "run-3", Status: domain.RunQueued, AgentType: "development"}, nil
+}
 func (f *fakeRunService) Get(context.Context, string, string) (domain.Run, error) {
 	return domain.Run{ID: "run-1", Status: domain.RunSucceeded}, nil
 }

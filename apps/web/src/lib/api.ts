@@ -249,6 +249,7 @@ export type Run = {
   review?: {
     findings?: { severity: string; file?: string; line?: number; body: string }[];
   } | null;
+  fix_of_run_id?: string;
 };
 
 export type Approval = {
@@ -273,6 +274,11 @@ export function startRun(orgID: string, projectID: string, taskRef: string) {
     `/api/v1/orgs/${orgID}/projects/${projectID}/tasks/${taskRef}/runs`,
     { method: "POST", body: JSON.stringify({ agent_type: "planning" }) },
   );
+}
+
+/** Fix the blocker findings of a review on the existing pull request. */
+export function fixReview(orgID: string, runID: string) {
+  return request<Run>(`/api/v1/orgs/${orgID}/runs/${runID}/fix-review`, { method: "POST" });
 }
 
 /** Retry a failed development run with its approved plan (no new planning run). */

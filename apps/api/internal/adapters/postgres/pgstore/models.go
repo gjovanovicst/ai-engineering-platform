@@ -621,6 +621,7 @@ type Run struct {
 	FrozenContextHash    string
 	FrozenContextSources string
 	TraceID              string
+	FixOfRunID           pgtype.UUID
 }
 
 type RunArtifact struct {

@@ -72,7 +72,11 @@ func (p *Publisher) Publish(ctx context.Context, run domain.Run, workspace []byt
 		return domain.PullRequest{}, err
 	}
 
-	branch := "aip/" + shortID(run.ID)
+	branchID := run.ID
+	if run.FixOfRunID != "" {
+		branchID = run.FixOfRunID
+	}
+	branch := "aip/" + shortID(branchID)
 	if err := p.Pusher.Push(ctx, workspace, PushRequest{
 		RemoteURL: remoteURL(repo, token, p.CloneBases),
 		Branch:    branch,

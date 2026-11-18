@@ -6,6 +6,12 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Review-fix runs**: `POST /orgs/{org}/runs/{run}/fix-review` starts a
+  development run that fixes the blocker findings of a finished review on the
+  **existing pull request** (the same approved plan and branch; the review
+  re-runs after the fix). The run page's review panel gains a "Fix review
+  findings" action.
+
 - **`aipctl seed`**: creates the demo org **Acme**, the owner `demo@acme.io`
   (password from `AIP_SEED_PASSWORD`), the **Demo** project and three ready
   tasks with acceptance criteria. Idempotent; `make seed` is documented in the

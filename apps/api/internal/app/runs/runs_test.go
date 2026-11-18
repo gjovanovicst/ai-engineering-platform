@@ -22,6 +22,8 @@ type fakeStore struct {
 	approval *Approval
 	decided  int
 	plans    map[string][]byte
+
+	latestDev *domain.Run
 }
 
 func newFakeStore() *fakeStore { return &fakeStore{runs: map[string]domain.Run{}} }
@@ -72,6 +74,9 @@ func (f *fakeStore) SetContextHash(context.Context, string, string, string) erro
 func (f *fakeStore) SetAcceptanceProof(context.Context, string, string, []byte) error { return nil }
 func (f *fakeStore) SetReview(context.Context, string, string, []byte) error          { return nil }
 func (f *fakeStore) LatestRun(context.Context, string, string, string) (domain.Run, error) {
+	if f.latestDev != nil {
+		return *f.latestDev, nil
+	}
 	return domain.Run{}, domain.ErrNotFound
 }
 func (f *fakeStore) LatestForProject(context.Context, string, string) (domain.Run, error) {

@@ -2261,6 +2261,11 @@ type StreamRunEventsParams struct {
 	LastEventID *int64 `json:"Last-Event-ID,omitempty"`
 }
 
+// FixReviewRunParams defines parameters for FixReviewRun.
+type FixReviewRunParams struct {
+	IdempotencyKey IdempotencyKeyParam `json:"Idempotency-Key"`
+}
+
 // RetryRunParams defines parameters for RetryRun.
 type RetryRunParams struct {
 	IdempotencyKey IdempotencyKeyParam `json:"Idempotency-Key"`

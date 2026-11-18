@@ -42,6 +42,12 @@ type Cloner struct {
 // Clone implements runs.WorkspaceProvider. A project without a repo returns
 // nil, meaning an empty workspace (the previous behaviour).
 func (c *Cloner) Clone(ctx context.Context, orgID, projectID string) ([]byte, error) {
+	return c.CloneRef(ctx, orgID, projectID, "")
+}
+
+// CloneRef clones a specific ref (a pull-request branch for a review-fix run).
+// An empty ref means the repository's default branch.
+func (c *Cloner) CloneRef(ctx context.Context, orgID, projectID, ref string) ([]byte, error) {
 	repo, err := c.Repos.ByProject(ctx, orgID, projectID)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
@@ -67,9 +73,12 @@ func (c *Cloner) Clone(ctx context.Context, orgID, projectID string) ([]byte, er
 		}
 		token = fresh
 	}
-	base := repo.DefaultBranch
+	base := ref
 	if base == "" {
-		base = "main"
+		base = repo.DefaultBranch
+		if base == "" {
+			base = "main"
+		}
 	}
 
 	dir, err := os.MkdirTemp("", "aip-clone-*")
@@ -80,6 +89,9 @@ func (c *Cloner) Clone(ctx context.Context, orgID, projectID string) ([]byte, er
 
 	url := remoteURL(repo, token, c.CloneBases)
 	if err := c.runClone(ctx, url, dir, base); err != nil {
+		if ref != "" {
+			return nil, fmt.Errorf("git: clone %s: %w", ref, err)
+		}
 		// An empty repository has no branch yet; clone it without --branch so
 		// the run can still create the first commit.
 		if retryErr := c.runClone(ctx, url, dir, ""); retryErr != nil {
