@@ -2,7 +2,7 @@
 
 All notable changes to this project. Dates are 2026.
 
-## Unreleased
+## 0.1.1 — 2026-11-18
 
 ### Security
 
