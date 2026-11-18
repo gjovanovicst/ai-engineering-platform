@@ -55,7 +55,9 @@ func main() {
 		runShow(os.Args[2:])
 	case "approve":
 		runApprove(os.Args[2:])
-	case "bootstrap", "seed", "replay":
+	case "seed":
+		runSeed()
+	case "bootstrap", "replay":
 		fmt.Fprintf(os.Stderr, "aipctl %s: not implemented yet (see docs/05-mvp-plan.md)\n", cmd)
 		os.Exit(1)
 	default:

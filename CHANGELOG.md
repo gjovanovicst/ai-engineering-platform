@@ -6,6 +6,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **`aipctl seed`**: creates the demo org **Acme**, the owner `demo@acme.io`
+  (password from `AIP_SEED_PASSWORD`), the **Demo** project and three ready
+  tasks with acceptance criteria. Idempotent; `make seed` is documented in the
+  quickstart.
+
 - **Web dependencies in the offline sandbox**: when a repository has a
   `pnpm-lock.yaml` (root or `apps/web/`), the worker installs the locked
   dependencies on the host (`pnpm install --frozen-lockfile --ignore-scripts`)
@@ -18,8 +23,6 @@ All notable changes to this project. Dates are 2026.
   one gate). Delivery → Checks gains a test command field, the API exposes
   `PUT /orgs/{org}/projects/{project}/test-command`, and the worker prefers the
   project command, falling back to the global one.
-
-### Added
 
 - **Retry a failed development run with its approved plan**:
   `POST /api/v1/orgs/{org}/runs/{run}/retry` queues a new development run with

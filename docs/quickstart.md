@@ -64,6 +64,18 @@ The web is at <http://localhost:3000>, the API at
 
 ## 5. First project
 
+Either seed the demo data:
+
+```sh
+make seed
+```
+
+That creates the org **Acme**, the owner `demo@acme.io` (password from
+`AIP_SEED_PASSWORD`, default `correct horse battery` — local only), the **Demo**
+project and three ready tasks. It is idempotent, so running it again is safe.
+
+... or register yourself:
+
 1. Open <http://localhost:3000/register> and create the owner account.
 2. Create an organization and a project in the web UI.
 3. Connect the repository the agents should work in (a fine-grained GitHub PAT:
