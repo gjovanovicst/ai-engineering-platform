@@ -4,6 +4,13 @@ All notable changes to this project. Dates are 2026.
 
 ## Unreleased
 
+### Security
+
+- **Dev dependency audit is clean**: vitest 3.2.7 → 4.1.12, vite 6.4.6, and a
+  `@typescript-eslint/typescript-estree` 8.73 override (minimatch ^11.0.1).
+  `pnpm audit` reports zero advisories. Dev-only: the shipped Next build is
+  unchanged.
+
 ### Added
 
 - **CI-fix runs**: a failed check on the pull-request page gains **Fix CI**;
