@@ -27,6 +27,7 @@ type Project struct {
 	DesignStandardVersion   int
 	RequiredChecks          []string
 	E2ECommand              string
+	TestCommand             string
 	VisualCommand           string
 	MCPServers              string
 	VisualThreshold         float64

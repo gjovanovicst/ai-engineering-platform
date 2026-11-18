@@ -50,7 +50,7 @@ func TestRunnerRequiresProofForEveryCriterion(t *testing.T) {
 		diff:  diff,
 	}
 	runner := NewRunner(backend, store, nil, nil, "go test ./...", nil).WithTests(tests)
-	run, err := runner.Execute(context.Background(), acceptanceRun(), "prompt", nil, "", nil, []string{"AC1"}, nil, "", "", "", 0.01, nil, 0, nil, nil, nil, nil)
+	run, err := runner.Execute(context.Background(), acceptanceRun(), "prompt", nil, "", nil, []string{"AC1"}, nil, "", "", "", "", 0.01, nil, 0, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func TestRunnerFailsWhenProofIsMissing(t *testing.T) {
 		diff:  "+++ b/pagination.go\n+func Page() {}\n",
 	}
 	runner := NewRunner(backend, store, nil, nil, "go test ./...", nil).WithTests(tests)
-	run, err := runner.Execute(context.Background(), acceptanceRun(), "prompt", nil, "", nil, []string{"AC1"}, nil, "", "", "", 0.01, nil, 0, nil, nil, nil, nil)
+	run, err := runner.Execute(context.Background(), acceptanceRun(), "prompt", nil, "", nil, []string{"AC1"}, nil, "", "", "", "", 0.01, nil, 0, nil, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

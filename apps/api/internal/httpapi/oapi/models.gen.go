@@ -1426,6 +1426,7 @@ type Project struct {
 	Slug           *string             `json:"slug,omitempty"`
 	Status         *ProjectStatus      `json:"status,omitempty"`
 	TechStack      *[]string           `json:"tech_stack,omitempty"`
+	TestCommand    *string             `json:"test_command,omitempty"`
 	UpdatedAt      *time.Time          `json:"updated_at,omitempty"`
 }
 
@@ -2152,6 +2153,11 @@ type TransitionTaskParams struct {
 	IdempotencyKey IdempotencyKeyParam `json:"Idempotency-Key"`
 }
 
+// SetProjectTestCommandJSONBody defines parameters for SetProjectTestCommand.
+type SetProjectTestCommandJSONBody struct {
+	Command string `json:"command"`
+}
+
 // ListTestResultsParams defines parameters for ListTestResults.
 type ListTestResultsParams struct {
 	Limit  *LimitParam         `form:"limit,omitempty" json:"limit,omitempty"`
@@ -2412,6 +2418,9 @@ type StartTaskRunJSONRequestBody StartTaskRunJSONBody
 
 // TransitionTaskJSONRequestBody defines body for TransitionTask for application/json ContentType.
 type TransitionTaskJSONRequestBody TransitionTaskJSONBody
+
+// SetProjectTestCommandJSONRequestBody defines body for SetProjectTestCommand for application/json ContentType.
+type SetProjectTestCommandJSONRequestBody SetProjectTestCommandJSONBody
 
 // CreateProviderJSONRequestBody defines body for CreateProvider for application/json ContentType.
 type CreateProviderJSONRequestBody CreateProviderJSONBody

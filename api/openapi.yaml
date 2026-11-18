@@ -478,6 +478,34 @@ paths:
       responses:
         "204": { description: Arhiviran }
 
+  /orgs/{org}/projects/{project}/test-command:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/ProjectParam"
+    put:
+      tags: [projects]
+      operationId: setProjectTestCommand
+      description: |
+        Stores the project test command. An empty string means the project uses
+        the global `AIP_TEST_COMMAND`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [command]
+              properties:
+                command: { type: string, maxLength: 500 }
+      responses:
+        "200":
+          description: The updated project
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /orgs/{org}/projects/{project}/tasks:
     parameters:
       - { $ref: "#/components/parameters/OrgParam" }
@@ -2744,6 +2772,7 @@ components:
           properties:
             id: { type: string, format: uuid }
             slug: { type: string }
+            test_command: { type: string }
             required_checks:
               type: array
               items: { type: string }

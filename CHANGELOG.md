@@ -6,6 +6,14 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Per-project test command**: `projects.test_command` overrides the global
+  `AIP_TEST_COMMAND` (a Go API + Node web repository needs both toolchains in
+  one gate). Delivery → Checks gains a test command field, the API exposes
+  `PUT /orgs/{org}/projects/{project}/test-command`, and the worker prefers the
+  project command, falling back to the global one.
+
+### Added
+
 - **Retry a failed development run with its approved plan**:
   `POST /api/v1/orgs/{org}/runs/{run}/retry` queues a new development run with
   the failed run's plan, moves the task back to `in_progress` and records a

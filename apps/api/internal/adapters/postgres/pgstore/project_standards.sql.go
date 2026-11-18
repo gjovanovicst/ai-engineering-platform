@@ -14,7 +14,7 @@ import (
 const clearProjectDesignStandard = `-- name: ClearProjectDesignStandard :one
 UPDATE projects SET design_system_id = NULL, design_standard_version = NULL, updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type ClearProjectDesignStandardParams struct {
@@ -59,6 +59,7 @@ func (q *Queries) ClearProjectDesignStandard(ctx context.Context, arg ClearProje
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }
@@ -103,7 +104,7 @@ UPDATE projects p
 SET design_system_id = ds.id, design_standard_version = ds.version, updated_at = now()
 FROM design_standards ds
 WHERE p.id = $1 AND p.org_id = $2 AND ds.id = $3 AND ds.org_id = $2 AND ds.status = 'published'
-RETURNING p.id, p.org_id, p.name, p.slug, p.description, p.blueprint_id, p.blueprint_version, p.tech_stack, p.status, p.archived_at, p.module_map, p.test_gates, p.tool_policy, p.design_system_id, p.blueprint_sha256, p.created_at, p.updated_at, p.required_checks, p.task_seq, p.design_standard_version, p.e2e_command, p.visual_command, p.mcp_servers, p.visual_threshold, p.visual_masks, p.policy_max_diff_bytes, p.policy_forbidden_paths, p.policy_change_window, p.policy_allowed_models, p.policy_allowed_tools, p.policy_required_approvals, p.plugin_checks, p.agent_plugin_id
+RETURNING p.id, p.org_id, p.name, p.slug, p.description, p.blueprint_id, p.blueprint_version, p.tech_stack, p.status, p.archived_at, p.module_map, p.test_gates, p.tool_policy, p.design_system_id, p.blueprint_sha256, p.created_at, p.updated_at, p.required_checks, p.task_seq, p.design_standard_version, p.e2e_command, p.visual_command, p.mcp_servers, p.visual_threshold, p.visual_masks, p.policy_max_diff_bytes, p.policy_forbidden_paths, p.policy_change_window, p.policy_allowed_models, p.policy_allowed_tools, p.policy_required_approvals, p.plugin_checks, p.agent_plugin_id, p.test_command
 `
 
 type SetProjectDesignStandardParams struct {
@@ -149,6 +150,7 @@ func (q *Queries) SetProjectDesignStandard(ctx context.Context, arg SetProjectDe
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }

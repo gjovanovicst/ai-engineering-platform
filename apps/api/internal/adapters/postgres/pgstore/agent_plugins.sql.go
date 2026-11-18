@@ -140,7 +140,7 @@ func (q *Queries) ProjectAgentPlugin(ctx context.Context, arg ProjectAgentPlugin
 const setProjectAgentPlugin = `-- name: SetProjectAgentPlugin :one
 UPDATE projects SET agent_plugin_id = $3, updated_at = now()
 WHERE id = $1 AND org_id = $2
-RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
 `
 
 type SetProjectAgentPluginParams struct {
@@ -186,6 +186,7 @@ func (q *Queries) SetProjectAgentPlugin(ctx context.Context, arg SetProjectAgent
 		&i.PolicyRequiredApprovals,
 		&i.PluginChecks,
 		&i.AgentPluginID,
+		&i.TestCommand,
 	)
 	return i, err
 }

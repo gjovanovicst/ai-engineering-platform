@@ -22,7 +22,7 @@ func TestRunnerEmitsSpan(t *testing.T) {
 	store.runs["run-1"] = domain.Run{ID: "run-1", OrgID: "o", ProjectID: "p", TaskID: "t", Status: domain.RunQueued}
 	runner := NewRunner(&fakeBackend{}, store, nil, nil, "", slog.New(slog.DiscardHandler))
 
-	if _, err := runner.Execute(context.Background(), store.runs["run-1"], "prompt", nil, "", nil, nil, nil, "", "", "", 0.01, nil, 0, nil, nil, nil, nil); err != nil {
+	if _, err := runner.Execute(context.Background(), store.runs["run-1"], "prompt", nil, "", nil, nil, nil, "", "", "", "", 0.01, nil, 0, nil, nil, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 

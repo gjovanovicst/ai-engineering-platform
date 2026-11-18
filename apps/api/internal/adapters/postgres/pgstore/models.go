@@ -505,6 +505,7 @@ type Project struct {
 	PolicyRequiredApprovals int32
 	PluginChecks            string
 	AgentPluginID           pgtype.UUID
+	TestCommand             string
 }
 
 type ProjectComponent struct {
