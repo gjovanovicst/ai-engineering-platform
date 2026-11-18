@@ -523,6 +523,102 @@ func (s *Service) Decide(ctx context.Context, orgID, approvalID, decision, reaso
 	}
 }
 
+// RetryInput identifies a failed development run to retry.
+type RetryInput struct {
+	OrgID string
+	RunID string
+	Actor string
+}
+
+// Retry starts a new development run with the failed run's approved plan, so a
+// failure does not need a new planning run and a new plan approval.
+func (s *Service) Retry(ctx context.Context, in RetryInput) (domain.Run, error) {
+	run, err := s.store.Get(ctx, in.OrgID, in.RunID)
+	if err != nil {
+		return domain.Run{}, err
+	}
+	if run.AgentType != string(domain.AgentDevelopment) {
+		return domain.Run{}, &domain.TransitionError{
+			From: domain.TaskStatus(run.AgentType), To: domain.TaskStatus(domain.RunQueued),
+			Detail: "only development runs can be retried",
+		}
+	}
+	if run.Status != domain.RunFailed {
+		return domain.Run{}, &domain.TransitionError{
+			From: domain.TaskStatus(run.Status), To: domain.TaskStatus(domain.RunQueued),
+			Detail: "only a failed run can be retried",
+		}
+	}
+	if len(run.Plan) == 0 {
+		return domain.Run{}, fmt.Errorf("%w: the failed run has no approved plan to retry", domain.ErrValidation)
+	}
+	if latest, lerr := s.store.LatestRun(ctx, in.OrgID, run.TaskID, string(domain.AgentDevelopment)); lerr == nil && !latest.Status.Terminal() {
+		return domain.Run{}, fmt.Errorf("%w: a run is already active for the task", domain.ErrConflict)
+	}
+	task, err := s.tasks.Get(ctx, in.OrgID, run.ProjectID, run.TaskID)
+	if err != nil {
+		return domain.Run{}, err
+	}
+	if err := retryTask(ctx, &task); err != nil {
+		return domain.Run{}, err
+	}
+	created, err := s.store.Create(ctx, domain.Run{
+		OrgID: run.OrgID, ProjectID: run.ProjectID, TaskID: run.TaskID,
+		AgentType: string(domain.AgentDevelopment), Status: domain.RunQueued,
+		Model: run.Model, Budget: run.Budget,
+		FrozenContextHash: run.FrozenContextHash, FrozenContextSources: run.FrozenContextSources,
+	})
+	if err != nil {
+		return domain.Run{}, err
+	}
+	if err := s.store.SetPlan(ctx, in.OrgID, created.ID, run.Plan, ""); err != nil {
+		return domain.Run{}, err
+	}
+	if _, err := s.tasks.UpdateStatus(ctx, task); err != nil {
+		return domain.Run{}, err
+	}
+	if s.enqueuer != nil {
+		if err := s.enqueuer.Enqueue(ctx, created.ID, created.OrgID); err != nil {
+			return domain.Run{}, err
+		}
+	}
+	_ = s.store.AppendEvent(ctx, in.OrgID, created.ID, "run.retried", "user",
+		map[string]any{"from_run": run.ID, "actor": in.Actor})
+	return created, nil
+}
+
+// retryTask moves the task back to in_progress for a new development run. A
+// blocked task goes through ready and planning (the state machine only allows
+// planning -> in_progress with an approved plan); a task left in progress or
+// review by an older failure is blocked first.
+func retryTask(_ context.Context, task *domain.Task) error {
+	opt := domain.TransitionOptions{Actor: domain.ActorHuman, Reason: "retry with the approved plan"}
+	switch task.Status {
+	case domain.TaskInProgress, domain.TaskReview:
+		if err := task.Transition(domain.TaskBlocked, opt); err != nil {
+			return err
+		}
+	case domain.TaskBlocked, domain.TaskReady:
+		// fine as is
+	default:
+		return &domain.TransitionError{
+			From: task.Status, To: domain.TaskInProgress,
+			Detail: "the task cannot be retried from " + string(task.Status),
+		}
+	}
+	if task.Status == domain.TaskBlocked {
+		if err := task.Transition(domain.TaskReady, opt); err != nil {
+			return err
+		}
+	}
+	if err := task.Transition(domain.TaskPlanning, opt); err != nil {
+		return err
+	}
+	return task.Transition(domain.TaskInProgress, domain.TransitionOptions{
+		Actor: domain.ActorHuman, Reason: "retry with the approved plan", PlanApproved: true,
+	})
+}
+
 // EventsAfter returns events after a sequence number (SSE replay).
 func (s *Service) EventsAfter(ctx context.Context, orgID, id string, after int64) ([]Event, error) {
 	return s.store.EventsAfter(ctx, orgID, id, after)

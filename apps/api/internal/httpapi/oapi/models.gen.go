@@ -2255,6 +2255,11 @@ type StreamRunEventsParams struct {
 	LastEventID *int64 `json:"Last-Event-ID,omitempty"`
 }
 
+// RetryRunParams defines parameters for RetryRun.
+type RetryRunParams struct {
+	IdempotencyKey IdempotencyKeyParam `json:"Idempotency-Key"`
+}
+
 // SearchParams defines parameters for Search.
 type SearchParams struct {
 	Q     string      `form:"q" json:"q"`
