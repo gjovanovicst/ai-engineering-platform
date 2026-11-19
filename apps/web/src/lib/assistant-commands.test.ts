@@ -8,6 +8,9 @@ describe("assistant commands", () => {
     expect(names).toContain("/create-task");
     expect(names).toContain("/create-project");
     expect(names).toContain("/retry");
+    expect(names).toContain("/triage");
+    expect(names).toContain("/standup");
+    expect(names).toContain("/help");
   });
 
   it("expands a known command and keeps the arguments", () => {

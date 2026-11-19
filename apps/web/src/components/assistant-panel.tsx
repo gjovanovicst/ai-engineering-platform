@@ -69,6 +69,14 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
     const original = text.trim();
     if (!original) return;
     const expanded = expandCommand(original);
+    if (expanded?.command === "/help") {
+      setMessages((current) => [
+        ...current,
+        { role: "user", text: original },
+        { role: "assistant", text: assistantCommands.map((command) => `**${command.name}** — ${command.description}\n\`${command.usage}\``).join("\n") },
+      ]);
+      return;
+    }
     const question = expanded ? expanded.prompt : original;
     setBusy(true);
     setError(null);
