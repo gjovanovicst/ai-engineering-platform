@@ -9,6 +9,7 @@ import { decodeClaims, type Claims } from "@/lib/auth";
 import { ensureSession, listNotifications, logout, logoutAll, markNotificationsRead } from "@/lib/api";
 import { getAccessToken } from "@/lib/session";
 import { BrandMark } from "@/components/brand-mark";
+import { CommandPalette } from "@/components/command-palette";
 import { HelpPanel } from "@/components/help-panel";
 
 type NavItem = { label: string; href: string; icon: string; group: string; developerOnly?: boolean };
@@ -57,9 +58,21 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
   const [claims, setClaims] = useState<Claims | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("aip-theme");
@@ -165,7 +178,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
         <header className="app-topbar">
           <button type="button" className="icon-button mobile-menu-button" aria-label="Open navigation" onClick={() => setMobileNavOpen(true)}><Icon name="menu" /></button>
           <div className="breadcrumbs"><span>Workspace</span><span className="breadcrumb-slash">/</span><strong>{nav.find((item) => isActive(item.href))?.label ?? "Overview"}</strong></div>
-          <Link href="/search" className="global-search"><Icon name="search" size={16} /><span>Search anything...</span><kbd>⌘ K</kbd></Link>
+          <button type="button" onClick={() => setPaletteOpen(true)} className="global-search"><Icon name="search" size={16} /><span>Search anything...</span><kbd>⌘ K</kbd></button>
           <div className="topbar-actions">
             <div className="popover-anchor">
               <button type="button" onClick={() => setBellOpen((open) => !open)} aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"} aria-expanded={bellOpen} className="icon-button notification-button">
@@ -198,6 +211,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
             </div>
           </div>
           {helpOpen ? <HelpPanel onClose={() => setHelpOpen(false)} /> : null}
+          {paletteOpen && claims?.org ? <CommandPalette orgID={claims.org} onClose={() => setPaletteOpen(false)} /> : null}
         </header>
         <main id="main-content" tabIndex={-1} className="app-content">{children}</main>
       </div>

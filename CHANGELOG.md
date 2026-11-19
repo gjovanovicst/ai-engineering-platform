@@ -6,6 +6,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Command palette**: `⌘K` (or `Ctrl+K`) opens a keyboard-first palette with
+  the actions (projects, agents, search, settings, help), the projects, the
+  searched tasks/runs and the recent runs; ↑/↓ navigate, Enter runs, Esc closes.
+  The top-bar search opens it too.
+
 - **Guidance layer**: a `NextAction` card on the run page (approve the plan,
   retry a failed development run, fix the review findings, review and merge),
   a `HelpTip` tooltip with a glossary, a help panel (the docs, the shortcuts and
