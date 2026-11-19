@@ -187,3 +187,38 @@ export const designStandardSchema = z.object({
     }, "The advanced JSON must be valid JSON."),
 });
 export type DesignStandardValues = z.infer<typeof designStandardSchema>;
+
+export const previewSchema = z.object({
+  image: z.string().trim().min(1, "An image is required.").max(300, "At most 300 characters."),
+  port: z
+    .string()
+    .trim()
+    .regex(/^\d+$/, "A port number.")
+    .refine((value) => Number(value) >= 1 && Number(value) <= 65535, "A port between 1 and 65535."),
+  ttl: z
+    .string()
+    .trim()
+    .regex(/^\d+$/, "A number of minutes.")
+    .refine((value) => Number(value) >= 1 && Number(value) <= 1440, "1 to 1440 minutes."),
+});
+export type PreviewValues = z.infer<typeof previewSchema>;
+
+export const incidentSchema = z.object({
+  title: z.string().trim().min(1, "A title is required.").max(200, "At most 200 characters."),
+  severity: z.enum(["sev1", "sev2", "sev3", "sev4"]),
+});
+export type IncidentValues = z.infer<typeof incidentSchema>;
+
+export const scimSchema = z.object({
+  name: z.string().trim().min(1, "A name is required.").max(80, "At most 80 characters."),
+});
+export type ScimValues = z.infer<typeof scimSchema>;
+
+export const githubAppSchema = z.object({
+  installation: z
+    .string()
+    .trim()
+    .regex(/^\d+$/, "The installation id is a number.")
+    .refine((value) => Number(value) > 0, "A positive installation id."),
+});
+export type GitHubAppValues = z.infer<typeof githubAppSchema>;

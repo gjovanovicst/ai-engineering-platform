@@ -4,19 +4,26 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { ApiError, createIncident, listIncidents, resolveIncident } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { incidentSchema, type IncidentValues } from "@/lib/schemas";
 
 export function IncidentsPanel({ orgID }: { orgID: string }) {
   const queryClient = useQueryClient();
-  const [title, setTitle] = useState("");
-  const [severity, setSeverity] = useState("sev2");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useZodForm<IncidentValues>(incidentSchema, { defaultValues: { title: "", severity: "sev2" } });
   const [error, setError] = useState<string | null>(null);
   const incidents = useQuery({ queryKey: ["incidents", orgID], queryFn: () => listIncidents(orgID) });
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["incidents", orgID] });
 
   const create = useMutation({
-    mutationFn: () => createIncident(orgID, { title: title.trim(), severity }),
-    onSuccess: () => { setTitle(""); setError(null); invalidate(); },
+    mutationFn: (values: IncidentValues) => createIncident(orgID, { title: values.title.trim(), severity: values.severity }),
+    onSuccess: () => { setError(null); invalidate(); },
     onError: (err) => setError(err instanceof ApiError ? err.message : "Could not open the incident"),
   });
   const resolve = useMutation({
@@ -29,13 +36,17 @@ export function IncidentsPanel({ orgID }: { orgID: string }) {
     <section className="mt-6 rounded-lg border border-border bg-bg-surface p-4">
       <h2 className="text-sm font-semibold">Incidents</h2>
       <p className="mt-1 text-xs text-text-secondary">Production incidents drive the change-failure rate and MTTR.</p>
-      <div className="mt-3 flex flex-wrap items-end gap-2">
-        <input aria-label="Incident title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Checkout latency spike" className="h-9 min-w-[240px] flex-1 rounded-md border border-border bg-bg-surface px-3 text-xs" />
-        <select aria-label="Severity" value={severity} onChange={(e) => setSeverity(e.target.value)} className="h-9 rounded-md border border-border bg-bg-surface px-2 text-xs">
-          <option value="sev1">sev1</option><option value="sev2">sev2</option><option value="sev3">sev3</option><option value="sev4">sev4</option>
-        </select>
-        <Button variant="secondary" loading={create.isPending} onClick={() => create.mutate()}>Open incident</Button>
-      </div>
+      <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={handleSubmit((values) => create.mutate(values))}>
+        <Field label="Incident title" htmlFor="incident-title" error={errors.title?.message}>
+          <Input id="incident-title" aria-invalid={Boolean(errors.title)} {...register("title")} placeholder="Checkout latency spike" className="h-9 min-w-[240px] text-xs" />
+        </Field>
+        <Field label="Severity" htmlFor="incident-severity">
+          <select id="incident-severity" {...register("severity")} className="h-9 rounded-md border border-border bg-bg-surface px-2 text-xs">
+            <option value="sev1">sev1</option><option value="sev2">sev2</option><option value="sev3">sev3</option><option value="sev4">sev4</option>
+          </select>
+        </Field>
+        <Button type="submit" variant="secondary" loading={create.isPending} className="mt-5">Open incident</Button>
+      </form>
       {error ? <p role="alert" className="mt-2 text-xs text-status-danger">{error}</p> : null}
       {incidents.isLoading ? <p className="mt-3 text-xs text-text-muted">Loading…</p> : null}
       {incidents.isError ? <p className="mt-3 text-xs text-status-danger">Could not load incidents.</p> : null}
