@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { acceptInviteSchema, aiProviderSchema, apiKeySchema, commandSchema, componentEntrySchema, designTokenSchema, environmentSchema, inviteSchema, loginSchema, registerSchema, repoConnectSchema, repoCredentialSchema, ruleSchema, taskComposerSchema, type TaskComposerValues } from "./schemas";
+import { acceptInviteSchema, aiProviderSchema, apiKeySchema, baselineSchema, checksSchema, commandSchema, componentEntrySchema, deleteProjectSchema, designTokenSchema, environmentSchema, inviteSchema, loginSchema, registerSchema, repoConnectSchema, repoCredentialSchema, ruleSchema, taskComposerSchema, type TaskComposerValues } from "./schemas";
 
 function composer(overrides: Partial<TaskComposerValues> = {}): TaskComposerValues {
   return {
@@ -128,5 +128,22 @@ describe("access schemas", () => {
     expect(ruleSchema.safeParse({ name: "Tests", level: "organization", body: "Every change has a test." }).success).toBe(true);
     expect(ruleSchema.safeParse({ name: "", level: "organization", body: "x" }).success).toBe(false);
     expect(ruleSchema.safeParse({ name: "Tests", level: "organization", body: "" }).success).toBe(false);
+  });
+});
+
+describe("project settings schemas", () => {
+  it("caps the required checks string", () => {
+    expect(checksSchema.safeParse({ checks: "ci, test" }).success).toBe(true);
+    expect(checksSchema.safeParse({ checks: "x".repeat(501) }).success).toBe(false);
+  });
+
+  it("requires a baseline name", () => {
+    expect(baselineSchema.safeParse({ name: "home" }).success).toBe(true);
+    expect(baselineSchema.safeParse({ name: "  " }).success).toBe(false);
+  });
+
+  it("requires the project name confirmation", () => {
+    expect(deleteProjectSchema.safeParse({ confirm: "Portal" }).success).toBe(true);
+    expect(deleteProjectSchema.safeParse({ confirm: "" }).success).toBe(false);
   });
 });
