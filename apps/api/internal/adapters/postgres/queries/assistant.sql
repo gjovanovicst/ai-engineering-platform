@@ -25,3 +25,9 @@ RETURNING id, conversation_id, org_id, role, content, tool_name, tool_input, too
 SELECT id, conversation_id, org_id, role, content, tool_name, tool_input, tool_output, created_at
 FROM assistant_messages WHERE conversation_id = $1 AND org_id = $2
 ORDER BY created_at ASC LIMIT $3;
+
+-- name: DeleteAssistantConversation :exec
+DELETE FROM assistant_conversations WHERE id = $1 AND org_id = $2 AND user_id = $3;
+
+-- name: DeleteAssistantConversations :exec
+DELETE FROM assistant_conversations WHERE org_id = $1 AND user_id = $2;

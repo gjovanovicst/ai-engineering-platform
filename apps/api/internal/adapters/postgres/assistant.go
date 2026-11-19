@@ -115,6 +115,22 @@ func (s *AssistantStore) ListMessages(ctx context.Context, orgID, conversationID
 	return out, err
 }
 
+func (s *AssistantStore) DeleteConversation(ctx context.Context, orgID, userID, id string) error {
+	return db.WithOrg(ctx, s.pool, orgID, func(ctx context.Context, tx pgx.Tx) error {
+		return s.q.WithTx(tx).DeleteAssistantConversation(ctx, pgstore.DeleteAssistantConversationParams{
+			ID: toUUID(id), OrgID: toUUID(orgID), UserID: toUUID(userID),
+		})
+	})
+}
+
+func (s *AssistantStore) DeleteConversations(ctx context.Context, orgID, userID string) error {
+	return db.WithOrg(ctx, s.pool, orgID, func(ctx context.Context, tx pgx.Tx) error {
+		return s.q.WithTx(tx).DeleteAssistantConversations(ctx, pgstore.DeleteAssistantConversationsParams{
+			OrgID: toUUID(orgID), UserID: toUUID(userID),
+		})
+	})
+}
+
 func assistantConversationFromRow(row pgstore.AssistantConversation) domain.AssistantConversation {
 	return domain.AssistantConversation{
 		ID: uuidString(row.ID), OrgID: uuidString(row.OrgID), UserID: uuidString(row.UserID),

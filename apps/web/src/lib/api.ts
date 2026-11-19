@@ -123,6 +123,14 @@ export function listAssistantMessages(orgID: string, conversationID: string) {
   return request<{ data: AssistantHistoryMessage[] }>(`/api/v1/orgs/${orgID}/assistant/conversations/${conversationID}`);
 }
 
+export function deleteAssistantConversation(orgID: string, conversationID: string) {
+  return request<void>(`/api/v1/orgs/${orgID}/assistant/conversations/${conversationID}`, { method: "DELETE" });
+}
+
+export function clearAssistantConversations(orgID: string) {
+  return request<void>(`/api/v1/orgs/${orgID}/assistant/conversations`, { method: "DELETE" });
+}
+
 export type TokenPair = {
   access_token: string;
   refresh_token: string;

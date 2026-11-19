@@ -55,6 +55,8 @@ type Store interface {
 	ListConversations(ctx context.Context, orgID, userID string, limit int) ([]domain.AssistantConversation, error)
 	ListMessages(ctx context.Context, orgID, conversationID string, limit int) ([]domain.AssistantMessage, error)
 	AppendMessage(ctx context.Context, m domain.AssistantMessage) (domain.AssistantMessage, error)
+	DeleteConversation(ctx context.Context, orgID, userID, id string) error
+	DeleteConversations(ctx context.Context, orgID, userID string) error
 }
 
 // Platform is the read/write surface the tools use. It is the existing app
@@ -115,6 +117,16 @@ func (s *Service) ListConversations(ctx context.Context, orgID, userID string, l
 // ListMessages returns one conversation's messages.
 func (s *Service) ListMessages(ctx context.Context, orgID, conversationID string, limit int) ([]domain.AssistantMessage, error) {
 	return s.store.ListMessages(ctx, orgID, conversationID, limit)
+}
+
+// DeleteConversation removes one of the user's conversations (the owner only).
+func (s *Service) DeleteConversation(ctx context.Context, orgID, userID, id string) error {
+	return s.store.DeleteConversation(ctx, orgID, userID, id)
+}
+
+// DeleteConversations removes all of the user's conversations.
+func (s *Service) DeleteConversations(ctx context.Context, orgID, userID string) error {
+	return s.store.DeleteConversations(ctx, orgID, userID)
 }
 
 const systemPrompt = `You are the assistant inside an AI engineering platform.

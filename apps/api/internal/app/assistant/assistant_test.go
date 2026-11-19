@@ -30,6 +30,22 @@ func (s *memStore) ListConversations(_ context.Context, _, _ string, _ int) ([]d
 	return s.conversations, nil
 }
 
+func (s *memStore) DeleteConversation(_ context.Context, _, _, id string) error {
+	var kept []domain.AssistantConversation
+	for _, c := range s.conversations {
+		if c.ID != id {
+			kept = append(kept, c)
+		}
+	}
+	s.conversations = kept
+	return nil
+}
+
+func (s *memStore) DeleteConversations(context.Context, string, string) error {
+	s.conversations = nil
+	return nil
+}
+
 func (s *memStore) ListMessages(_ context.Context, _, conversationID string, _ int) ([]domain.AssistantMessage, error) {
 	var out []domain.AssistantMessage
 	for _, m := range s.messages {

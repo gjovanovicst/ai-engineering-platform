@@ -16,7 +16,8 @@ All notable changes to this project. Dates are 2026.
   write), the chat history (the conversation list and the reload of an earlier
   conversation), the slash commands (/create-task, /create-project, /retry,
   /cancel, /explain, /whats-next) with the input autocomplete, the
-  create_project tool and the list_runs fix.
+  create_project tool, the list_runs fix, and the conversation management
+  (delete one or clear the whole history).
 
 - **Command palette**: `⌘K` (or `Ctrl+K`) opens a keyboard-first palette with
   the actions (projects, agents, search, settings, help), the projects, the

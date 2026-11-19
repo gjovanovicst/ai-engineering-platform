@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AssistantMarkdown } from "@/components/assistant-markdown";
 import { Button } from "@/components/ui/button";
 import { SidePanel } from "@/components/ui/side-panel";
-import { assistantStream, listAssistantConversations, listAssistantMessages, type AssistantConversation, type AssistantEvent } from "@/lib/api";
+import { assistantStream, clearAssistantConversations, deleteAssistantConversation, listAssistantConversations, listAssistantMessages, type AssistantConversation, type AssistantEvent } from "@/lib/api";
 import { assistantCommands, expandCommand } from "@/lib/assistant-commands";
 
 type ChatMessage = { role: "user" | "assistant" | "note"; text: string };
@@ -62,6 +62,27 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
     setMessages([]);
     setPendingTool(null);
     setError(null);
+  }
+
+  async function removeConversation(id: string) {
+    try {
+      await deleteAssistantConversation(orgID, id);
+      setConversations((current) => current.filter((conversation) => conversation.id !== id));
+      if (conversationID === id) newChat();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not delete the conversation");
+    }
+  }
+
+  async function clearHistory() {
+    if (typeof window !== "undefined" && !window.confirm("Delete all earlier conversations?")) return;
+    try {
+      await clearAssistantConversations(orgID);
+      setConversations([]);
+      newChat();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not clear the conversations");
+    }
   }
 
   async function ask(text: string, confirm = false) {
@@ -186,16 +207,30 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
           </button>
           {conversations.length === 0 ? <p className="px-2 py-1 text-text-muted">No earlier conversations.</p> : null}
           {conversations.map((conversation) => (
-            <button
-              key={conversation.id}
-              type="button"
-              onClick={() => void openConversation(conversation.id)}
-              className={`block w-full truncate rounded-md px-2 py-1.5 text-left hover:bg-bg-hover ${conversation.id === conversationID ? "bg-bg-hover text-text-primary" : "text-text-secondary"}`}
-              title={conversation.title}
-            >
-              {conversation.title || "Untitled"}
-            </button>
+            <div key={conversation.id} className="group flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => void openConversation(conversation.id)}
+                className={`min-w-0 flex-1 truncate rounded-md px-2 py-1.5 text-left hover:bg-bg-hover ${conversation.id === conversationID ? "bg-bg-hover text-text-primary" : "text-text-secondary"}`}
+                title={conversation.title}
+              >
+                {conversation.title || "Untitled"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void removeConversation(conversation.id)}
+                aria-label={`Delete ${conversation.title || "conversation"}`}
+                className="shrink-0 rounded px-1 text-text-muted opacity-0 hover:text-status-danger group-hover:opacity-100"
+              >
+                ×
+              </button>
+            </div>
           ))}
+          {conversations.length > 0 ? (
+            <button type="button" onClick={() => void clearHistory()} className="mt-2 w-full rounded-md px-2 py-1.5 text-left text-status-danger hover:bg-bg-hover">
+              Clear all history
+            </button>
+          ) : null}
         </aside>
         <div className="min-w-0 flex-1 space-y-3 overflow-y-auto p-5 text-sm">
         {messages.length === 0 ? (

@@ -145,6 +145,8 @@ func NewRouter(d Deps) http.Handler {
 	mux.HandleFunc("POST /api/v1/orgs/{org}/assistant/messages", assistantH.send)
 	mux.HandleFunc("GET /api/v1/orgs/{org}/assistant/conversations", assistantH.conversations)
 	mux.HandleFunc("GET /api/v1/orgs/{org}/assistant/conversations/{conversation}", assistantH.messages)
+	mux.HandleFunc("DELETE /api/v1/orgs/{org}/assistant/conversations/{conversation}", assistantH.deleteConversation)
+	mux.HandleFunc("DELETE /api/v1/orgs/{org}/assistant/conversations", assistantH.deleteConversations)
 	mux.HandleFunc("GET /api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"version": d.Version,
