@@ -6,6 +6,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **AI assistant (part 1)**: the conversation store — migration 0083
+  (`assistant_conversations`, `assistant_messages`), the domain types, the
+  postgres store and the queries. The endpoint and the tools follow.
+
 - **Command palette**: `⌘K` (or `Ctrl+K`) opens a keyboard-first palette with
   the actions (projects, agents, search, settings, help), the projects, the
   searched tasks/runs and the recent runs; ↑/↓ navigate, Enter runs, Esc closes.
