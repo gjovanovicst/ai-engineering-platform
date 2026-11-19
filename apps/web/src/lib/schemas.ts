@@ -158,3 +158,32 @@ export const ruleSchema = z.object({
   body: z.string().trim().min(1, "The body is required.").max(20000, "At most 20000 characters."),
 });
 export type RuleValues = z.infer<typeof ruleSchema>;
+
+export const agentPluginSchema = z.object({
+  name: z.string().trim().min(1, "A name is required.").max(80, "At most 80 characters."),
+  version: z.string().trim().min(1, "A version is required.").max(40, "At most 40 characters."),
+  image: z.string().trim().min(1, "An image is required.").max(300, "At most 300 characters."),
+  command: z.string().trim().min(1, "A command is required.").max(500, "At most 500 characters."),
+  types: z.array(z.string()).min(1, "Choose at least one agent type."),
+});
+export type AgentPluginValues = z.infer<typeof agentPluginSchema>;
+
+export const designStandardSchema = z.object({
+  name: z.string().trim().min(3, "The name needs at least 3 characters.").max(80, "At most 80 characters."),
+  accessibility: z.string().max(4000, "At most 4000 characters."),
+  responsive: z.string().max(4000, "At most 4000 characters."),
+  patterns: z.string().max(4000, "At most 4000 characters."),
+  advanced: z
+    .string()
+    .max(8000, "At most 8000 characters.")
+    .refine((value) => {
+      if (!value.trim()) return true;
+      try {
+        JSON.parse(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }, "The advanced JSON must be valid JSON."),
+});
+export type DesignStandardValues = z.infer<typeof designStandardSchema>;

@@ -4,7 +4,11 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
+import { useZodForm } from "@/lib/form";
+import { designStandardSchema, type DesignStandardValues } from "@/lib/schemas";
 import {
   ApiError,
   createDesignStandard,
@@ -70,6 +74,14 @@ export function DesignStandardsPanel({ orgID }: { orgID: string }) {
   const standards = useQuery({ queryKey: ["design-standards", orgID], queryFn: () => listDesignStandards(orgID) });
   const tokens = useQuery({ queryKey: ["design-tokens", orgID], queryFn: () => listDesignTokens(orgID) });
   const [builder, setBuilder] = useState<BuilderState | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useZodForm<DesignStandardValues>(designStandardSchema, {
+    defaultValues: { name: "", accessibility: "", responsive: "", patterns: "", advanced: "" },
+  });
   const [compare, setCompare] = useState<{ base: DesignStandard; next: DesignStandard } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -102,17 +114,29 @@ export function DesignStandardsPanel({ orgID }: { orgID: string }) {
   const groups = [...new Set(rows.map((row) => row.name))];
   const tokenCount = tokens.data?.data.length ?? 0;
 
-  const submit = () => {
+  const submit = handleSubmit((values) => {
     if (!builder) return;
     try {
-      const spec = buildSpec(builder, tokens.data?.data ?? [], builder.base);
+      const spec = buildSpec({ ...builder, ...values }, tokens.data?.data ?? [], builder.base);
       if (spec.tokens.length === 0) throw new Error("Add design tokens first");
-      if (builder.name.trim().length < 3) throw new Error("Name must be at least 3 characters");
-      create.mutate({ ...builder, base: spec });
+      create.mutate({ ...builder, ...values, base: spec });
     } catch (err) {
-      setBuilder({ ...builder, error: err instanceof Error ? err.message : "Invalid spec" });
+      setBuilder({ ...builder, ...values, error: err instanceof Error ? err.message : "Invalid spec" });
     }
-  };
+  });
+
+  function openBuilder(state: BuilderState | null) {
+    setBuilder(state);
+    if (state) {
+      reset({
+        name: state.name,
+        accessibility: state.accessibility,
+        responsive: state.responsive,
+        patterns: state.patterns,
+        advanced: state.advanced,
+      });
+    }
+  }
 
   return (
     <section className="rounded-lg border border-border bg-bg-surface">
@@ -123,7 +147,7 @@ export function DesignStandardsPanel({ orgID }: { orgID: string }) {
             Versioned standards projects and agents inherit. Draft edits stay mutable; published versions are frozen.
           </p>
         </div>
-        <Button variant="secondary" onClick={() => setBuilder(builderFrom())}>
+        <Button variant="secondary" onClick={() => openBuilder(builderFrom())}>
           New standard
         </Button>
       </header>
@@ -144,59 +168,52 @@ export function DesignStandardsPanel({ orgID }: { orgID: string }) {
         >
         <div className="space-y-4 p-5">
           <div className="grid gap-3">
-            <label className="text-xs text-text-muted">
-              Name
-              <input
-                value={builder.name}
-                onChange={(event) => setBuilder({ ...builder, name: event.target.value })}
-                className="mt-1 h-9 w-full rounded-md border border-border bg-bg-surface px-3 text-sm"
-                placeholder="Acme product UI"
-              />
-            </label>
-            <label className="text-xs text-text-muted">
-              Tokens (from the registry: {tokenCount})
-              <input disabled value={tokenCount ? `${tokenCount} tokens will be captured` : "No tokens yet"} className="mt-1 h-9 w-full rounded-md border border-border bg-bg-canvas px-3 text-sm text-text-muted" />
-            </label>
+            <Field label="Name" htmlFor="standard-name" error={errors.name?.message}>
+              <Input id="standard-name" aria-invalid={Boolean(errors.name)} {...register("name")} placeholder="Acme product UI" />
+            </Field>
+            <Field label={`Tokens (from the registry: ${tokenCount})`} htmlFor="standard-tokens">
+              <Input id="standard-tokens" disabled value={tokenCount ? `${tokenCount} tokens will be captured` : "No tokens yet"} className="bg-bg-canvas text-text-muted" />
+            </Field>
           </div>
           <div className="grid gap-3">
-            <label className="text-xs text-text-muted">
-              Accessibility (one per line)
+            <Field label="Accessibility (one per line)" htmlFor="standard-accessibility" error={errors.accessibility?.message}>
               <textarea
+                id="standard-accessibility"
                 rows={4}
-                value={builder.accessibility}
-                onChange={(event) => setBuilder({ ...builder, accessibility: event.target.value })}
-                className="mt-1 w-full rounded-md border border-border bg-bg-surface px-3 py-2 text-xs"
+                aria-invalid={Boolean(errors.accessibility)}
+                {...register("accessibility")}
+                className="w-full rounded-md border border-border bg-bg-surface px-3 py-2 text-xs"
               />
-            </label>
-            <label className="text-xs text-text-muted">
-              Responsive rules (one per line)
+            </Field>
+            <Field label="Responsive rules (one per line)" htmlFor="standard-responsive" error={errors.responsive?.message}>
               <textarea
+                id="standard-responsive"
                 rows={4}
-                value={builder.responsive}
-                onChange={(event) => setBuilder({ ...builder, responsive: event.target.value })}
-                className="mt-1 w-full rounded-md border border-border bg-bg-surface px-3 py-2 text-xs"
+                aria-invalid={Boolean(errors.responsive)}
+                {...register("responsive")}
+                className="w-full rounded-md border border-border bg-bg-surface px-3 py-2 text-xs"
               />
-            </label>
-            <label className="text-xs text-text-muted">
-              Patterns (one per line)
+            </Field>
+            <Field label="Patterns (one per line)" htmlFor="standard-patterns" error={errors.patterns?.message}>
               <textarea
+                id="standard-patterns"
                 rows={4}
-                value={builder.patterns}
-                onChange={(event) => setBuilder({ ...builder, patterns: event.target.value })}
-                className="mt-1 w-full rounded-md border border-border bg-bg-surface px-3 py-2 text-xs"
+                aria-invalid={Boolean(errors.patterns)}
+                {...register("patterns")}
+                className="w-full rounded-md border border-border bg-bg-surface px-3 py-2 text-xs"
               />
-            </label>
+            </Field>
           </div>
-          <label className="block text-xs text-text-muted">
-            Typography, spacing, radius, themes (JSON, optional)
+          <Field label="Typography, spacing, radius, themes (JSON, optional)" htmlFor="standard-advanced" error={errors.advanced?.message}>
             <textarea
+              id="standard-advanced"
               rows={5}
-              value={builder.advanced}
-              onChange={(event) => setBuilder({ ...builder, advanced: event.target.value })}
+              aria-invalid={Boolean(errors.advanced)}
+              {...register("advanced")}
               placeholder={'{\n  "typography": {"font_family": "Inter"},\n  "spacing": {"unit": "4px"},\n  "radius": {"card": "14px"}\n}'}
-              className="mt-1 w-full rounded-md border border-border bg-bg-surface px-3 py-2 font-mono text-xs"
+              className="w-full rounded-md border border-border bg-bg-surface px-3 py-2 font-mono text-xs"
             />
-          </label>
+          </Field>
           {builder.error ? <p role="alert" className="text-xs text-status-danger">{builder.error}</p> : null}
           <p className="text-xs text-text-muted">
             {builder.id ? "Creates the next draft version." : "Creates v1 as a draft."} Publish when ready.
