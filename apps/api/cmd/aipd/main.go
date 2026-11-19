@@ -208,7 +208,10 @@ func main() {
 	runService, err := runs.New(runStore, taskService, runner, queue.Enqueuer{Client: queueClient}, merger, logger)
 	assistantStore := postgres.NewAssistantStore(pool)
 	assistantPlatform := &assistantPlatform{projects: projectService, tasks: taskService, runs: runService}
-	assistantLLM := llm.NewAnthropic(os.Getenv("AIP_ASSISTANT_LLM_BASE_URL"), os.Getenv("AIP_ASSISTANT_LLM_API_KEY"), os.Getenv("AIP_ASSISTANT_LLM_MODEL"))
+	var assistantLLM assistant.LLM = llm.NewAnthropic(os.Getenv("AIP_ASSISTANT_LLM_BASE_URL"), os.Getenv("AIP_ASSISTANT_LLM_API_KEY"), os.Getenv("AIP_ASSISTANT_LLM_MODEL"))
+	if os.Getenv("AIP_ASSISTANT_LLM_PROVIDER") == "openai" {
+		assistantLLM = llm.NewOpenAI(os.Getenv("AIP_ASSISTANT_LLM_BASE_URL"), os.Getenv("AIP_ASSISTANT_LLM_API_KEY"), os.Getenv("AIP_ASSISTANT_LLM_MODEL"))
+	}
 	assistantService, assistantErr := assistant.New(assistantStore, assistantLLM, assistantPlatform, logger)
 	if assistantErr != nil {
 		logger.Error("assistant service", slog.Any("err", assistantErr))
