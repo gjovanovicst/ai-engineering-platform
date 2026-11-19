@@ -9,6 +9,7 @@ import { decodeClaims, type Claims } from "@/lib/auth";
 import { ensureSession, listNotifications, logout, logoutAll, markNotificationsRead } from "@/lib/api";
 import { getAccessToken } from "@/lib/session";
 import { BrandMark } from "@/components/brand-mark";
+import { AssistantPanel } from "@/components/assistant-panel";
 import { CommandPalette } from "@/components/command-palette";
 import { HelpPanel } from "@/components/help-panel";
 
@@ -59,6 +60,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
   const [menuOpen, setMenuOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -193,6 +195,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
                 </ul>
               </div>}
             </div>
+            <button type="button" onClick={() => setAssistantOpen(true)} aria-label="Assistant" className="icon-button"><span aria-hidden="true">✦</span></button>
             <button type="button" onClick={() => setHelpOpen(true)} aria-label="Help" className="icon-button"><span aria-hidden="true">?</span></button>
             <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Light theme" : "Dark theme"} className="icon-button"><Icon name={theme === "dark" ? "sun" : "moon"} size={18} /></button>
             <span className="topbar-divider" />
@@ -212,6 +215,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
           </div>
           {helpOpen ? <HelpPanel onClose={() => setHelpOpen(false)} /> : null}
           {paletteOpen && claims?.org ? <CommandPalette orgID={claims.org} onClose={() => setPaletteOpen(false)} /> : null}
+          {assistantOpen && claims?.org ? <AssistantPanel orgID={claims.org} onClose={() => setAssistantOpen(false)} /> : null}
         </header>
         <main id="main-content" tabIndex={-1} className="app-content">{children}</main>
       </div>

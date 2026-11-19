@@ -73,6 +73,44 @@ async function request<T>(path: string, init: RequestInit = {}, retry = true): P
   return (await res.json()) as T;
 }
 
+
+export type AssistantEvent = { type: "text" | "pending" | "done" | "error"; text?: string; pending_tool?: string; conversation_id?: string };
+
+/** Streams one assistant message (SSE). Events: text, pending, done. */
+export async function assistantStream(
+  orgID: string,
+  input: { conversation_id?: string; prompt: string; confirm?: boolean },
+  onEvent: (event: AssistantEvent) => void,
+): Promise<void> {
+  const response = await send(`/api/v1/orgs/${orgID}/assistant/messages`, {
+    method: "POST",
+    headers: { Accept: "text/event-stream" },
+    body: JSON.stringify(input),
+  });
+  if (!response.ok) throw await toError(response);
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error("The assistant stream is not available");
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const frames = buffer.split("\n\n");
+    buffer = frames.pop() ?? "";
+    for (const frame of frames) {
+      const eventLine = frame.split("\n").find((line) => line.startsWith("event: "));
+      const dataLine = frame.split("\n").find((line) => line.startsWith("data: "));
+      if (!dataLine) continue;
+      try {
+        const data = JSON.parse(dataLine.slice(6)) as AssistantEvent;
+        onEvent({ ...data, type: (eventLine?.slice(7) as AssistantEvent["type"]) ?? "text" });
+      } catch {
+        // ignore a malformed frame; the stream continues
+      }
+    }
+  }
+}
 export type TokenPair = {
   access_token: string;
   refresh_token: string;
