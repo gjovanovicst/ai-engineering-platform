@@ -78,22 +78,19 @@ func (c *OpenAI) Chat(ctx context.Context, system string, messages []assistant.M
 	converted := []oaMessage{{Role: "system", Content: system}}
 	// Tool results map to the tool_call_id of the previous call; the assistant
 	// appends them in order, so the ids are tracked here.
-	var lastToolIDs []string
 	for _, m := range messages {
 		switch m.Role {
 		case "tool":
-			id := "call_0"
-			if len(lastToolIDs) > 0 {
-				id = lastToolIDs[0]
-				lastToolIDs = lastToolIDs[1:]
-			}
-			converted = append(converted, oaMessage{Role: "tool", ToolCallID: id, Content: m.Content})
+			// The stored history keeps the tool output as a plain message (the
+			// assistant message does not carry the tool_calls ids), so it is
+			// replayed as a user turn: the OpenAI API rejects a tool role
+			// without the matching tool_calls.
+			converted = append(converted, oaMessage{Role: "user", Content: m.Content})
 		case "assistant":
 			converted = append(converted, oaMessage{Role: "assistant", Content: m.Content})
 		default:
 			converted = append(converted, oaMessage{Role: "user", Content: m.Content})
 		}
-		_ = lastToolIDs
 	}
 	specs := make([]oaTool, 0, len(tools))
 	for _, t := range tools {
