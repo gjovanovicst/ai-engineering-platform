@@ -6,6 +6,12 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Forms foundation**: react-hook-form + zod with a shared `useZodForm`, the
+  field help/error, an unsaved-changes guard and a component-test setup
+  (testing-library, jsdom). The task composer and the test/e2e/visual command
+  settings are migrated: inline validation before submit and the form-level
+  API errors.
+
 - **Task scope fields and blueprint starter-task scope**: tasks carry the
   files, the out-of-scope, the proving test and the rollback (the
   Definition-of-Ready scope). The task composer and the drawer render them; the
