@@ -12,8 +12,10 @@ All notable changes to this project. Dates are 2026.
   validation: inline field errors, the `aria-invalid` danger border and the
   server error at the form level; so do the agent plugin, design standard,
   preview, incident, SCIM token, GitHub App installation, backup request, SSO,
-  workspace and BYOK forms, plus the project settings checks, visual baseline
-  and delete confirmation (parts 1-4a of the forms consistency sweep #49).
+  workspace and BYOK forms, plus the project settings (the checks, the visual
+  baseline, the delete confirmation, the policy fields, the MCP config, the
+  plugin checks and the scaffold) (parts 1-4 of the forms consistency sweep
+  #49).
 
 ### Added
 

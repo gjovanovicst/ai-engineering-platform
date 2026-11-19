@@ -12,7 +12,7 @@ import { PullRequestsPanel } from "@/components/pull-requests-panel";
 import { RepoPanel } from "@/components/repo-panel";
 import { CommandForm } from "@/components/command-form";
 import { useZodForm } from "@/lib/form";
-import { baselineSchema, checksSchema, deleteProjectSchema, type BaselineValues, type ChecksValues, type DeleteProjectValues } from "@/lib/schemas";
+import { approvalsSchema, baselineSchema, checksSchema, deleteProjectSchema, mcpSchema, modelsSchema, pluginChecksSchema, policySchema, scaffoldSchema, toolsSchema, windowSchema, type BaselineValues, type ChecksValues, type DeleteProjectValues, type ApprovalsValues, type McpValues, type ModelsValues, type PluginChecksValues, type PolicyValues, type ScaffoldValues, type ToolsValues, type WindowValues } from "@/lib/schemas";
 import { TaskBoard } from "@/components/task-board";
 import { TaskComposer } from "@/components/task-composer";
 import { TaskDrawer } from "@/components/task-drawer";
@@ -74,32 +74,30 @@ export function ProjectView({ projectId }: { projectId: string }) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [checksError, setChecksError] = useState<string | null>(null);
-  const [mcpConfig, setMCPConfig] = useState("");
   const [mcpError, setMCPError] = useState<string | null>(null);
   const [protection, setProtection] = useState<string | null>(null);
   const [baselineError, setBaselineError] = useState<string | null>(null);
   const [mcpTools, setMCPTools] = useState<MCPTool[] | null>(null);
   const [mcpToolsError, setMCPToolsError] = useState<string | null>(null);
   const [mcpToolsLoading, setMCPToolsLoading] = useState(false);
-  const [scaffoldName, setScaffoldName] = useState("");
-  const [scaffoldKind, setScaffoldKind] = useState("react");
   const [scaffoldNote, setScaffoldNote] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const checksForm = useZodForm<ChecksValues>(checksSchema, { defaultValues: { checks: "" } });
+  const scaffoldForm = useZodForm<ScaffoldValues>(scaffoldSchema, { defaultValues: { name: "", kind: "react" } });
+  const mcpForm = useZodForm<McpValues>(mcpSchema, { defaultValues: { config: "" } });
+  const policyForm = useZodForm<PolicyValues>(policySchema, { defaultValues: { max: "0", paths: "" } });
+  const pluginForm = useZodForm<PluginChecksValues>(pluginChecksSchema, { defaultValues: { checks: "[]" } });
+  const windowForm = useZodForm<WindowValues>(windowSchema, { defaultValues: { window: "" } });
+  const modelsForm = useZodForm<ModelsValues>(modelsSchema, { defaultValues: { models: "" } });
+  const toolsForm = useZodForm<ToolsValues>(toolsSchema, { defaultValues: { tools: "" } });
+  const approvalsForm = useZodForm<ApprovalsValues>(approvalsSchema, { defaultValues: { approvals: "1" } });
   const baselineForm = useZodForm<BaselineValues>(baselineSchema, { defaultValues: { name: "" } });
   const deleteForm = useZodForm<DeleteProjectValues>(deleteProjectSchema, { defaultValues: { confirm: "" } });
-  const [policyMax, setPolicyMax] = useState("0");
-  const [policyPaths, setPolicyPaths] = useState("");
   const [policyError, setPolicyError] = useState<string | null>(null);
-  const [policyWindow, setPolicyWindow] = useState("");
   const [windowError, setWindowError] = useState<string | null>(null);
-  const [allowedModels, setAllowedModels] = useState("");
   const [modelsError, setModelsError] = useState<string | null>(null);
-  const [allowedTools, setAllowedTools] = useState("");
   const [toolsError, setToolsError] = useState<string | null>(null);
-  const [requiredApprovals, setRequiredApprovals] = useState("1");
   const [approvalsError, setApprovalsError] = useState<string | null>(null);
-  const [pluginChecks, setPluginChecks] = useState("[]");
   const [pluginError, setPluginError] = useState<string | null>(null);
   const [standardID, setStandardID] = useState("");
   const [standardError, setStandardError] = useState<string | null>(null);
@@ -248,41 +246,41 @@ export function ProjectView({ projectId }: { projectId: string }) {
     onError: (err) => setProtection(err instanceof ApiError ? err.message : "Could not protect the branch"),
   });
   const savePolicy = useMutation({
-    mutationFn: () => setProjectPolicy(claims!.org, projectId, Number(policyMax) || 0, policyPaths.split(",").map((p) => p.trim()).filter(Boolean)),
+    mutationFn: (values: PolicyValues) => setProjectPolicy(claims!.org, projectId, Number(values.max) || 0, values.paths.split(",").map((p) => p.trim()).filter(Boolean)),
     onSuccess: () => { setPolicyError(null); queryClient.invalidateQueries({ queryKey: ["project", claims?.org, projectId] }); },
     onError: (err) => setPolicyError(err instanceof ApiError ? err.message : "Could not save the policy"),
   });
   const saveWindow = useMutation({
-    mutationFn: () => setProjectChangeWindow(claims!.org, projectId, policyWindow.trim()),
+    mutationFn: (values: WindowValues) => setProjectChangeWindow(claims!.org, projectId, values.window.trim()),
     onSuccess: () => { setWindowError(null); queryClient.invalidateQueries({ queryKey: ["project", claims?.org, projectId] }); },
     onError: (err) => setWindowError(err instanceof ApiError ? err.message : "Could not save the change window"),
   });
   const saveModels = useMutation({
-    mutationFn: () => setProjectAllowedModels(claims!.org, projectId, allowedModels.split(",").map((m) => m.trim()).filter(Boolean)),
+    mutationFn: (values: ModelsValues) => setProjectAllowedModels(claims!.org, projectId, values.models.split(",").map((m) => m.trim()).filter(Boolean)),
     onSuccess: () => { setModelsError(null); queryClient.invalidateQueries({ queryKey: ["project", claims?.org, projectId] }); },
     onError: (err) => setModelsError(err instanceof ApiError ? err.message : "Could not save the allowed models"),
   });
   const saveTools = useMutation({
-    mutationFn: () => setProjectAllowedTools(claims!.org, projectId, allowedTools.split(",").map((t) => t.trim()).filter(Boolean)),
+    mutationFn: (values: ToolsValues) => setProjectAllowedTools(claims!.org, projectId, values.tools.split(",").map((t) => t.trim()).filter(Boolean)),
     onSuccess: () => { setToolsError(null); queryClient.invalidateQueries({ queryKey: ["project", claims?.org, projectId] }); },
     onError: (err) => setToolsError(err instanceof ApiError ? err.message : "Could not save the allowed tools"),
   });
   const saveApprovals = useMutation({
-    mutationFn: () => setProjectRequiredApprovals(claims!.org, projectId, Number(requiredApprovals) || 1),
+    mutationFn: (values: ApprovalsValues) => setProjectRequiredApprovals(claims!.org, projectId, Number(values.approvals) || 1),
     onSuccess: () => { setApprovalsError(null); queryClient.invalidateQueries({ queryKey: ["project", claims?.org, projectId] }); },
     onError: (err) => setApprovalsError(err instanceof ApiError ? err.message : "Could not save the approval rule"),
   });
   const scaffold = useMutation({
-    mutationFn: () => scaffoldComponent(claims!.org, projectId, scaffoldName.trim(), scaffoldKind),
+    mutationFn: (values: ScaffoldValues) => scaffoldComponent(claims!.org, projectId, values.name.trim(), values.kind),
     onSuccess: (task) => {
-      setScaffoldName("");
+      scaffoldForm.reset({ name: "" });
       setScaffoldNote(`created ${task.ref}: ${task.title}`);
       queryClient.invalidateQueries({ queryKey: ["tasks", claims?.org, projectId] });
     },
     onError: (err) => setScaffoldNote(err instanceof ApiError ? err.message : "Could not create the component task"),
   });
   const savePlugins = useMutation({
-    mutationFn: () => setProjectPluginChecks(claims!.org, projectId, pluginChecks.trim() || "[]"),
+    mutationFn: (values: PluginChecksValues) => setProjectPluginChecks(claims!.org, projectId, values.checks.trim() || "[]"),
     onSuccess: () => { setPluginError(null); queryClient.invalidateQueries({ queryKey: ["project", claims?.org, projectId] }); },
     onError: (err) => setPluginError(err instanceof ApiError ? err.message : "Could not save the plugin checks"),
   });
@@ -307,16 +305,18 @@ export function ProjectView({ projectId }: { projectId: string }) {
     checksForm.reset({ checks: requiredKey });
   }, [requiredKey, checksForm]);
   useEffect(() => {
-    setMCPConfig(project.data?.mcp_servers ?? "");
+    mcpForm.reset({ config: project.data?.mcp_servers ?? "" });
   }, [project.data?.mcp_servers]);
   useEffect(() => {
-    setPolicyMax(String(project.data?.policy_max_diff_bytes ?? 0));
-    setPolicyPaths((project.data?.policy_forbidden_paths ?? []).join(", "));
-    setPolicyWindow(project.data?.policy_change_window ?? "");
-    setAllowedModels((project.data?.policy_allowed_models ?? []).join(", "));
-    setAllowedTools((project.data?.policy_allowed_tools ?? []).join(", "));
-    setRequiredApprovals(String(project.data?.policy_required_approvals ?? 1));
-    setPluginChecks(project.data?.plugin_checks ?? "[]");
+    policyForm.reset({
+      max: String(project.data?.policy_max_diff_bytes ?? 0),
+      paths: (project.data?.policy_forbidden_paths ?? []).join(", "),
+    });
+    windowForm.reset({ window: project.data?.policy_change_window ?? "" });
+    modelsForm.reset({ models: (project.data?.policy_allowed_models ?? []).join(", ") });
+    toolsForm.reset({ tools: (project.data?.policy_allowed_tools ?? []).join(", ") });
+    approvalsForm.reset({ approvals: String(project.data?.policy_required_approvals ?? 1) as "1" | "2" | "3" });
+    pluginForm.reset({ checks: project.data?.plugin_checks ?? "[]" });
   }, [project.data?.policy_max_diff_bytes, project.data?.policy_forbidden_paths, project.data?.policy_change_window, project.data?.policy_allowed_models, project.data?.policy_allowed_tools, project.data?.policy_required_approvals, project.data?.plugin_checks]);
 
   const tasks = useQuery({
@@ -560,13 +560,17 @@ export function ProjectView({ projectId }: { projectId: string }) {
           <p className="mt-1 text-xs text-text-secondary">
             Creates a task with the expected files, tokens, registry and test requirements for a new UI component.
           </p>
-          <div className="mt-3 flex flex-wrap items-end gap-2">
-            <input aria-label="Component name" value={scaffoldName} onChange={(e) => setScaffoldName(e.target.value)} placeholder="ButtonGroup" className="h-9 min-w-[200px] flex-1 rounded-md border border-border bg-bg-surface px-3 text-xs" />
-            <select aria-label="Component kind" value={scaffoldKind} onChange={(e) => setScaffoldKind(e.target.value)} className="h-9 rounded-md border border-border bg-bg-surface px-2 text-xs">
-              <option value="react">React</option><option value="vue">Vue</option><option value="angular">Angular</option>
-            </select>
-            <Button variant="secondary" loading={scaffold.isPending} onClick={() => scaffold.mutate()}>Create task</Button>
-          </div>
+          <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={scaffoldForm.handleSubmit((values) => scaffold.mutate(values))}>
+            <Field label="Component name" htmlFor="scaffold-name" error={scaffoldForm.formState.errors.name?.message}>
+              <Input id="scaffold-name" aria-invalid={Boolean(scaffoldForm.formState.errors.name)} {...scaffoldForm.register("name")} placeholder="ButtonGroup" className="h-9 min-w-[200px] text-xs" />
+            </Field>
+            <Field label="Component kind" htmlFor="scaffold-kind">
+              <select id="scaffold-kind" {...scaffoldForm.register("kind")} className="h-9 rounded-md border border-border bg-bg-surface px-2 text-xs">
+                <option value="react">React</option><option value="vue">Vue</option><option value="angular">Angular</option>
+              </select>
+            </Field>
+            <Button type="submit" variant="secondary" loading={scaffold.isPending} className="mt-5">Create task</Button>
+          </form>
           {scaffoldNote ? <p className="mt-2 text-xs text-text-secondary">{scaffoldNote}</p> : null}
         </section>
       ) : null}
@@ -686,20 +690,24 @@ export function ProjectView({ projectId }: { projectId: string }) {
               ))}
             </ul>
           ) : null}
-          <textarea
-            aria-label="MCP servers"
-            value={mcpConfig}
-            onChange={(e) => setMCPConfig(e.target.value)}
-            rows={3}
-            placeholder='[{"name":"fs","command":"mcp-fs","args":["--root","/workspace"]}]'
-            className="mt-2 w-full rounded-md border border-border bg-bg-surface px-3 py-2 font-mono text-xs"
-          />
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Button variant="secondary" loading={saveMCP.isPending} onClick={() => saveMCP.mutate(mcpConfig)}>Save</Button>
-            <Button variant="secondary" loading={mcpToolsLoading} onClick={loadMCPTools}>Load tools from last run</Button>
-            {mcpError ? <p role="alert" className="text-xs text-status-danger">{mcpError}</p> : null}
-            {mcpToolsError ? <p role="alert" className="text-xs text-status-danger">{mcpToolsError}</p> : null}
-          </div>
+          <form className="mt-2" onSubmit={mcpForm.handleSubmit((values) => saveMCP.mutate(values.config))}>
+            <Field label="MCP servers" htmlFor="mcp-config" error={mcpForm.formState.errors.config?.message}>
+              <textarea
+                id="mcp-config"
+                rows={3}
+                aria-invalid={Boolean(mcpForm.formState.errors.config)}
+                {...mcpForm.register("config")}
+                placeholder='[{"name":"fs","command":"mcp-fs","args":["--root","/workspace"]}]'
+                className="w-full rounded-md border border-border bg-bg-surface px-3 py-2 font-mono text-xs"
+              />
+            </Field>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Button type="submit" variant="secondary" loading={saveMCP.isPending}>Save</Button>
+              <Button type="button" variant="secondary" loading={mcpToolsLoading} onClick={loadMCPTools}>Load tools from last run</Button>
+              {mcpError ? <p role="alert" className="text-xs text-status-danger">{mcpError}</p> : null}
+              {mcpToolsError ? <p role="alert" className="text-xs text-status-danger">{mcpToolsError}</p> : null}
+            </div>
+          </form>
           {mcpTools !== null ? (
             mcpTools.length > 0 ? (
               <ul className="mt-2 flex flex-wrap gap-2 text-xs">
@@ -748,60 +756,82 @@ export function ProjectView({ projectId }: { projectId: string }) {
         <section className="mt-5 rounded-lg border border-border bg-bg-surface p-4">
           <h2 className="text-sm font-semibold">Diff policy</h2>
           <p className="mt-1 text-xs text-text-secondary">0 disables the size limit. Forbidden paths are relative to the repository.</p>
-          <div className="mt-2 flex flex-wrap items-end gap-2">
-            <input aria-label="Max diff bytes" value={policyMax} onChange={(e) => setPolicyMax(e.target.value)} placeholder="0" className="h-9 w-32 rounded-md border border-border bg-bg-surface px-3 text-xs" />
-            <input aria-label="Forbidden paths" value={policyPaths} onChange={(e) => setPolicyPaths(e.target.value)} placeholder="secrets, infra/prod" className="h-9 min-w-[240px] flex-1 rounded-md border border-border bg-bg-surface px-3 text-xs" />
-            <Button variant="secondary" loading={savePolicy.isPending} onClick={() => savePolicy.mutate()}>Save policy</Button>
-          </div>
+          <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={policyForm.handleSubmit((values) => savePolicy.mutate(values))}>
+            <Field label="Max diff bytes" htmlFor="policy-max" error={policyForm.formState.errors.max?.message}>
+              <Input id="policy-max" aria-invalid={Boolean(policyForm.formState.errors.max)} {...policyForm.register("max")} placeholder="0" className="h-9 w-32 text-xs" />
+            </Field>
+            <Field label="Forbidden paths" htmlFor="policy-paths" error={policyForm.formState.errors.paths?.message}>
+              <Input id="policy-paths" aria-invalid={Boolean(policyForm.formState.errors.paths)} {...policyForm.register("paths")} placeholder="secrets, infra/prod" className="h-9 min-w-[240px] text-xs" />
+            </Field>
+            <Button type="submit" variant="secondary" loading={savePolicy.isPending} className="mt-5">Save policy</Button>
+          </form>
           {policyError ? <p role="alert" className="mt-2 text-xs text-status-danger">{policyError}</p> : null}
           <div className="mt-4 border-t border-border pt-3">
             <h3 className="text-xs font-semibold">Merge window</h3>
             <p className="mt-1 text-xs text-text-secondary">
               JSON: {'{"days":[1,2,3,4,5],"start":"09:00","end":"17:00","tz":"Europe/Belgrade"}'}. Empty means always.
             </p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <input aria-label="Change window" value={policyWindow} onChange={(e) => setPolicyWindow(e.target.value)} placeholder="empty = always" className="h-9 min-w-[280px] flex-1 rounded-md border border-border bg-bg-surface px-3 font-mono text-xs" />
-              <Button variant="secondary" loading={saveWindow.isPending} onClick={() => saveWindow.mutate()}>Save window</Button>
-            </div>
+            <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={windowForm.handleSubmit((values) => saveWindow.mutate(values))}>
+              <Field label="Change window" htmlFor="change-window" error={windowForm.formState.errors.window?.message}>
+                <Input id="change-window" aria-invalid={Boolean(windowForm.formState.errors.window)} {...windowForm.register("window")} placeholder="empty = always" className="h-9 min-w-[280px] font-mono text-xs" />
+              </Field>
+              <Button type="submit" variant="secondary" loading={saveWindow.isPending} className="mt-5">Save window</Button>
+            </form>
             {windowError ? <p role="alert" className="mt-2 text-xs text-status-danger">{windowError}</p> : null}
           </div>
           <div className="mt-4 border-t border-border pt-3">
             <h3 className="text-xs font-semibold">Allowed models</h3>
             <p className="mt-1 text-xs text-text-secondary">Comma-separated model names; empty means any model.</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <input aria-label="Allowed models" value={allowedModels} onChange={(e) => setAllowedModels(e.target.value)} placeholder="claude-sonnet-4, gpt-5" className="h-9 min-w-[280px] flex-1 rounded-md border border-border bg-bg-surface px-3 font-mono text-xs" />
-              <Button variant="secondary" loading={saveModels.isPending} onClick={() => saveModels.mutate()}>Save models</Button>
-            </div>
+            <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={modelsForm.handleSubmit((values) => saveModels.mutate(values))}>
+              <Field label="Allowed models" htmlFor="allowed-models" error={modelsForm.formState.errors.models?.message}>
+                <Input id="allowed-models" aria-invalid={Boolean(modelsForm.formState.errors.models)} {...modelsForm.register("models")} placeholder="claude-sonnet-4, gpt-5" className="h-9 min-w-[280px] font-mono text-xs" />
+              </Field>
+              <Button type="submit" variant="secondary" loading={saveModels.isPending} className="mt-5">Save models</Button>
+            </form>
             {modelsError ? <p role="alert" className="mt-2 text-xs text-status-danger">{modelsError}</p> : null}
           </div>
           <div className="mt-4 border-t border-border pt-3">
             <h3 className="text-xs font-semibold">Allowed MCP tools</h3>
             <p className="mt-1 text-xs text-text-secondary">Comma-separated exact names or prefixes ending in * (e.g. mcp__fs__read, mcp__git__*). Empty means all.</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <input aria-label="Allowed MCP tools" value={allowedTools} onChange={(e) => setAllowedTools(e.target.value)} placeholder="mcp__fs__read, mcp__git__*" className="h-9 min-w-[280px] flex-1 rounded-md border border-border bg-bg-surface px-3 font-mono text-xs" />
-              <Button variant="secondary" loading={saveTools.isPending} onClick={() => saveTools.mutate()}>Save tools</Button>
-            </div>
+            <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={toolsForm.handleSubmit((values) => saveTools.mutate(values))}>
+              <Field label="Allowed MCP tools" htmlFor="allowed-tools" error={toolsForm.formState.errors.tools?.message}>
+                <Input id="allowed-tools" aria-invalid={Boolean(toolsForm.formState.errors.tools)} {...toolsForm.register("tools")} placeholder="mcp__fs__read, mcp__git__*" className="h-9 min-w-[280px] font-mono text-xs" />
+              </Field>
+              <Button type="submit" variant="secondary" loading={saveTools.isPending} className="mt-5">Save tools</Button>
+            </form>
             {toolsError ? <p role="alert" className="mt-2 text-xs text-status-danger">{toolsError}</p> : null}
           </div>
           <div className="mt-4 border-t border-border pt-3">
             <h3 className="text-xs font-semibold">Required approvals</h3>
             <p className="mt-1 text-xs text-text-secondary">Distinct approvers needed before a PR merge (1–3).</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <select aria-label="Required approvals" value={requiredApprovals} onChange={(e) => setRequiredApprovals(e.target.value)} className="h-9 rounded-md border border-border bg-bg-surface px-2 text-xs">
-                <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-              </select>
-              <Button variant="secondary" loading={saveApprovals.isPending} onClick={() => saveApprovals.mutate()}>Save rule</Button>
-            </div>
+            <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={approvalsForm.handleSubmit((values) => saveApprovals.mutate(values))}>
+              <Field label="Required approvals" htmlFor="required-approvals">
+                <select id="required-approvals" {...approvalsForm.register("approvals")} className="h-9 rounded-md border border-border bg-bg-surface px-2 text-xs">
+                  <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                </select>
+              </Field>
+              <Button type="submit" variant="secondary" loading={saveApprovals.isPending}>Save rule</Button>
+            </form>
             {approvalsError ? <p role="alert" className="mt-2 text-xs text-status-danger">{approvalsError}</p> : null}
           </div>
           <div className="mt-4 border-t border-border pt-3">
             <h3 className="text-xs font-semibold">Plugin checks</h3>
             <p className="mt-1 text-xs text-text-secondary">JSON list of named sandbox commands (name + command fields). Max 5.</p>
-            <textarea aria-label="Plugin checks" value={pluginChecks} onChange={(e) => setPluginChecks(e.target.value)} rows={3} className="mt-2 w-full rounded-md border border-border bg-bg-surface px-3 py-2 font-mono text-xs" />
-            <div className="mt-2 flex items-center gap-2">
-              <Button variant="secondary" loading={savePlugins.isPending} onClick={() => savePlugins.mutate()}>Save plugins</Button>
-              {pluginError ? <span role="alert" className="text-xs text-status-danger">{pluginError}</span> : null}
-            </div>
+            <form className="mt-2" onSubmit={pluginForm.handleSubmit((values) => savePlugins.mutate(values))}>
+              <Field label="Plugin checks" htmlFor="plugin-checks" error={pluginForm.formState.errors.checks?.message}>
+                <textarea
+                  id="plugin-checks"
+                  rows={3}
+                  aria-invalid={Boolean(pluginForm.formState.errors.checks)}
+                  {...pluginForm.register("checks")}
+                  className="w-full rounded-md border border-border bg-bg-surface px-3 py-2 font-mono text-xs"
+                />
+              </Field>
+              <div className="mt-2 flex items-center gap-2">
+                <Button type="submit" variant="secondary" loading={savePlugins.isPending}>Save plugins</Button>
+                {pluginError ? <span role="alert" className="text-xs text-status-danger">{pluginError}</span> : null}
+              </div>
+            </form>
           </div>
         </section>
       ) : null}

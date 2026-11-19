@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { acceptInviteSchema, aiProviderSchema, apiKeySchema, baselineSchema, checksSchema, commandSchema, componentEntrySchema, deleteProjectSchema, designTokenSchema, environmentSchema, inviteSchema, loginSchema, registerSchema, repoConnectSchema, repoCredentialSchema, ruleSchema, taskComposerSchema, type TaskComposerValues } from "./schemas";
+import { acceptInviteSchema, aiProviderSchema, apiKeySchema, approvalsSchema, baselineSchema, checksSchema, commandSchema, componentEntrySchema, deleteProjectSchema, designTokenSchema, environmentSchema, inviteSchema, loginSchema, mcpSchema, modelsSchema, pluginChecksSchema, policySchema, registerSchema, repoConnectSchema, repoCredentialSchema, ruleSchema, scaffoldSchema, taskComposerSchema, toolsSchema, windowSchema, type TaskComposerValues } from "./schemas";
 
 function composer(overrides: Partial<TaskComposerValues> = {}): TaskComposerValues {
   return {
@@ -145,5 +145,38 @@ describe("project settings schemas", () => {
   it("requires the project name confirmation", () => {
     expect(deleteProjectSchema.safeParse({ confirm: "Portal" }).success).toBe(true);
     expect(deleteProjectSchema.safeParse({ confirm: "" }).success).toBe(false);
+  });
+});
+
+describe("project settings policy schemas", () => {
+  it("requires a scaffold component name", () => {
+    expect(scaffoldSchema.safeParse({ name: "ButtonGroup", kind: "react" }).success).toBe(true);
+    expect(scaffoldSchema.safeParse({ name: "  ", kind: "react" }).success).toBe(false);
+  });
+
+  it("validates the MCP JSON", () => {
+    expect(mcpSchema.safeParse({ config: "" }).success).toBe(true);
+    expect(mcpSchema.safeParse({ config: "[]" }).success).toBe(true);
+    expect(mcpSchema.safeParse({ config: "[oops" }).success).toBe(false);
+  });
+
+  it("requires a numeric max diff", () => {
+    expect(policySchema.safeParse({ max: "0", paths: "" }).success).toBe(true);
+    expect(policySchema.safeParse({ max: "abc", paths: "" }).success).toBe(false);
+  });
+
+  it("caps the plugin checks at five", () => {
+    expect(pluginChecksSchema.safeParse({ checks: "[]" }).success).toBe(true);
+    const six = JSON.stringify(Array.from({ length: 6 }, (_, i) => ({ name: `c${i}`, command: "true" })));
+    expect(pluginChecksSchema.safeParse({ checks: six }).success).toBe(false);
+  });
+
+  it("validates the window JSON and the approvals", () => {
+    expect(windowSchema.safeParse({ window: "" }).success).toBe(true);
+    expect(windowSchema.safeParse({ window: "{bad" }).success).toBe(false);
+    expect(modelsSchema.safeParse({ models: "gpt-5" }).success).toBe(true);
+    expect(toolsSchema.safeParse({ tools: "mcp__fs__read" }).success).toBe(true);
+    expect(approvalsSchema.safeParse({ approvals: "2" }).success).toBe(true);
+    expect(approvalsSchema.safeParse({ approvals: "4" }).success).toBe(false);
   });
 });

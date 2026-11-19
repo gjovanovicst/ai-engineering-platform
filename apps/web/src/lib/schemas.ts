@@ -268,3 +268,67 @@ export const deleteProjectSchema = z.object({
   confirm: z.string().trim().min(1, "Type the project name to confirm."),
 });
 export type DeleteProjectValues = z.infer<typeof deleteProjectSchema>;
+
+const validJsonOrEmpty = (value: string) => {
+  if (!value.trim()) return true;
+  try {
+    JSON.parse(value);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const scaffoldSchema = z.object({
+  name: z.string().trim().min(1, "A component name is required.").max(80, "At most 80 characters."),
+  kind: z.enum(["react", "vue", "angular"]),
+});
+export type ScaffoldValues = z.infer<typeof scaffoldSchema>;
+
+export const mcpSchema = z.object({
+  config: z.string().max(5000, "At most 5000 characters.").refine(validJsonOrEmpty, "The MCP config must be valid JSON."),
+});
+export type McpValues = z.infer<typeof mcpSchema>;
+
+export const policySchema = z.object({
+  max: z.string().trim().regex(/^\d+$/, "A number of bytes (0 disables the limit)."),
+  paths: z.string().max(500, "At most 500 characters."),
+});
+export type PolicyValues = z.infer<typeof policySchema>;
+
+export const pluginChecksSchema = z.object({
+  checks: z
+    .string()
+    .max(5000, "At most 5000 characters.")
+    .refine(validJsonOrEmpty, "The plugin checks must be a JSON array.")
+    .refine((value) => {
+      if (!value.trim()) return true;
+      try {
+        const parsed: unknown = JSON.parse(value);
+        return Array.isArray(parsed) && parsed.length <= 5;
+      } catch {
+        return false;
+      }
+    }, "At most 5 plugin checks."),
+});
+export type PluginChecksValues = z.infer<typeof pluginChecksSchema>;
+
+export const windowSchema = z.object({
+  window: z.string().max(500, "At most 500 characters.").refine(validJsonOrEmpty, "The merge window must be valid JSON."),
+});
+export type WindowValues = z.infer<typeof windowSchema>;
+
+export const modelsSchema = z.object({
+  models: z.string().max(500, "At most 500 characters."),
+});
+export type ModelsValues = z.infer<typeof modelsSchema>;
+
+export const toolsSchema = z.object({
+  tools: z.string().max(500, "At most 500 characters."),
+});
+export type ToolsValues = z.infer<typeof toolsSchema>;
+
+export const approvalsSchema = z.object({
+  approvals: z.enum(["1", "2", "3"]),
+});
+export type ApprovalsValues = z.infer<typeof approvalsSchema>;
