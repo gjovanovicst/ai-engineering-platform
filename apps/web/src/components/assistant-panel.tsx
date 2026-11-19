@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { AssistantMarkdown } from "@/components/assistant-markdown";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
   const [pendingTool, setPendingTool] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [conversations, setConversations] = useState<AssistantConversation[]>([]);
   const [commandIndex, setCommandIndex] = useState(0);
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -89,6 +91,11 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
       setError(err instanceof Error ? err.message : "The assistant could not answer");
     } finally {
       setBusy(false);
+      if (confirm) {
+        // A confirmed write (create a task/project, retry, cancel) changes the
+        // page's data: refresh every query so the list reflects it at once.
+        await queryClient.invalidateQueries();
+      }
     }
   }
 
