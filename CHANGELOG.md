@@ -6,13 +6,15 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
-- **AI assistant (parts 1-3)**: the conversation store (migration 0083), the
+- **AI assistant (parts 1-4)**: the conversation store (migration 0083), the
   assistant service (the read/write tools behind a preview + confirmation, the
-  untrusted tool-output wrapping, the per-user rate limit) and the endpoint —
+  untrusted tool-output wrapping, the per-user rate limit), the endpoint —
   `POST /orgs/{org}/assistant/messages` with the JSON answer or the SSE
-  `text`/`pending`/`done` events, the Anthropic adapter and the web side panel
-  (the page context, the streamed answer, the tool preview and the confirmation
-  before any write).
+  `text`/`pending`/`done` events, the Anthropic and OpenAI-compatible adapters
+  (DeepSeek) — and the web side panel (the page context, the streamed answer,
+  the markdown rendering, the tool preview and the confirmation before any
+  write), plus the chat history (the conversation list and the reload of an
+  earlier conversation).
 
 - **Command palette**: `⌘K` (or `Ctrl+K`) opens a keyboard-first palette with
   the actions (projects, agents, search, settings, help), the projects, the
