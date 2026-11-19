@@ -6,14 +6,22 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { ApiError, ensureSession, searchTasks } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { searchSchema, type SearchValues } from "@/lib/schemas";
 import type { Claims } from "@/lib/auth";
 
 export default function SearchPage() {
   const router = useRouter();
   const [claims, setClaims] = useState<Claims | null | undefined>(undefined);
-  const [term, setTerm] = useState("");
   const [query, setQuery] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useZodForm<SearchValues>(searchSchema, { defaultValues: { q: "" } });
 
   useEffect(() => {
     ensureSession().then((result) => {
@@ -40,21 +48,17 @@ export default function SearchPage() {
         </p>
       </header>
 
-      <form
-        className="search-box mb-6 flex gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setQuery(term);
-        }}
-      >
-        <input
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          placeholder="T-142 or SSO"
-          aria-label="Search tasks"
-          className="h-9 flex-1 rounded-md border border-border bg-bg-surface px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-        />
-        <Button type="submit" disabled={term.trim().length < 2}>
+      <form className="search-box mb-6 flex flex-wrap items-start gap-2" onSubmit={handleSubmit((values) => setQuery(values.q))}>
+        <Field label="Search tasks" htmlFor="search-term" error={errors.q?.message}>
+          <Input
+            id="search-term"
+            aria-invalid={Boolean(errors.q)}
+            {...register("q")}
+            placeholder="T-142 or SSO"
+            className="h-9 w-[340px] max-w-full"
+          />
+        </Field>
+        <Button type="submit" className="mt-0.5">
           Search
         </Button>
       </form>

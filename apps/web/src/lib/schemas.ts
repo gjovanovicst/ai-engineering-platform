@@ -63,3 +63,34 @@ export const designTokenSchema = z.object({
 });
 
 export type DesignTokenValues = z.infer<typeof designTokenSchema>;
+
+const emailField = z.email("Enter a valid email address.");
+const passwordField = z
+  .string()
+  .min(12, "At least 12 characters.")
+  .max(128, "At most 128 characters.");
+
+export const loginSchema = z.object({
+  email: emailField,
+  password: z.string().min(1, "A password is required."),
+});
+export type LoginValues = z.infer<typeof loginSchema>;
+
+export const registerSchema = z.object({
+  name: z.string().trim().min(1, "A name is required.").max(120, "At most 120 characters."),
+  email: emailField,
+  org_name: z.string().trim().max(80, "At most 80 characters."),
+  password: passwordField,
+});
+export type RegisterValues = z.infer<typeof registerSchema>;
+
+export const acceptInviteSchema = z.object({
+  name: z.string().trim().min(1, "A name is required.").max(120, "At most 120 characters."),
+  password: passwordField,
+});
+export type AcceptInviteValues = z.infer<typeof acceptInviteSchema>;
+
+export const searchSchema = z.object({
+  q: z.string().trim().min(2, "Type at least two characters."),
+});
+export type SearchValues = z.infer<typeof searchSchema>;

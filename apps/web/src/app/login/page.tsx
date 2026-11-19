@@ -8,27 +8,31 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { BrandMark } from "@/components/brand-mark";
 import { API_URL, ApiError, login } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { loginSchema, type LoginValues } from "@/lib/schemas";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useZodForm<LoginValues>(loginSchema, { defaultValues: { email: "", password: "" } });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function onSubmit(event: React.FormEvent) {
-    event.preventDefault();
+  const onSubmit = handleSubmit(async (values) => {
     setError(null);
     setBusy(true);
     try {
-      await login(email, password);
+      await login(values.email, values.password);
       router.replace("/overview");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Sign-in failed");
     } finally {
       setBusy(false);
     }
-  }
+  });
 
   return (
     <main className="auth-page">
@@ -60,11 +64,11 @@ export default function LoginPage() {
           </div>
           {error ? <div role="alert" className="mb-4 rounded-lg border border-status-danger/30 bg-status-danger/10 px-3 py-2.5 text-sm text-status-danger">{error}</div> : null}
           <form onSubmit={onSubmit} className="auth-form">
-            <Field label="Work email" htmlFor="email">
-              <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" />
+            <Field label="Work email" htmlFor="email" error={errors.email?.message}>
+              <Input id="email" type="email" autoComplete="email" aria-invalid={Boolean(errors.email)} {...register("email")} placeholder="you@company.com" />
             </Field>
-            <Field label="Password" htmlFor="password">
-              <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" />
+            <Field label="Password" htmlFor="password" error={errors.password?.message}>
+              <Input id="password" type="password" autoComplete="current-password" aria-invalid={Boolean(errors.password)} {...register("password")} placeholder="Enter your password" />
             </Field>
             <div className="auth-form-meta"><label><input type="checkbox" /> Remember me</label><a href="/register">Need access?</a></div>
             <Button type="submit" loading={busy} className="w-full auth-submit">Sign in to workspace <span aria-hidden="true">→</span></Button>

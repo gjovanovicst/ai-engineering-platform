@@ -4,6 +4,12 @@ All notable changes to this project. Dates are 2026.
 
 ## Unreleased
 
+### Fixed
+
+- The auth forms (login, register, invite accept, search) use the zod
+  validation: inline field errors, the `aria-invalid` danger border and the
+  server error at the form level (part 1 of the forms consistency sweep #49).
+
 ### Added
 
 - **Forms foundation**: react-hook-form + zod with a shared `useZodForm`, the

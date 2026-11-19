@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ApiError, acceptInvite, acceptInvitePublic, ensureSession } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { acceptInviteSchema, type AcceptInviteValues } from "@/lib/schemas";
 import { setSession } from "@/lib/session";
 
 type State = "checking" | "has-session" | "no-session" | "done" | "error";
@@ -18,8 +20,11 @@ function AcceptInvite() {
   const token = params.get("token") ?? "";
   const [state, setState] = useState<State>("checking");
   const [message, setMessage] = useState("");
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useZodForm<AcceptInviteValues>(acceptInviteSchema, { defaultValues: { name: "", password: "" } });
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -40,11 +45,10 @@ function AcceptInvite() {
     }
   }
 
-  async function registerAndAccept(event: React.FormEvent) {
-    event.preventDefault();
+  const registerAndAccept = handleSubmit(async (values) => {
     setBusy(true);
     try {
-      const pair = await acceptInvitePublic(token, name, password);
+      const pair = await acceptInvitePublic(token, values.name, values.password);
       setSession(pair);
       setMessage("Your account is ready and you joined the workspace.");
       setState("done");
@@ -54,7 +58,7 @@ function AcceptInvite() {
     } finally {
       setBusy(false);
     }
-  }
+  });
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center p-6">
@@ -78,17 +82,17 @@ function AcceptInvite() {
           <p className="text-sm text-text-secondary">
             Create an account with the invited email to join the workspace.
           </p>
-          <Field label="Name" htmlFor="invite-name">
-            <Input id="invite-name" required value={name} onChange={(e) => setName(e.target.value)} />
+          <Field label="Name" htmlFor="invite-name" error={errors.name?.message}>
+            <Input id="invite-name" aria-invalid={Boolean(errors.name)} {...register("name")} placeholder="Jane Smith" />
           </Field>
-          <Field label="Password" htmlFor="invite-password">
+          <Field label="Password" htmlFor="invite-password" error={errors.password?.message}>
             <Input
               id="invite-password"
               type="password"
-              required
-              minLength={12}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              aria-invalid={Boolean(errors.password)}
+              {...register("password")}
+              placeholder="At least 12 characters"
             />
           </Field>
           <Button type="submit" loading={busy}>
