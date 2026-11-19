@@ -8,13 +8,19 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
 import { ApiError, createInvite, listInvites } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { inviteSchema, type InviteValues } from "@/lib/schemas";
 
 const roles = ["admin", "designer", "member", "viewer"];
 
 export function InvitesPanel({ orgID }: { orgID: string }) {
   const queryClient = useQueryClient();
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState("member");
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useZodForm<InviteValues>(inviteSchema, { defaultValues: { email: "", role: "member" } });
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
@@ -22,11 +28,11 @@ export function InvitesPanel({ orgID }: { orgID: string }) {
   const invites = useQuery({ queryKey: ["invites", orgID], queryFn: () => listInvites(orgID) });
 
   const create = useMutation({
-    mutationFn: () => createInvite(orgID, email, role),
+    mutationFn: (input: InviteValues) => createInvite(orgID, input.email, input.role),
     onSuccess: (invite) => {
       const origin = typeof window === "undefined" ? "" : window.location.origin;
       setLink(`${origin}/invites/accept?org=${orgID}&token=${invite.token}`);
-      setEmail("");
+      reset({ email: "" });
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["invites", orgID] });
     },
@@ -60,26 +66,21 @@ export function InvitesPanel({ orgID }: { orgID: string }) {
       <form
         id="invite-form"
         className="space-y-4 p-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          create.mutate();
-        }}
+        onSubmit={handleSubmit((values) => create.mutate(values))}
       >
-        <Field label="Email" htmlFor="invite-email">
+        <Field label="Email" htmlFor="invite-email" error={errors.email?.message}>
           <Input
             id="invite-email"
             type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            aria-invalid={Boolean(errors.email)}
+            {...register("email")}
             placeholder="dev@acme.io"
           />
         </Field>
         <Field label="Role" htmlFor="invite-role">
           <select
             id="invite-role"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
+            {...register("role")}
             className="h-9 w-full rounded-md border border-border bg-bg-surface px-3 text-sm"
           >
             {roles.map((r) => (

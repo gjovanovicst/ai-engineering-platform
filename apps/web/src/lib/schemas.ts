@@ -135,3 +135,26 @@ export const environmentSchema = z.object({
   url: z.string().trim().min(1, "A URL is required.").max(300, "At most 300 characters."),
 });
 export type EnvironmentValues = z.infer<typeof environmentSchema>;
+
+export const inviteSchema = z.object({
+  email: z.email("Enter a valid email address."),
+  role: z.enum(["admin", "designer", "member", "viewer"]),
+});
+export type InviteValues = z.infer<typeof inviteSchema>;
+
+export const apiKeySchema = z.object({
+  name: z.string().trim().min(1, "A name is required.").max(80, "At most 80 characters."),
+  role: z.enum(["admin", "member", "viewer"]),
+  days: z
+    .string()
+    .trim()
+    .refine((value) => value === "" || (/^\d+$/.test(value) && Number(value) >= 0 && Number(value) <= 3650), "A whole number of days between 0 and 3650."),
+});
+export type ApiKeyValues = z.infer<typeof apiKeySchema>;
+
+export const ruleSchema = z.object({
+  name: z.string().trim().min(1, "A name is required.").max(120, "At most 120 characters."),
+  level: z.enum(["organization", "project", "module", "task"]),
+  body: z.string().trim().min(1, "The body is required.").max(20000, "At most 20000 characters."),
+});
+export type RuleValues = z.infer<typeof ruleSchema>;

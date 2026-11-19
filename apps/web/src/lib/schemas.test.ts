@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { acceptInviteSchema, aiProviderSchema, commandSchema, componentEntrySchema, designTokenSchema, environmentSchema, loginSchema, registerSchema, repoConnectSchema, repoCredentialSchema, taskComposerSchema, type TaskComposerValues } from "./schemas";
+import { acceptInviteSchema, aiProviderSchema, apiKeySchema, commandSchema, componentEntrySchema, designTokenSchema, environmentSchema, inviteSchema, loginSchema, registerSchema, repoConnectSchema, repoCredentialSchema, ruleSchema, taskComposerSchema, type TaskComposerValues } from "./schemas";
 
 function composer(overrides: Partial<TaskComposerValues> = {}): TaskComposerValues {
   return {
@@ -108,5 +108,25 @@ describe("delivery panel schemas", () => {
   it("requires an environment URL", () => {
     expect(environmentSchema.safeParse({ name: "dev", url: "https://dev.example.com" }).success).toBe(true);
     expect(environmentSchema.safeParse({ name: "dev", url: "" }).success).toBe(false);
+  });
+});
+
+describe("access schemas", () => {
+  it("requires a valid invite email", () => {
+    expect(inviteSchema.safeParse({ email: "dev@acme.io", role: "member" }).success).toBe(true);
+    expect(inviteSchema.safeParse({ email: "nope", role: "member" }).success).toBe(false);
+  });
+
+  it("requires a key name and a bounded expiry", () => {
+    expect(apiKeySchema.safeParse({ name: "ci", role: "member", days: "90" }).success).toBe(true);
+    expect(apiKeySchema.safeParse({ name: "", role: "member", days: "90" }).success).toBe(false);
+    expect(apiKeySchema.safeParse({ name: "ci", role: "member", days: "-1" }).success).toBe(false);
+    expect(apiKeySchema.safeParse({ name: "ci", role: "member", days: "4000" }).success).toBe(false);
+  });
+
+  it("requires a rule name and body", () => {
+    expect(ruleSchema.safeParse({ name: "Tests", level: "organization", body: "Every change has a test." }).success).toBe(true);
+    expect(ruleSchema.safeParse({ name: "", level: "organization", body: "x" }).success).toBe(false);
+    expect(ruleSchema.safeParse({ name: "Tests", level: "organization", body: "" }).success).toBe(false);
   });
 });
