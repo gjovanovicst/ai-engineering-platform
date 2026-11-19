@@ -7,27 +7,29 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useZodForm } from "@/lib/form";
+import { registerSchema, type RegisterValues } from "@/lib/schemas";
 import { BrandMark } from "@/components/brand-mark";
-import { ApiError, login, register } from "@/lib/api";
+import { ApiError, login, register as registerAccount } from "@/lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", org_name: "", password: "" });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useZodForm<RegisterValues>(registerSchema, {
+    defaultValues: { name: "", email: "", org_name: "", password: "" },
+  });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  function update(key: keyof typeof form) {
-    return (event: React.ChangeEvent<HTMLInputElement>) =>
-      setForm((current) => ({ ...current, [key]: event.target.value }));
-  }
-
-  async function onSubmit(event: React.FormEvent) {
-    event.preventDefault();
+  const onSubmit = handleSubmit(async (values) => {
     setError(null);
     setBusy(true);
     try {
-      await register(form);
-      await login(form.email, form.password);
+      await registerAccount(values);
+      await login(values.email, values.password);
       router.replace("/projects");
     } catch (err) {
       setError(
@@ -40,7 +42,7 @@ export default function RegisterPage() {
     } finally {
       setBusy(false);
     }
-  }
+  });
 
   return (
     <main className="auth-page">
@@ -72,10 +74,18 @@ export default function RegisterPage() {
           </div>
           {error ? <div role="alert" className="mb-4 rounded-lg border border-status-danger/30 bg-status-danger/10 px-3 py-2.5 text-sm text-status-danger">{error}</div> : null}
           <form onSubmit={onSubmit} className="auth-form">
-            <Field label="Your name" htmlFor="name"><Input id="name" autoComplete="name" required value={form.name} onChange={update("name")} placeholder="Jane Smith" /></Field>
-            <Field label="Work email" htmlFor="email"><Input id="email" type="email" autoComplete="email" required value={form.email} onChange={update("email")} placeholder="you@company.com" /></Field>
-            <Field label="Workspace name" htmlFor="org_name"><Input id="org_name" value={form.org_name} onChange={update("org_name")} placeholder="Acme Engineering" /></Field>
-            <Field label="Password" htmlFor="password"><Input id="password" type="password" autoComplete="new-password" required minLength={12} value={form.password} onChange={update("password")} placeholder="At least 12 characters" /></Field>
+            <Field label="Your name" htmlFor="name" error={errors.name?.message}>
+              <Input id="name" autoComplete="name" aria-invalid={Boolean(errors.name)} {...register("name")} placeholder="Jane Smith" />
+            </Field>
+            <Field label="Work email" htmlFor="email" error={errors.email?.message}>
+              <Input id="email" type="email" autoComplete="email" aria-invalid={Boolean(errors.email)} {...register("email")} placeholder="you@company.com" />
+            </Field>
+            <Field label="Workspace name" htmlFor="org_name" error={errors.org_name?.message}>
+              <Input id="org_name" aria-invalid={Boolean(errors.org_name)} {...register("org_name")} placeholder="Acme Engineering" />
+            </Field>
+            <Field label="Password" htmlFor="password" error={errors.password?.message}>
+              <Input id="password" type="password" autoComplete="new-password" aria-invalid={Boolean(errors.password)} {...register("password")} placeholder="At least 12 characters" />
+            </Field>
             <Button type="submit" loading={busy} className="w-full auth-submit">Create account <span aria-hidden="true">→</span></Button>
           </form>
           <p className="auth-register">Already have an account? <Link href="/login">Sign in</Link></p>

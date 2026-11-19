@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { commandSchema, componentEntrySchema, designTokenSchema, taskComposerSchema, type TaskComposerValues } from "./schemas";
+import { acceptInviteSchema, commandSchema, componentEntrySchema, designTokenSchema, loginSchema, registerSchema, taskComposerSchema, type TaskComposerValues } from "./schemas";
 
 function composer(overrides: Partial<TaskComposerValues> = {}): TaskComposerValues {
   return {
@@ -63,5 +63,24 @@ describe("registry schemas", () => {
     expect(designTokenSchema.safeParse({ name: "color-brand", value: "#2563eb", category: "color" }).success).toBe(true);
     expect(designTokenSchema.safeParse({ name: "", value: "#2563eb", category: "color" }).success).toBe(false);
     expect(designTokenSchema.safeParse({ name: "a", value: "", category: "color" }).success).toBe(false);
+  });
+});
+
+describe("auth schemas", () => {
+  it("requires a valid email and a password", () => {
+    expect(loginSchema.safeParse({ email: "not-an-email", password: "x" }).success).toBe(false);
+    expect(loginSchema.safeParse({ email: "a@b.co", password: "" }).success).toBe(false);
+    expect(loginSchema.safeParse({ email: "a@b.co", password: "secret" }).success).toBe(true);
+  });
+
+  it("rejects a password shorter than 12 characters on register", () => {
+    const base = { name: "Jane", email: "a@b.co", org_name: "", password: "short" };
+    expect(registerSchema.safeParse(base).success).toBe(false);
+    expect(registerSchema.safeParse({ ...base, password: "correct horse battery" }).success).toBe(true);
+  });
+
+  it("accepts an invite with a valid password", () => {
+    expect(acceptInviteSchema.safeParse({ name: "Jane", password: "correct horse battery" }).success).toBe(true);
+    expect(acceptInviteSchema.safeParse({ name: "", password: "correct horse battery" }).success).toBe(false);
   });
 });
