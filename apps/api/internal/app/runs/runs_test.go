@@ -34,6 +34,10 @@ func (f *fakeStore) Create(_ context.Context, r domain.Run) (domain.Run, error) 
 	f.runs[r.ID] = r
 	return r, nil
 }
+func (f *fakeStore) ListRuns(_ context.Context, _ string, _ int) ([]domain.Run, error) {
+	return nil, nil
+}
+
 func (f *fakeStore) Get(_ context.Context, _, id string) (domain.Run, error) {
 	r, ok := f.runs[id]
 	if !ok {

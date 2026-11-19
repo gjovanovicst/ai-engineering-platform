@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gjovanovicst/ai-engineering-platform/internal/app/projects"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/runs"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/tasks"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/domain"
@@ -38,6 +39,28 @@ func (s *Service) tools() map[string]tool {
 					out = append(out, map[string]string{"id": p.ID, "name": p.Name, "slug": p.Slug, "status": string(p.Status)})
 				}
 				return out, nil
+			},
+		},
+		"create_project": {
+			name:        "create_project",
+			description: "Draft a project in the workspace. The human must confirm before it is created.",
+			schema:      json.RawMessage(`{"type":"object","properties":{"name":{"type":"string"},"slug":{"type":"string"},"description":{"type":"string"}},"required":["name"]}`),
+			readOnly:    false,
+			preview: func(input json.RawMessage) string {
+				var args struct{ Name string }
+				_ = json.Unmarshal(input, &args)
+				return fmt.Sprintf("I will create the project %q. Confirm to create it.", args.Name)
+			},
+			run: func(ctx context.Context, orgID string, input json.RawMessage) (any, error) {
+				var args struct{ Name, Slug, Description string }
+				if err := json.Unmarshal(input, &args); err != nil {
+					return nil, err
+				}
+				project, err := s.platform.CreateProject(ctx, projects.CreateInput{OrgID: orgID, Name: args.Name, Slug: args.Slug, Description: args.Description})
+				if err != nil {
+					return nil, err
+				}
+				return map[string]string{"id": project.ID, "name": project.Name, "slug": project.Slug}, nil
 			},
 		},
 		"list_tasks": {

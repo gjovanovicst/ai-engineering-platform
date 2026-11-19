@@ -6,6 +6,7 @@ import { AssistantMarkdown } from "@/components/assistant-markdown";
 import { Button } from "@/components/ui/button";
 import { SidePanel } from "@/components/ui/side-panel";
 import { assistantStream, listAssistantConversations, listAssistantMessages, type AssistantConversation, type AssistantEvent } from "@/lib/api";
+import { assistantCommands, expandCommand } from "@/lib/assistant-commands";
 
 type ChatMessage = { role: "user" | "assistant" | "note"; text: string };
 
@@ -59,12 +60,14 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
 
   async function ask(text: string, confirm = false) {
     if (busy) return;
-    const question = text.trim();
-    if (!question) return;
+    const original = text.trim();
+    if (!original) return;
+    const expanded = expandCommand(original);
+    const question = expanded ? expanded.prompt : original;
     setBusy(true);
     setError(null);
     setPendingTool(null);
-    if (!confirm) setMessages((current) => [...current, { role: "user", text: question }]);
+    if (!confirm) setMessages((current) => [...current, { role: "user", text: original }]);
     try {
       await assistantStream(
         orgID,
@@ -107,13 +110,35 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
             void ask(text);
           }}
         >
-          <input
-            aria-label="Ask the assistant"
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            placeholder="Ask about a run, a task or what to do next…"
-            className="h-9 flex-1 rounded-md border border-border bg-bg-surface px-3 text-sm"
-          />
+          <div className="relative flex-1">
+            <input
+              aria-label="Ask the assistant"
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+              placeholder="Ask, or type / for commands…"
+              className="h-9 w-full rounded-md border border-border bg-bg-surface px-3 text-sm"
+            />
+            {prompt.startsWith("/") && !prompt.includes(" ") ? (
+              <ul role="listbox" aria-label="Commands" className="absolute bottom-full left-0 z-10 mb-1 w-full rounded-md border border-border bg-bg-surface p-1 text-xs shadow-lg">
+                {assistantCommands
+                  .filter((command) => command.name.startsWith(prompt.trim()))
+                  .map((command) => (
+                    <li key={command.name}>
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={false}
+                        onClick={() => setPrompt(command.name + " ")}
+                        className="flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left hover:bg-bg-hover"
+                      >
+                        <span className="font-mono">{command.name}</span>
+                        <span className="text-text-muted">{command.description}</span>
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            ) : null}
+          </div>
           <Button type="submit" loading={busy}>Send</Button>
         </form>
       }

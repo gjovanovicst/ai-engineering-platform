@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gjovanovicst/ai-engineering-platform/internal/app/projects"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/runs"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/tasks"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/domain"
@@ -71,6 +72,10 @@ type mockPlatform struct {
 func (m *mockPlatform) ListProjects(context.Context, string, int) ([]domain.Project, error) {
 	return []domain.Project{{ID: "p1", Name: "Portal", Status: "active"}}, nil
 }
+func (m *mockPlatform) CreateProject(_ context.Context, in projects.CreateInput) (domain.Project, error) {
+	return domain.Project{ID: "p2", Name: in.Name, Slug: "p2"}, nil
+}
+
 func (m *mockPlatform) ListTasks(context.Context, string, string) ([]domain.Task, error) {
 	return nil, nil
 }

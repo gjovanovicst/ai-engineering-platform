@@ -583,6 +583,10 @@ func (p *assistantPlatform) ListProjects(ctx context.Context, orgID string, limi
 	return p.projects.List(ctx, orgID, limit)
 }
 
+func (p *assistantPlatform) CreateProject(ctx context.Context, in projects.CreateInput) (domain.Project, error) {
+	return p.projects.Create(ctx, in)
+}
+
 func (p *assistantPlatform) ListTasks(ctx context.Context, orgID, projectID string) ([]domain.Task, error) {
 	return p.tasks.List(ctx, orgID, projectID, "", "", 200)
 }
@@ -595,8 +599,8 @@ func (p *assistantPlatform) GetRun(ctx context.Context, orgID, id string) (domai
 	return p.runs.Get(ctx, orgID, id)
 }
 
-func (p *assistantPlatform) ListRuns(context.Context, string) ([]domain.Run, error) {
-	return nil, nil
+func (p *assistantPlatform) ListRuns(ctx context.Context, orgID string) ([]domain.Run, error) {
+	return p.runs.ListOrg(ctx, orgID, 20)
 }
 
 func (p *assistantPlatform) RetryRun(ctx context.Context, in runs.RetryInput) (domain.Run, error) {

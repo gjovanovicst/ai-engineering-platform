@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gjovanovicst/ai-engineering-platform/internal/app/projects"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/runs"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/tasks"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/domain"
@@ -60,6 +61,7 @@ type Store interface {
 // services, narrow to what the assistant needs.
 type Platform interface {
 	ListProjects(ctx context.Context, orgID string, limit int) ([]domain.Project, error)
+	CreateProject(ctx context.Context, in projects.CreateInput) (domain.Project, error)
 	ListTasks(ctx context.Context, orgID, projectID string) ([]domain.Task, error)
 	CreateTask(ctx context.Context, in tasks.CreateInput) (domain.Task, error)
 	GetRun(ctx context.Context, orgID, id string) (domain.Run, error)

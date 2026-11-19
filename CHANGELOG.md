@@ -13,8 +13,10 @@ All notable changes to this project. Dates are 2026.
   `text`/`pending`/`done` events, the Anthropic and OpenAI-compatible adapters
   (DeepSeek) — and the web side panel (the page context, the streamed answer,
   the markdown rendering, the tool preview and the confirmation before any
-  write), plus the chat history (the conversation list and the reload of an
-  earlier conversation).
+  write), the chat history (the conversation list and the reload of an earlier
+  conversation), the slash commands (/create-task, /create-project, /retry,
+  /cancel, /explain, /whats-next) with the input autocomplete, the
+  create_project tool and the list_runs fix.
 
 - **Command palette**: `⌘K` (or `Ctrl+K`) opens a keyboard-first palette with
   the actions (projects, agents, search, settings, help), the projects, the
