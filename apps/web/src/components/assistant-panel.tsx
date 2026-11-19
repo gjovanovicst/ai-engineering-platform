@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { AssistantMarkdown } from "@/components/assistant-markdown";
 import { Button } from "@/components/ui/button";
 import { SidePanel } from "@/components/ui/side-panel";
 import { assistantStream, type AssistantEvent } from "@/lib/api";
@@ -122,7 +123,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
                   : "mr-8 border border-border bg-bg-surface text-text-secondary"
             }`}
           >
-            {message.text}
+            {message.role === "assistant" ? <AssistantMarkdown text={message.text} /> : message.text}
           </div>
         ))}
         {busy ? <p className="text-xs text-text-muted">The assistant is thinking…</p> : null}
