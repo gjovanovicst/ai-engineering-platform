@@ -8,7 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
 import { ApiError, createTask, startRun, transitionTask, updateTask, uploadTaskAttachment, type Acceptance, type Task } from "@/lib/api";
-import { completeAcceptance, dependencyRefs, dorIssues, tagList, taskInput, type TaskComposerAction } from "@/components/task-composer-model";
+import { completeAcceptance, dependencyRefs, dorIssues, linesList, linesText, tagList, taskInput, type TaskComposerAction } from "@/components/task-composer-model";
 
 const blankAC: Acceptance = { given: "", when: "", then: "" };
 const priorities: { value: "low" | "med" | "high"; label: string }[] = [
@@ -40,6 +40,10 @@ export function TaskComposer({ orgID, projectID, projectName, tasks, task, onClo
     task?.acceptance?.length ? task.acceptance.map((a) => ({ ...a })) : [{ ...blankAC }],
   );
   const [files, setFiles] = useState<File[]>([]);
+  const [scopeFiles, setScopeFiles] = useState(linesText(task?.files));
+  const [outOfScope, setOutOfScope] = useState(linesText(task?.out_of_scope));
+  const [testPlan, setTestPlan] = useState(linesText(task?.test_plan));
+  const [rollback, setRollback] = useState(linesText(task?.rollback));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<TaskComposerAction | null>(null);
 
@@ -70,7 +74,19 @@ export function TaskComposer({ orgID, projectID, projectName, tasks, task, onClo
     setBusy(action);
     setError(null);
     try {
-      const input = taskInput({ title, description, references, priority, tags, acceptance, dependsOn });
+      const input = taskInput({
+        title,
+        description,
+        references,
+        priority,
+        tags,
+        acceptance,
+        dependsOn,
+        files: scopeFiles,
+        outOfScope,
+        testPlan,
+        rollback,
+      });
       let saved: Task;
       if (editing && task) {
         saved = await updateTask(orgID, projectID, task.id, input);
@@ -297,6 +313,59 @@ export function TaskComposer({ orgID, projectID, projectName, tasks, task, onClo
           <section className="space-y-3 border-t border-border pt-5">
             <div className="flex items-center gap-2">
               <span className="task-section-number">3</span>
+              <h3 className="text-sm font-semibold">Scope and proof</h3>
+            </div>
+            <p className="text-xs text-text-secondary">
+              Where the change lands, what is out of scope, the test that proves it and the rollback.
+              Recommended before a task is handed to an agent.
+            </p>
+            <div className="grid gap-3 md:grid-cols-2">
+              <Field label="Files and packages" htmlFor="task-files">
+                <textarea
+                  id="task-files"
+                  rows={3}
+                  value={scopeFiles}
+                  onChange={(e) => setScopeFiles(e.target.value)}
+                  placeholder="apps/api/internal/httpapi/runs.go (one per line)"
+                  className="w-full rounded-md border border-border bg-bg-surface px-2 py-1.5 text-sm"
+                />
+              </Field>
+              <Field label="Out of scope" htmlFor="task-out-of-scope">
+                <textarea
+                  id="task-out-of-scope"
+                  rows={3}
+                  value={outOfScope}
+                  onChange={(e) => setOutOfScope(e.target.value)}
+                  placeholder="What this task explicitly does not do"
+                  className="w-full rounded-md border border-border bg-bg-surface px-2 py-1.5 text-sm"
+                />
+              </Field>
+              <Field label="The test that proves it" htmlFor="task-test-plan">
+                <textarea
+                  id="task-test-plan"
+                  rows={3}
+                  value={testPlan}
+                  onChange={(e) => setTestPlan(e.target.value)}
+                  placeholder="TestFoo in runs_test.go"
+                  className="w-full rounded-md border border-border bg-bg-surface px-2 py-1.5 text-sm"
+                />
+              </Field>
+              <Field label="Rollback" htmlFor="task-rollback">
+                <textarea
+                  id="task-rollback"
+                  rows={3}
+                  value={rollback}
+                  onChange={(e) => setRollback(e.target.value)}
+                  placeholder="Revert the commit; the migration is additive"
+                  className="w-full rounded-md border border-border bg-bg-surface px-2 py-1.5 text-sm"
+                />
+              </Field>
+            </div>
+          </section>
+
+          <section className="space-y-3 border-t border-border pt-5">
+            <div className="flex items-center gap-2">
+              <span className="task-section-number">4</span>
               <h3 className="text-sm font-semibold">Dependencies</h3>
             </div>
             <p className="text-xs text-text-secondary">Tasks that must be done before this one can start.</p>
@@ -323,7 +392,7 @@ export function TaskComposer({ orgID, projectID, projectName, tasks, task, onClo
 
           <section className="space-y-3 border-t border-border pt-5">
             <div className="flex items-center gap-2">
-              <span className="task-section-number">4</span>
+              <span className="task-section-number">5</span>
               <h3 className="text-sm font-semibold">Attachments</h3>
             </div>
             <p className="text-xs text-text-secondary">Screenshots, wireframes or logs; uploaded with the task when you save.</p>
@@ -393,6 +462,15 @@ export function TaskComposer({ orgID, projectID, projectName, tasks, task, onClo
               </li>
               <li className={completeCount > 0 ? "text-status-success" : "text-text-muted"}>
                 {completeCount > 0 ? "✓" : "○"} At least one complete acceptance criterion
+              </li>
+              <li className={linesList(scopeFiles).length > 0 ? "text-status-success" : "text-text-muted"}>
+                {linesList(scopeFiles).length > 0 ? "✓" : "○"} Files and packages (recommended)
+              </li>
+              <li className={linesList(testPlan).length > 0 ? "text-status-success" : "text-text-muted"}>
+                {linesList(testPlan).length > 0 ? "✓" : "○"} The proving test (recommended)
+              </li>
+              <li className={linesList(rollback).length > 0 ? "text-status-success" : "text-text-muted"}>
+                {linesList(rollback).length > 0 ? "✓" : "○"} Rollback (recommended)
               </li>
             </ul>
             {issues.length > 0 ? (

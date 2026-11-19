@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { completeAcceptance, dependencyRefs, dorIssues, tagList, taskInput } from "./task-composer-model";
+import { completeAcceptance, dependencyRefs, dorIssues, linesList, linesText, tagList, taskInput } from "./task-composer-model";
 
 describe("task composer model", () => {
   it("requires a title and one complete acceptance criterion for ready", () => {
@@ -40,5 +40,33 @@ describe("task composer model", () => {
       { id: "2", ref: "T-2" },
     ] as never;
     expect(dependencyRefs({ depends_on: ["2"] } as never, tasks)).toEqual(["T-2"]);
+  });
+});
+
+describe("scope helpers", () => {
+  it("joins and splits the scope entries", () => {
+    expect(linesText(["a", "b"])).toBe("a\nb");
+    expect(linesList(" a \n\nb ")).toEqual(["a", "b"]);
+    expect(linesText(undefined)).toBe("");
+  });
+
+  it("includes the scope arrays in the payload", () => {
+    const input = taskInput({
+      title: "Add health",
+      description: "",
+      references: "",
+      priority: "med",
+      tags: "",
+      acceptance: [{ given: "a", when: "b", then: "c" }],
+      dependsOn: [],
+      files: "apps/api/main.go",
+      outOfScope: "auth",
+      testPlan: "TestHealth",
+      rollback: "revert",
+    });
+    expect(input.files).toEqual(["apps/api/main.go"]);
+    expect(input.out_of_scope).toEqual(["auth"]);
+    expect(input.test_plan).toEqual(["TestHealth"]);
+    expect(input.rollback).toEqual(["revert"]);
   });
 });

@@ -6,6 +6,12 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Task scope fields and blueprint starter-task scope**: tasks carry the
+  files, the out-of-scope, the proving test and the rollback (the
+  Definition-of-Ready scope). The task composer and the drawer render them; the
+  blueprint starter tasks accept the same scope and the instantiation creates
+  them as draft tasks.
+
 - **Task composer 2.0**: a full window for creating and editing a task — the
   acceptance criteria builder (multiple given/when/then rows), dependency
   picker, attachments, the live Definition of Ready, a card preview and three

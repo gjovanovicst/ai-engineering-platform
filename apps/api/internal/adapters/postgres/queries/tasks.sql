@@ -1,6 +1,8 @@
 -- name: CreateTask :one
-INSERT INTO tasks (org_id, project_id, ref, title, description, acceptance, priority, tags, created_by, depends_on)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO tasks (org_id, project_id, ref, title, description, acceptance, priority, tags, created_by, depends_on,
+    files, out_of_scope, test_plan, rollback)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+    $11, $12, $13, $14)
 RETURNING *;
 
 -- name: GetTask :one
@@ -36,7 +38,8 @@ RETURNING *;
 -- name: UpdateTask :one
 UPDATE tasks
 SET title = $3, description = $4, priority = $5, assignee_id = $6, tags = $7,
-    acceptance = $8, depends_on = $9
+    acceptance = $8, depends_on = $9,
+    files = $10, out_of_scope = $11, test_plan = $12, rollback = $13
 WHERE id = $1 AND org_id = $2 AND deleted_at IS NULL
 RETURNING *;
 

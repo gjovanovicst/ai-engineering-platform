@@ -118,6 +118,10 @@ export type Task = {
   priority: "low" | "med" | "high";
   tags: string[];
   depends_on?: string[];
+  files?: string[];
+  out_of_scope?: string[];
+  test_plan?: string[];
+  rollback?: string[];
   blocked_reason?: string;
   created_at: string;
   updated_at: string;
@@ -174,6 +178,10 @@ export function updateTask(
     tags?: string[];
     acceptance?: Acceptance[];
     depends_on?: string[];
+    files?: string[];
+    out_of_scope?: string[];
+    test_plan?: string[];
+    rollback?: string[];
   },
 ) {
   return request<Task>(`/api/v1/orgs/${orgID}/projects/${projectID}/tasks/${taskID}`, {
@@ -205,7 +213,18 @@ export function listTasks(orgID: string, projectID: string, status?: string) {
 export function createTask(
   orgID: string,
   projectID: string,
-  input: { title: string; description?: string; acceptance: Acceptance[]; priority?: "low" | "med" | "high"; tags?: string[]; depends_on?: string[] },
+  input: {
+    title: string;
+    description?: string;
+    acceptance: Acceptance[];
+    priority?: "low" | "med" | "high";
+    tags?: string[];
+    depends_on?: string[];
+    files?: string[];
+    out_of_scope?: string[];
+    test_plan?: string[];
+    rollback?: string[];
+  },
 ) {
   return request<Task>(`/api/v1/orgs/${orgID}/projects/${projectID}/tasks`, {
     method: "POST",

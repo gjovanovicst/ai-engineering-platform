@@ -140,12 +140,26 @@ func (h *taskHandlers) create(w http.ResponseWriter, r *http.Request) {
 	if req.DependsOn != nil {
 		dependsOn = *req.DependsOn
 	}
+	var files, outOfScope, testPlan, rollback []string
+	if req.Files != nil {
+		files = *req.Files
+	}
+	if req.OutOfScope != nil {
+		outOfScope = *req.OutOfScope
+	}
+	if req.TestPlan != nil {
+		testPlan = *req.TestPlan
+	}
+	if req.Rollback != nil {
+		rollback = *req.Rollback
+	}
 
 	task, err := h.svc.Create(r.Context(), tasks.CreateInput{
 		OrgID: claims.OrgID, ProjectID: r.PathValue("project"),
 		Title: req.Title, Description: description, DependsOn: dependsOn,
 		Acceptance: acceptance, Priority: priority, Tags: tags,
 		CreatedBy: claims.Subject,
+		Files:     files, OutOfScope: outOfScope, TestPlan: testPlan, Rollback: rollback,
 	})
 	if err != nil {
 		switch {
@@ -251,19 +265,23 @@ func taskJSON(t domain.Task) map[string]any {
 		acceptance = append(acceptance, acceptanceJSON{Given: a.Given, When: a.When, Then: a.Then})
 	}
 	out := map[string]any{
-		"id":          t.ID,
-		"org_id":      t.OrgID,
-		"project_id":  t.ProjectID,
-		"ref":         t.Ref,
-		"title":       t.Title,
-		"description": t.Description,
-		"acceptance":  acceptance,
-		"status":      string(t.Status),
-		"priority":    string(t.Priority),
-		"tags":        t.Tags,
-		"depends_on":  t.DependsOn,
-		"created_at":  t.CreatedAt.UTC().Format(time.RFC3339),
-		"updated_at":  t.UpdatedAt.UTC().Format(time.RFC3339),
+		"id":           t.ID,
+		"org_id":       t.OrgID,
+		"project_id":   t.ProjectID,
+		"ref":          t.Ref,
+		"title":        t.Title,
+		"description":  t.Description,
+		"acceptance":   acceptance,
+		"status":       string(t.Status),
+		"priority":     string(t.Priority),
+		"tags":         t.Tags,
+		"depends_on":   t.DependsOn,
+		"files":        t.Files,
+		"out_of_scope": t.OutOfScope,
+		"test_plan":    t.TestPlan,
+		"rollback":     t.Rollback,
+		"created_at":   t.CreatedAt.UTC().Format(time.RFC3339),
+		"updated_at":   t.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 	if t.BlockedReason != "" {
 		out["blocked_reason"] = t.BlockedReason
@@ -287,7 +305,11 @@ func (h *taskHandlers) update(w http.ResponseWriter, r *http.Request) {
 			When  string `json:"when"`
 			Then  string `json:"then"`
 		} `json:"acceptance"`
-		DependsOn *[]string `json:"depends_on"`
+		DependsOn  *[]string `json:"depends_on"`
+		Files      *[]string `json:"files"`
+		OutOfScope *[]string `json:"out_of_scope"`
+		TestPlan   *[]string `json:"test_plan"`
+		Rollback   *[]string `json:"rollback"`
 	}
 	if !decode(w, r, 1<<20, &req) {
 		return
@@ -302,11 +324,25 @@ func (h *taskHandlers) update(w http.ResponseWriter, r *http.Request) {
 	if req.DependsOn != nil {
 		dependsOn = *req.DependsOn
 	}
+	var files, outOfScope, testPlan, rollback []string
+	if req.Files != nil {
+		files = *req.Files
+	}
+	if req.OutOfScope != nil {
+		outOfScope = *req.OutOfScope
+	}
+	if req.TestPlan != nil {
+		testPlan = *req.TestPlan
+	}
+	if req.Rollback != nil {
+		rollback = *req.Rollback
+	}
 	task, err := h.svc.Update(r.Context(), tasks.UpdateInput{
 		OrgID: claims.OrgID, ProjectID: r.PathValue("project"), IDOrRef: r.PathValue("task"),
 		Title: req.Title, Description: req.Description, Priority: req.Priority,
 		AssigneeID: req.AssigneeID, Tags: req.Tags,
 		Acceptance: acceptance, DependsOn: dependsOn,
+		Files: files, OutOfScope: outOfScope, TestPlan: testPlan, Rollback: rollback,
 	})
 	if err != nil {
 		switch {

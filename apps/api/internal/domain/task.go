@@ -85,16 +85,22 @@ const (
 
 // Task is a unit of work in a project's backlog.
 type Task struct {
-	ID            string
-	OrgID         string
-	ProjectID     string
-	Ref           string
-	Title         string
-	Description   string
-	Acceptance    []AcceptanceCriterion
-	Status        TaskStatus
-	Priority      Priority
-	Tags          []string
+	ID          string
+	OrgID       string
+	ProjectID   string
+	Ref         string
+	Title       string
+	Description string
+	Acceptance  []AcceptanceCriterion
+	Status      TaskStatus
+	Priority    Priority
+	Tags        []string
+	// Scope: the Definition of Ready fields (files, out of scope, the test
+	// that proves it, the rollback).
+	Files         []string
+	OutOfScope    []string
+	TestPlan      []string
+	Rollback      []string
 	AssigneeID    string
 	CreatedBy     string
 	BlockedReason string

@@ -53,6 +53,10 @@ func (s *TaskStore) Create(ctx context.Context, t domain.Task) (domain.Task, err
 			Tags:        tags,
 			CreatedBy:   toUUID(t.CreatedBy),
 			DependsOn:   depends,
+			Files:       nonNil(t.Files),
+			OutOfScope:  nonNil(t.OutOfScope),
+			TestPlan:    nonNil(t.TestPlan),
+			Rollback:    nonNil(t.Rollback),
 		})
 		if err != nil {
 			return mapUnique(err)
@@ -170,6 +174,10 @@ func taskFromRow(row pgstore.Task) (domain.Task, error) {
 		Status:      domain.TaskStatus(row.Status),
 		Priority:    domain.Priority(row.Priority),
 		Tags:        row.Tags,
+		Files:       row.Files,
+		OutOfScope:  row.OutOfScope,
+		TestPlan:    row.TestPlan,
+		Rollback:    row.Rollback,
 		DependsOn:   uuidsToStrings(row.DependsOn),
 		AssigneeID:  uuidString(row.AssigneeID),
 		CreatedAt:   row.CreatedAt.Time,
@@ -225,6 +233,8 @@ func (s *TaskStore) Update(ctx context.Context, task domain.Task) (domain.Task, 
 			Description: task.Description, Priority: string(task.Priority),
 			AssigneeID: optionalUUID(task.AssigneeID), Tags: task.Tags,
 			Acceptance: acceptance, DependsOn: depends,
+			Files: nonNil(task.Files), OutOfScope: nonNil(task.OutOfScope),
+			TestPlan: nonNil(task.TestPlan), Rollback: nonNil(task.Rollback),
 		})
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
@@ -261,4 +271,12 @@ func uuidsToStrings(ids []pgtype.UUID) []string {
 		out = append(out, uuidString(id))
 	}
 	return out
+}
+
+// nonNil keeps the NOT NULL text[] columns valid for empty input.
+func nonNil(values []string) []string {
+	if values == nil {
+		return []string{}
+	}
+	return values
 }

@@ -94,7 +94,7 @@ func TestInstantiateCreatesStarterTasks(t *testing.T) {
 		func(context.Context, string, string, string, string) (domain.Project, error) {
 			return domain.Project{ID: "p-1", Name: "Novasoft"}, nil
 		},
-		func(_ context.Context, _, _, title, _ string, priority domain.Priority, _ []domain.AcceptanceCriterion) (domain.Task, error) {
+		func(_ context.Context, _, _, title, _ string, priority domain.Priority, _ []domain.AcceptanceCriterion, _, _, _, _ []string) (domain.Task, error) {
 			created = append(created, title)
 			priorities = append(priorities, priority)
 			return domain.Task{ID: title}, nil

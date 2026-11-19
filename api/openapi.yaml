@@ -2859,6 +2859,22 @@ components:
           type: array
           maxItems: 20
           items: { type: string, example: T-12 }
+        files:
+          type: array
+          maxItems: 50
+          items: { type: string }
+        out_of_scope:
+          type: array
+          maxItems: 50
+          items: { type: string }
+        test_plan:
+          type: array
+          maxItems: 50
+          items: { type: string }
+        rollback:
+          type: array
+          maxItems: 50
+          items: { type: string }
 
     Task:
       allOf:
