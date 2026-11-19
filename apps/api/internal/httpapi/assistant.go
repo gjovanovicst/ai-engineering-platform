@@ -91,7 +91,7 @@ func (h *assistantHandlers) stream(w http.ResponseWriter, out assistant.SendOutp
 		_, _ = w.Write([]byte("event: " + event + "\ndata: " + string(data) + "\n\n"))
 	}
 	if out.PendingTool != "" {
-		emit("pending", map[string]any{"tool": out.PendingTool, "text": out.Text, "conversation_id": out.ConversationID})
+		emit("pending", map[string]any{"pending_tool": out.PendingTool, "text": out.Text, "conversation_id": out.ConversationID})
 	} else {
 		emit("text", map[string]any{"text": out.Text, "conversation_id": out.ConversationID})
 	}

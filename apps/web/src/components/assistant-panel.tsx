@@ -81,7 +81,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
           if (event.type === "text") setMessages((current) => [...current, { role: "assistant", text: event.text ?? "" }]);
           if (event.type === "pending") {
             setMessages((current) => [...current, { role: "assistant", text: event.text ?? "" }]);
-            setPendingTool(event.pending_tool ?? "");
+            setPendingTool(event.pending_tool ?? event.tool ?? "");
           }
         },
       );
