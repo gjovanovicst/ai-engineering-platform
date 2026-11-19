@@ -6,9 +6,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
-- The auth forms (login, register, invite accept, search) use the zod
-  validation: inline field errors, the `aria-invalid` danger border and the
-  server error at the form level (part 1 of the forms consistency sweep #49).
+- The auth forms (login, register, invite accept, search) and the create
+  project form use the zod validation: inline field errors, the `aria-invalid`
+  danger border and the server error at the form level (parts 1-2 of the forms
+  consistency sweep #49).
 
 ### Added
 

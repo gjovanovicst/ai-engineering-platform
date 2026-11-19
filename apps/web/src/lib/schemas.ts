@@ -94,3 +94,9 @@ export const searchSchema = z.object({
   q: z.string().trim().min(2, "Type at least two characters."),
 });
 export type SearchValues = z.infer<typeof searchSchema>;
+
+export const projectSchema = z.object({
+  name: z.string().trim().min(1, "A name is required.").max(80, "At most 80 characters."),
+  description: z.string().max(2000, "At most 2000 characters."),
+});
+export type ProjectValues = z.infer<typeof projectSchema>;

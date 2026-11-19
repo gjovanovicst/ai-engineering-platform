@@ -10,6 +10,8 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
 import { ApiError, createProject, ensureSession, listProjects } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { projectSchema, type ProjectValues } from "@/lib/schemas";
 import type { Claims } from "@/lib/auth";
 
 export default function ProjectsPage() {
@@ -19,8 +21,13 @@ export default function ProjectsPage() {
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [form, setForm] = useState({ name: "", description: "" });
   const [formError, setFormError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useZodForm<ProjectValues>(projectSchema, { defaultValues: { name: "", description: "" } });
 
   useEffect(() => {
     ensureSession().then((result) => {
@@ -33,10 +40,10 @@ export default function ProjectsPage() {
   }, [router]);
 
   const create = useMutation({
-    mutationFn: () => createProject(claims!.org, form),
+    mutationFn: (input: ProjectValues) => createProject(claims!.org, input),
     onSuccess: (project) => {
       setShowForm(false);
-      setForm({ name: "", description: "" });
+      reset({ name: "", description: "" });
       setFormError(null);
       queryClient.invalidateQueries({ queryKey: ["projects", claims?.org] });
       router.push(`/projects/${project.id}`);
@@ -81,7 +88,7 @@ export default function ProjectsPage() {
           footer={
             <>
               <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
-              <Button type="submit" form="project-form" loading={create.isPending} disabled={form.name.trim() === ""}>
+              <Button type="submit" form="project-form" loading={create.isPending}>
                 Create project
               </Button>
             </>
@@ -90,26 +97,24 @@ export default function ProjectsPage() {
         <form
           id="project-form"
           className="space-y-4 p-5"
-          onSubmit={(event) => {
-            event.preventDefault();
-            create.mutate();
-          }}
+          onSubmit={handleSubmit((values) => create.mutate(values))}
         >
           <div className="grid gap-3">
-            <Field label="Name" htmlFor="project-name">
+            <Field label="Name" htmlFor="project-name" error={errors.name?.message}>
               <Input
                 id="project-name"
-                required
                 autoFocus
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                aria-invalid={Boolean(errors.name)}
+                {...register("name")}
+                placeholder="e.g. Customer portal"
               />
             </Field>
-            <Field label="Description" htmlFor="project-description">
+            <Field label="Description" htmlFor="project-description" error={errors.description?.message}>
               <Input
                 id="project-description"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                aria-invalid={Boolean(errors.description)}
+                {...register("description")}
+                placeholder="What the project delivers and for whom"
               />
             </Field>
           </div>
