@@ -15,6 +15,9 @@ release.
   apps before and after the release; their findings feed the patches.
 - **Every story meets the Definition of Ready** before it is picked up
   (`AGENTS.md` §1) and ships with the test that proves it.
+- **The user guide ships with the release**: each feature release updates
+  `docs/user/` (the site pages) and the release-notes page; stale docs fail the
+  release checklist.
 
 ## Release plan
 
@@ -61,6 +64,9 @@ Dependency order: design/blueprint → stack → flow → quality → production
    `release/vX.Y` branches, backport action, nightly workflow.
 10. **Pilots** — `pilot-go` and `pilot-web` repos, seed tasks, weekly cadence,
     pilot report template.
+11. **User guide refresh** — the site's guide for v0.1.1 and v0.2.0 (the seed,
+    the composer/scope, the retry/fix runs, the test command), a release-notes
+    page and the landing "what's new" (issue #46).
 
 ## v0.3.0 — Design 2.0 + Blueprint 2.0
 
