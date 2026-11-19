@@ -12,7 +12,7 @@ import (
 )
 
 const searchTasks = `-- name: SearchTasks :many
-SELECT id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on FROM tasks
+SELECT id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on, files, out_of_scope, test_plan, rollback FROM tasks
 WHERE org_id = $1
   AND ($2::uuid IS NULL OR project_id = $2)
   AND (
@@ -66,6 +66,10 @@ func (q *Queries) SearchTasks(ctx context.Context, arg SearchTasksParams) ([]Tas
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DependsOn,
+			&i.Files,
+			&i.OutOfScope,
+			&i.TestPlan,
+			&i.Rollback,
 		); err != nil {
 			return nil, err
 		}

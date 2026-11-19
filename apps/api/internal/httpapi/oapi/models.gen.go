@@ -1666,13 +1666,17 @@ type Task struct {
 	DependsOn     *[]string              `json:"depends_on,omitempty"`
 	Description   *string                `json:"description,omitempty"`
 	DoneAt        *time.Time             `json:"done_at,omitempty"`
+	Files         *[]string              `json:"files,omitempty"`
 	Id            *openapi_types.UUID    `json:"id,omitempty"`
+	OutOfScope    *[]string              `json:"out_of_scope,omitempty"`
 	Priority      *TaskPriority          `json:"priority,omitempty"`
 	ProjectId     *openapi_types.UUID    `json:"project_id,omitempty"`
 	ReadyAt       *time.Time             `json:"ready_at,omitempty"`
 	Ref           *string                `json:"ref,omitempty"`
+	Rollback      *[]string              `json:"rollback,omitempty"`
 	Status        *TaskStatus            `json:"status,omitempty"`
 	Tags          *[]string              `json:"tags,omitempty"`
+	TestPlan      *[]string              `json:"test_plan,omitempty"`
 	Title         string                 `json:"title"`
 	UpdatedAt     *time.Time             `json:"updated_at,omitempty"`
 }
@@ -1683,8 +1687,12 @@ type TaskInput struct {
 	AssigneeId  *openapi_types.UUID    `json:"assignee_id,omitempty"`
 	DependsOn   *[]string              `json:"depends_on,omitempty"`
 	Description *string                `json:"description,omitempty"`
+	Files       *[]string              `json:"files,omitempty"`
+	OutOfScope  *[]string              `json:"out_of_scope,omitempty"`
 	Priority    *TaskPriority          `json:"priority,omitempty"`
+	Rollback    *[]string              `json:"rollback,omitempty"`
 	Tags        *[]string              `json:"tags,omitempty"`
+	TestPlan    *[]string              `json:"test_plan,omitempty"`
 	Title       string                 `json:"title"`
 }
 

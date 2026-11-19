@@ -702,6 +702,10 @@ type Task struct {
 	CreatedAt     pgtype.Timestamptz
 	UpdatedAt     pgtype.Timestamptz
 	DependsOn     []pgtype.UUID
+	Files         []string
+	OutOfScope    []string
+	TestPlan      []string
+	Rollback      []string
 }
 
 type TaskAttachment struct {

@@ -44,6 +44,10 @@ type CreateInput struct {
 	Tags        []string
 	CreatedBy   string
 	DependsOn   []string
+	Files       []string
+	OutOfScope  []string
+	TestPlan    []string
+	Rollback    []string
 }
 
 // Create assigns the next reference and stores the task in draft.
@@ -68,6 +72,10 @@ func (s *Service) Create(ctx context.Context, in CreateInput) (domain.Task, erro
 		task.Acceptance = in.Acceptance
 		task.Priority = priority
 		task.Tags = in.Tags
+		task.Files = in.Files
+		task.OutOfScope = in.OutOfScope
+		task.TestPlan = in.TestPlan
+		task.Rollback = in.Rollback
 		task.CreatedBy = in.CreatedBy
 		for _, ref := range in.DependsOn {
 			dep, derr := s.store.GetByRef(ctx, in.OrgID, in.ProjectID, ref)
@@ -171,6 +179,10 @@ type UpdateInput struct {
 	Tags        []string
 	Acceptance  []domain.AcceptanceCriterion
 	DependsOn   []string
+	Files       []string
+	OutOfScope  []string
+	TestPlan    []string
+	Rollback    []string
 }
 
 // Update edits a task (status changes go through Transition).
@@ -193,6 +205,18 @@ func (s *Service) Update(ctx context.Context, in UpdateInput) (domain.Task, erro
 	}
 	if in.Acceptance != nil {
 		task.Acceptance = in.Acceptance
+	}
+	if in.Files != nil {
+		task.Files = in.Files
+	}
+	if in.OutOfScope != nil {
+		task.OutOfScope = in.OutOfScope
+	}
+	if in.TestPlan != nil {
+		task.TestPlan = in.TestPlan
+	}
+	if in.Rollback != nil {
+		task.Rollback = in.Rollback
 	}
 	if in.DependsOn != nil {
 		task.DependsOn = nil

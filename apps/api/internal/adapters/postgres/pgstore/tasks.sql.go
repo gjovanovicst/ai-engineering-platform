@@ -23,9 +23,11 @@ func (q *Queries) CountTasks(ctx context.Context, projectID pgtype.UUID) (int64,
 }
 
 const createTask = `-- name: CreateTask :one
-INSERT INTO tasks (org_id, project_id, ref, title, description, acceptance, priority, tags, created_by, depends_on)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-RETURNING id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on
+INSERT INTO tasks (org_id, project_id, ref, title, description, acceptance, priority, tags, created_by, depends_on,
+    files, out_of_scope, test_plan, rollback)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+    $11, $12, $13, $14)
+RETURNING id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on, files, out_of_scope, test_plan, rollback
 `
 
 type CreateTaskParams struct {
@@ -39,6 +41,10 @@ type CreateTaskParams struct {
 	Tags        []string
 	CreatedBy   pgtype.UUID
 	DependsOn   []pgtype.UUID
+	Files       []string
+	OutOfScope  []string
+	TestPlan    []string
+	Rollback    []string
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
@@ -53,6 +59,10 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		arg.Tags,
 		arg.CreatedBy,
 		arg.DependsOn,
+		arg.Files,
+		arg.OutOfScope,
+		arg.TestPlan,
+		arg.Rollback,
 	)
 	var i Task
 	err := row.Scan(
@@ -76,12 +86,16 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DependsOn,
+		&i.Files,
+		&i.OutOfScope,
+		&i.TestPlan,
+		&i.Rollback,
 	)
 	return i, err
 }
 
 const getTask = `-- name: GetTask :one
-SELECT id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on FROM tasks
+SELECT id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on, files, out_of_scope, test_plan, rollback FROM tasks
 WHERE id = $1 AND org_id = $2 AND deleted_at IS NULL
 `
 
@@ -114,12 +128,16 @@ func (q *Queries) GetTask(ctx context.Context, arg GetTaskParams) (Task, error) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DependsOn,
+		&i.Files,
+		&i.OutOfScope,
+		&i.TestPlan,
+		&i.Rollback,
 	)
 	return i, err
 }
 
 const getTaskByRef = `-- name: GetTaskByRef :one
-SELECT id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on FROM tasks
+SELECT id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on, files, out_of_scope, test_plan, rollback FROM tasks
 WHERE org_id = $1 AND project_id = $2 AND ref = $3 AND deleted_at IS NULL
 `
 
@@ -153,12 +171,16 @@ func (q *Queries) GetTaskByRef(ctx context.Context, arg GetTaskByRefParams) (Tas
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DependsOn,
+		&i.Files,
+		&i.OutOfScope,
+		&i.TestPlan,
+		&i.Rollback,
 	)
 	return i, err
 }
 
 const listTasks = `-- name: ListTasks :many
-SELECT id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on FROM tasks
+SELECT id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on, files, out_of_scope, test_plan, rollback FROM tasks
 WHERE org_id = $1
   AND project_id = $2
   AND deleted_at IS NULL
@@ -212,6 +234,10 @@ func (q *Queries) ListTasks(ctx context.Context, arg ListTasksParams) ([]Task, e
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DependsOn,
+			&i.Files,
+			&i.OutOfScope,
+			&i.TestPlan,
+			&i.Rollback,
 		); err != nil {
 			return nil, err
 		}
@@ -244,9 +270,10 @@ func (q *Queries) NextTaskRef(ctx context.Context, arg NextTaskRefParams) (int64
 const updateTask = `-- name: UpdateTask :one
 UPDATE tasks
 SET title = $3, description = $4, priority = $5, assignee_id = $6, tags = $7,
-    acceptance = $8, depends_on = $9
+    acceptance = $8, depends_on = $9,
+    files = $10, out_of_scope = $11, test_plan = $12, rollback = $13
 WHERE id = $1 AND org_id = $2 AND deleted_at IS NULL
-RETURNING id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on
+RETURNING id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on, files, out_of_scope, test_plan, rollback
 `
 
 type UpdateTaskParams struct {
@@ -259,6 +286,10 @@ type UpdateTaskParams struct {
 	Tags        []string
 	Acceptance  []byte
 	DependsOn   []pgtype.UUID
+	Files       []string
+	OutOfScope  []string
+	TestPlan    []string
+	Rollback    []string
 }
 
 func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, error) {
@@ -272,6 +303,10 @@ func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, e
 		arg.Tags,
 		arg.Acceptance,
 		arg.DependsOn,
+		arg.Files,
+		arg.OutOfScope,
+		arg.TestPlan,
+		arg.Rollback,
 	)
 	var i Task
 	err := row.Scan(
@@ -295,6 +330,10 @@ func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DependsOn,
+		&i.Files,
+		&i.OutOfScope,
+		&i.TestPlan,
+		&i.Rollback,
 	)
 	return i, err
 }
@@ -306,7 +345,7 @@ SET status = $3,
     ready_at = $5,
     done_at = $6
 WHERE id = $1 AND org_id = $2 AND deleted_at IS NULL
-RETURNING id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on
+RETURNING id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on, files, out_of_scope, test_plan, rollback
 `
 
 type UpdateTaskStatusParams struct {
@@ -349,6 +388,10 @@ func (q *Queries) UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusPara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DependsOn,
+		&i.Files,
+		&i.OutOfScope,
+		&i.TestPlan,
+		&i.Rollback,
 	)
 	return i, err
 }

@@ -26,6 +26,19 @@ export function dorIssues(title: string, acceptance: Acceptance[]): string[] {
   return issues;
 }
 
+/** Joins the scope entries for a textarea (one per line). */
+export function linesText(values: string[] | undefined): string {
+  return (values ?? []).join("\n");
+}
+
+/** Splits a textarea into the scope entries. */
+export function linesList(raw: string): string[] {
+  return raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 /** The create/update payload derived from the composer state. */
 export function taskInput(input: {
   title: string;
@@ -35,6 +48,10 @@ export function taskInput(input: {
   tags: string;
   acceptance: Acceptance[];
   dependsOn: string[];
+  files?: string;
+  outOfScope?: string;
+  testPlan?: string;
+  rollback?: string;
 }) {
   const description = [
     input.description.trim(),
@@ -49,6 +66,10 @@ export function taskInput(input: {
     tags: tagList(input.tags),
     acceptance: completeAcceptance(input.acceptance),
     depends_on: input.dependsOn,
+    files: linesList(input.files ?? ""),
+    out_of_scope: linesList(input.outOfScope ?? ""),
+    test_plan: linesList(input.testPlan ?? ""),
+    rollback: linesList(input.rollback ?? ""),
   };
 }
 

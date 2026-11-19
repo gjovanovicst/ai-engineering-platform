@@ -182,6 +182,26 @@ export function TaskDrawer({
             </section>
           ) : null}
 
+          {(task.files?.length ?? 0) + (task.out_of_scope?.length ?? 0) + (task.test_plan?.length ?? 0) + (task.rollback?.length ?? 0) > 0 ? (
+            <section>
+              <h3 className="mb-2 text-xs font-semibold uppercase text-text-muted">Scope and proof</h3>
+              <div className="space-y-2 text-sm text-text-secondary">
+                {task.files?.length ? (
+                  <div><p className="text-xs font-medium text-text-muted">Files</p><ul className="list-inside list-disc">{task.files.map((file) => <li key={file} className="font-mono text-xs">{file}</li>)}</ul></div>
+                ) : null}
+                {task.out_of_scope?.length ? (
+                  <div><p className="text-xs font-medium text-text-muted">Out of scope</p><ul className="list-inside list-disc">{task.out_of_scope.map((item) => <li key={item}>{item}</li>)}</ul></div>
+                ) : null}
+                {task.test_plan?.length ? (
+                  <div><p className="text-xs font-medium text-text-muted">The test that proves it</p><ul className="list-inside list-disc">{task.test_plan.map((item) => <li key={item}>{item}</li>)}</ul></div>
+                ) : null}
+                {task.rollback?.length ? (
+                  <div><p className="text-xs font-medium text-text-muted">Rollback</p><ul className="list-inside list-disc">{task.rollback.map((item) => <li key={item}>{item}</li>)}</ul></div>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
+
           <section>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-xs font-semibold uppercase text-text-muted">Details</h3>

@@ -40,7 +40,7 @@ type Store interface {
 type ProjectCreator func(ctx context.Context, orgID, blueprintID, name, description string) (domain.Project, error)
 
 // TaskCreator creates one starter task.
-type TaskCreator func(ctx context.Context, orgID, projectID, title, description string, priority domain.Priority, acceptance []domain.AcceptanceCriterion) (domain.Task, error)
+type TaskCreator func(ctx context.Context, orgID, projectID, title, description string, priority domain.Priority, acceptance []domain.AcceptanceCriterion, files, outOfScope, testPlan, rollback []string) (domain.Task, error)
 
 // Service validates and instantiates blueprints.
 type Service struct {
@@ -105,7 +105,8 @@ func (s *Service) Instantiate(ctx context.Context, orgID, id string) (domain.Pro
 			for _, ac := range starter.Acceptance {
 				acceptance = append(acceptance, domain.AcceptanceCriterion{Given: ac.Given, When: ac.When, Then: ac.Then})
 			}
-			if _, terr := s.tasks(ctx, orgID, project.ID, starter.Title, starter.Description, priorityOf(starter.Priority), acceptance); terr != nil {
+			if _, terr := s.tasks(ctx, orgID, project.ID, starter.Title, starter.Description, priorityOf(starter.Priority), acceptance,
+				starter.Files, starter.OutOfScope, starter.TestPlan, starter.Rollback); terr != nil {
 				s.log.Warn("blueprints: starter task", "err", terr, "title", starter.Title)
 				continue
 			}
@@ -182,6 +183,11 @@ type StarterTask struct {
 		When  string `json:"when"`
 		Then  string `json:"then"`
 	} `json:"acceptance"`
+	// The Definition of Ready scope fields (the task scope; optional).
+	Files      []string `json:"files"`
+	OutOfScope []string `json:"out_of_scope"`
+	TestPlan   []string `json:"test_plan"`
+	Rollback   []string `json:"rollback"`
 }
 
 // ValidationError lists schema violations.

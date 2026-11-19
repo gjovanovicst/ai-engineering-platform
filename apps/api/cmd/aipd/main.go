@@ -244,10 +244,11 @@ func main() {
 				OrgID: orgID, BlueprintID: blueprintID, Name: name, Description: description,
 			})
 		},
-		func(ctx context.Context, orgID, projectID, title, description string, priority domain.Priority, acceptance []domain.AcceptanceCriterion) (domain.Task, error) {
+		func(ctx context.Context, orgID, projectID, title, description string, priority domain.Priority, acceptance []domain.AcceptanceCriterion, files, outOfScope, testPlan, rollback []string) (domain.Task, error) {
 			return taskService.Create(ctx, tasks.CreateInput{
 				OrgID: orgID, ProjectID: projectID, Title: title, Description: description,
 				Priority: priority, Acceptance: acceptance,
+				Files: files, OutOfScope: outOfScope, TestPlan: testPlan, Rollback: rollback,
 			})
 		}, logger)
 	if err != nil {
