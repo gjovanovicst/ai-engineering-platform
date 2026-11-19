@@ -17,11 +17,20 @@ import {
   setProviderEnabled,
   upsertModelPrice,
 } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { aiProviderSchema, type AiProviderValues } from "@/lib/schemas";
 
 export function ProvidersPanel({ orgID }: { orgID: string }) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", base_url: "https://api.openai.com/v1", model: "", kind: "openai", api_key: "" });
   const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useZodForm<AiProviderValues>(aiProviderSchema, {
+    defaultValues: { name: "", base_url: "https://api.openai.com/v1", model: "", api_key: "" },
+  });
 
   const providers = useQuery({ queryKey: ["providers", orgID], queryFn: () => listProviders(orgID) });
   const prices = useQuery({ queryKey: ["prices", orgID], queryFn: () => listModelPrices(orgID) });
@@ -32,9 +41,9 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
   const [showPriceForm, setShowPriceForm] = useState(false);
 
   const create = useMutation({
-    mutationFn: () => createProvider(orgID, form),
+    mutationFn: (input: AiProviderValues) => createProvider(orgID, input),
     onSuccess: () => {
-      setForm({ name: "", base_url: "https://api.openai.com/v1", model: "", kind: "openai", api_key: "" });
+      reset({ name: "", base_url: "https://api.openai.com/v1", model: "", api_key: "" });
       setShowProviderForm(false);
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["providers", orgID] });
@@ -192,27 +201,25 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
       <form
         id="provider-form"
         className="space-y-4 p-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          create.mutate();
-        }}
+        onSubmit={handleSubmit((values) => create.mutate(values))}
       >
         <div className="grid gap-3 md:grid-cols-2">
-          <Field label="Name" htmlFor="provider-name">
-            <Input id="provider-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Field label="Name" htmlFor="provider-name" error={errors.name?.message}>
+            <Input id="provider-name" aria-invalid={Boolean(errors.name)} {...register("name")} placeholder="e.g. OpenAI" />
           </Field>
-          <Field label="Base URL" htmlFor="provider-url">
-            <Input id="provider-url" required value={form.base_url} onChange={(e) => setForm({ ...form, base_url: e.target.value })} />
+          <Field label="Base URL" htmlFor="provider-url" error={errors.base_url?.message}>
+            <Input id="provider-url" aria-invalid={Boolean(errors.base_url)} {...register("base_url")} placeholder="https://api.openai.com/v1" />
           </Field>
-          <Field label="Model (optional)" htmlFor="provider-model">
-            <Input id="provider-model" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} />
+          <Field label="Model (optional)" htmlFor="provider-model" error={errors.model?.message}>
+            <Input id="provider-model" aria-invalid={Boolean(errors.model)} {...register("model")} placeholder="gpt-4o" />
           </Field>
-          <Field label="API key" htmlFor="provider-key">
+          <Field label="API key" htmlFor="provider-key" error={errors.api_key?.message}>
             <Input
               id="provider-key"
               type="password"
-              value={form.api_key}
-              onChange={(e) => setForm({ ...form, api_key: e.target.value })}
+              aria-invalid={Boolean(errors.api_key)}
+              {...register("api_key")}
+              placeholder="sk-…"
             />
           </Field>
         </div>

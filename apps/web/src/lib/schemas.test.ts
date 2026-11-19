@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { acceptInviteSchema, commandSchema, componentEntrySchema, designTokenSchema, loginSchema, registerSchema, taskComposerSchema, type TaskComposerValues } from "./schemas";
+import { acceptInviteSchema, aiProviderSchema, commandSchema, componentEntrySchema, designTokenSchema, environmentSchema, loginSchema, registerSchema, repoConnectSchema, repoCredentialSchema, taskComposerSchema, type TaskComposerValues } from "./schemas";
 
 function composer(overrides: Partial<TaskComposerValues> = {}): TaskComposerValues {
   return {
@@ -82,5 +82,31 @@ describe("auth schemas", () => {
   it("accepts an invite with a valid password", () => {
     expect(acceptInviteSchema.safeParse({ name: "Jane", password: "correct horse battery" }).success).toBe(true);
     expect(acceptInviteSchema.safeParse({ name: "", password: "correct horse battery" }).success).toBe(false);
+  });
+});
+
+describe("delivery panel schemas", () => {
+  it("requires a repository name", () => {
+    const base = { provider: "github", name: "acme/app", default_branch: "main", webhook_secret: "s" };
+    expect(repoConnectSchema.safeParse(base).success).toBe(true);
+    expect(repoConnectSchema.safeParse({ ...base, name: "  " }).success).toBe(false);
+    expect(repoConnectSchema.safeParse({ ...base, provider: "gitea" }).success).toBe(false);
+  });
+
+  it("requires a provider name and base URL", () => {
+    const base = { name: "OpenAI", base_url: "https://api.openai.com/v1", model: "", api_key: "sk" };
+    expect(aiProviderSchema.safeParse(base).success).toBe(true);
+    expect(aiProviderSchema.safeParse({ ...base, name: "" }).success).toBe(false);
+    expect(aiProviderSchema.safeParse({ ...base, base_url: "" }).success).toBe(false);
+  });
+
+  it("requires a token", () => {
+    expect(repoCredentialSchema.safeParse({ token: "github_pat_x" }).success).toBe(true);
+    expect(repoCredentialSchema.safeParse({ token: "" }).success).toBe(false);
+  });
+
+  it("requires an environment URL", () => {
+    expect(environmentSchema.safeParse({ name: "dev", url: "https://dev.example.com" }).success).toBe(true);
+    expect(environmentSchema.safeParse({ name: "dev", url: "" }).success).toBe(false);
   });
 });

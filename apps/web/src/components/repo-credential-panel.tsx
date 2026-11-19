@@ -14,6 +14,8 @@ import {
   setRepoCredential,
   type Repo,
 } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { repoCredentialSchema, type RepoCredentialValues } from "@/lib/schemas";
 
 /**
  * Per-repository token used before the GitHub App and the global token.
@@ -30,8 +32,13 @@ export function RepoCredentialControl({
 }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [token, setToken] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useZodForm<RepoCredentialValues>(repoCredentialSchema, { defaultValues: { token: "" } });
   const queryKey = ["repo-credential", orgID, projectID, repo.id];
 
   const status = useQuery({
@@ -40,10 +47,10 @@ export function RepoCredentialControl({
   });
 
   const save = useMutation({
-    mutationFn: () => setRepoCredential(orgID, projectID, repo.id, token),
+    mutationFn: (input: RepoCredentialValues) => setRepoCredential(orgID, projectID, repo.id, input.token),
     onSuccess: () => {
       setOpen(false);
-      setToken("");
+      reset({ token: "" });
       setError(null);
       queryClient.invalidateQueries({ queryKey });
     },
@@ -98,7 +105,6 @@ export function RepoCredentialControl({
                 type="submit"
                 form={`repo-credential-form-${repo.id}`}
                 loading={save.isPending}
-                disabled={token.trim().length === 0}
               >
                 Save
               </Button>
@@ -108,10 +114,7 @@ export function RepoCredentialControl({
           <form
             id={`repo-credential-form-${repo.id}`}
             className="space-y-4 p-5"
-            onSubmit={(event) => {
-              event.preventDefault();
-              save.mutate();
-            }}
+            onSubmit={handleSubmit((values) => save.mutate(values))}
           >
             <div className="rounded-lg border border-border bg-bg-subtle p-3 text-xs text-text-secondary">
               <p className="font-medium text-text-primary">{repo.name}</p>
@@ -136,14 +139,14 @@ export function RepoCredentialControl({
               )}
             </div>
 
-            <Field label="Token" htmlFor={`repo-credential-token-${repo.id}`}>
+            <Field label="Token" htmlFor={`repo-credential-token-${repo.id}`} error={errors.token?.message}>
               <Input
                 id={`repo-credential-token-${repo.id}`}
                 type="password"
                 autoComplete="off"
+                aria-invalid={Boolean(errors.token)}
+                {...register("token")}
                 placeholder="github_pat_… or glpat-…"
-                value={token}
-                onChange={(event) => setToken(event.target.value)}
               />
             </Field>
 

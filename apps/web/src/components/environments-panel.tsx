@@ -15,6 +15,8 @@ import {
   listDeployments,
   listEnvironments,
 } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { environmentSchema, type EnvironmentValues } from "@/lib/schemas";
 
 const names = ["dev", "staging", "prod"];
 
@@ -28,7 +30,12 @@ const statusStyles: Record<string, string> = {
 
 export function EnvironmentsPanel({ orgID, projectID }: { orgID: string; projectID: string }) {
   const queryClient = useQueryClient();
-  const [envForm, setEnvForm] = useState({ name: "dev", url: "" });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useZodForm<EnvironmentValues>(environmentSchema, { defaultValues: { name: "dev", url: "" } });
   const [selected, setSelected] = useState<string | null>(null);
   const [release, setRelease] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -47,9 +54,9 @@ export function EnvironmentsPanel({ orgID, projectID }: { orgID: string; project
   });
 
   const addEnv = useMutation({
-    mutationFn: () => createEnvironment(orgID, projectID, envForm.name, envForm.url),
+    mutationFn: (input: EnvironmentValues) => createEnvironment(orgID, projectID, input.name, input.url),
     onSuccess: () => {
-      setEnvForm({ name: "dev", url: "" });
+      reset({ name: "dev", url: "" });
       setShowForm(false);
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["environments", orgID, projectID] });
@@ -109,16 +116,12 @@ export function EnvironmentsPanel({ orgID, projectID }: { orgID: string; project
           <form
             id="environment-form"
             className="space-y-4 p-5"
-            onSubmit={(event) => {
-              event.preventDefault();
-              addEnv.mutate();
-            }}
+            onSubmit={handleSubmit((values) => addEnv.mutate(values))}
           >
-            <Field label="Name" htmlFor="env-name">
+            <Field label="Name" htmlFor="env-name" error={errors.name?.message}>
               <select
                 id="env-name"
-                value={envForm.name}
-                onChange={(e) => setEnvForm({ ...envForm, name: e.target.value })}
+                {...register("name")}
                 className="h-9 w-full rounded-md border border-border bg-bg-surface px-3 text-sm"
               >
                 {names.map((name) => (
@@ -126,8 +129,8 @@ export function EnvironmentsPanel({ orgID, projectID }: { orgID: string; project
                 ))}
               </select>
             </Field>
-            <Field label="URL" htmlFor="env-url">
-              <Input id="env-url" value={envForm.url} onChange={(e) => setEnvForm({ ...envForm, url: e.target.value })} placeholder="https://dev.example.com" />
+            <Field label="URL" htmlFor="env-url" error={errors.url?.message}>
+              <Input id="env-url" aria-invalid={Boolean(errors.url)} {...register("url")} placeholder="https://dev.example.com" />
             </Field>
           </form>
         </SidePanel>

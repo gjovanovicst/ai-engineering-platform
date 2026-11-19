@@ -100,3 +100,38 @@ export const projectSchema = z.object({
   description: z.string().max(2000, "At most 2000 characters."),
 });
 export type ProjectValues = z.infer<typeof projectSchema>;
+
+export const repoConnectSchema = z.object({
+  provider: z.enum(["github", "gitlab"]),
+  name: z.string().trim().min(1, "A repository is required.").max(200, "At most 200 characters."),
+  default_branch: z.string().trim().max(200, "At most 200 characters."),
+  webhook_secret: z.string().max(200, "At most 200 characters."),
+});
+export type RepoConnectValues = z.infer<typeof repoConnectSchema>;
+
+export const aiProviderSchema = z.object({
+  name: z.string().trim().min(1, "A name is required.").max(80, "At most 80 characters."),
+  base_url: z.string().trim().min(1, "A base URL is required.").max(300, "At most 300 characters."),
+  model: z.string().trim().max(80, "At most 80 characters."),
+  api_key: z.string().max(400, "At most 400 characters."),
+});
+export type AiProviderValues = z.infer<typeof aiProviderSchema>;
+
+export const modelPriceSchema = z.object({
+  provider: z.string().trim().max(80, "At most 80 characters."),
+  model: z.string().trim().min(1, "A model is required.").max(80, "At most 80 characters."),
+  input: z.string().max(40, "At most 40 characters."),
+  output: z.string().max(40, "At most 40 characters."),
+});
+export type ModelPriceValues = z.infer<typeof modelPriceSchema>;
+
+export const repoCredentialSchema = z.object({
+  token: z.string().trim().min(1, "A token is required.").max(500, "At most 500 characters."),
+});
+export type RepoCredentialValues = z.infer<typeof repoCredentialSchema>;
+
+export const environmentSchema = z.object({
+  name: z.string().trim().min(1, "A name is required.").max(80, "At most 80 characters."),
+  url: z.string().trim().min(1, "A URL is required.").max(300, "At most 300 characters."),
+});
+export type EnvironmentValues = z.infer<typeof environmentSchema>;

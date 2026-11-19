@@ -14,8 +14,9 @@ import {
   listRepos,
   repoURL,
   webhookURL,
-  type ConnectRepoInput,
 } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { repoConnectSchema, type RepoConnectValues } from "@/lib/schemas";
 
 export function RepoPanel({
   orgID,
@@ -28,13 +29,15 @@ export function RepoPanel({
 }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<ConnectRepoInput>({
-    provider: "github",
-    name: "",
-    default_branch: "main",
-    webhook_secret: "",
-  });
   const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useZodForm<RepoConnectValues>(repoConnectSchema, {
+    defaultValues: { provider: "github", name: "", default_branch: "main", webhook_secret: "" },
+  });
 
   const repos = useQuery({
     queryKey: ["repos", orgID, projectID],
@@ -42,11 +45,11 @@ export function RepoPanel({
   });
 
   const connect = useMutation({
-    mutationFn: () => connectRepo(orgID, projectID, form),
+    mutationFn: (input: RepoConnectValues) => connectRepo(orgID, projectID, input),
     onSuccess: () => {
       setOpen(false);
       setError(null);
-      setForm({ provider: "github", name: "", default_branch: "main", webhook_secret: "" });
+      reset({ provider: "github", name: "", default_branch: "main", webhook_secret: "" });
       queryClient.invalidateQueries({ queryKey: ["repos", orgID, projectID] });
     },
     onError: (err) =>
@@ -82,51 +85,27 @@ export function RepoPanel({
         <form
           id="repo-form"
           className="space-y-4 p-5"
-          onSubmit={(event) => {
-            event.preventDefault();
-            connect.mutate();
-          }}
+          onSubmit={handleSubmit((values) => connect.mutate(values))}
         >
           <div className="grid gap-3">
             <Field label="Provider" htmlFor="provider">
               <select
                 id="provider"
-                value={form.provider}
-                onChange={(e) =>
-                  setForm({ ...form, provider: e.target.value as ConnectRepoInput["provider"] })
-                }
+                {...register("provider")}
                 className="h-9 w-full rounded-md border border-border bg-bg-surface px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
               >
                 <option value="github">GitHub</option>
                 <option value="gitlab">GitLab</option>
-                <option value="gitea">Gitea / Forgejo</option>
-                <option value="bitbucket">Bitbucket Cloud</option>
               </select>
             </Field>
-            <Field label="Repository" htmlFor="repo-name">
-              <Input
-                id="repo-name"
-                required
-                placeholder="owner/name or group/project"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
+            <Field label="Repository" htmlFor="repo-name" error={errors.name?.message}>
+              <Input id="repo-name" aria-invalid={Boolean(errors.name)} {...register("name")} placeholder="owner/name or group/project" />
             </Field>
-            <Field label="Default branch" htmlFor="default-branch">
-              <Input
-                id="default-branch"
-                value={form.default_branch}
-                onChange={(e) => setForm({ ...form, default_branch: e.target.value })}
-              />
+            <Field label="Default branch" htmlFor="default-branch" error={errors.default_branch?.message}>
+              <Input id="default-branch" aria-invalid={Boolean(errors.default_branch)} {...register("default_branch")} placeholder="main" />
             </Field>
-            <Field label="Webhook secret" htmlFor="webhook-secret">
-              <Input
-                id="webhook-secret"
-                type="password"
-                required
-                value={form.webhook_secret}
-                onChange={(e) => setForm({ ...form, webhook_secret: e.target.value })}
-              />
+            <Field label="Webhook secret" htmlFor="webhook-secret" error={errors.webhook_secret?.message}>
+              <Input id="webhook-secret" type="password" aria-invalid={Boolean(errors.webhook_secret)} {...register("webhook_secret")} placeholder="The webhook signing secret" />
             </Field>
           </div>
           {error ? (
