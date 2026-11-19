@@ -5,7 +5,11 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { ApiError, createRestoreRequest, getDRStatus, listRestoreRequests } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { restoreSchema, type RestoreValues } from "@/lib/schemas";
 
 function hours(seconds: number) {
   return `${(seconds / 3600).toFixed(1)} h`;
@@ -15,15 +19,19 @@ export function DRPanel({ orgID }: { orgID: string }) {
   const queryClient = useQueryClient();
   const dr = useQuery({ queryKey: ["dr", orgID], queryFn: () => getDRStatus(orgID), refetchInterval: 30000 });
   const restores = useQuery({ queryKey: ["restores", orgID], queryFn: () => listRestoreRequests(orgID), refetchInterval: 15000 });
-  const [target, setTarget] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useZodForm<RestoreValues>(restoreSchema, { defaultValues: { target: "" } });
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function requestRestore() {
+  const requestRestore = handleSubmit(async (values) => {
     setNote(null);
     setBusy(true);
     try {
-      await createRestoreRequest(orgID, new Date(target).toISOString());
+      await createRestoreRequest(orgID, new Date(values.target).toISOString());
       setNote("Restore request queued");
       queryClient.invalidateQueries({ queryKey: ["restores", orgID] });
     } catch (err) {
@@ -31,7 +39,7 @@ export function DRPanel({ orgID }: { orgID: string }) {
     } finally {
       setBusy(false);
     }
-  }
+  });
 
   return (
     <section className="rounded-lg border border-border bg-bg-surface p-4">
@@ -73,15 +81,14 @@ export function DRPanel({ orgID }: { orgID: string }) {
           </div>
         </div>
       ) : null}
-      <div className="mt-4 flex flex-wrap items-end gap-2">
-        <label className="text-xs text-text-secondary">
-          Target time
-          <input type="datetime-local" value={target} onChange={(e) => setTarget(e.target.value)} className="ml-2 h-9 rounded-md border border-border bg-bg-surface px-2 text-xs" />
-        </label>
-        <Button variant="secondary" loading={busy} disabled={!target} onClick={requestRestore}>Request restore</Button>
+      <form className="mt-4 flex flex-wrap items-end gap-2" onSubmit={requestRestore}>
+        <Field label="Target time" htmlFor="restore-target" error={errors.target?.message}>
+          <Input id="restore-target" type="datetime-local" aria-invalid={Boolean(errors.target)} {...register("target")} className="h-9" />
+        </Field>
+        <Button type="submit" variant="secondary" loading={busy}>Request restore</Button>
         <Link href="/docs" className="text-xs text-brand underline">Runbook</Link>
         {note ? <span className="text-xs text-text-secondary">{note}</span> : null}
-      </div>
+      </form>
       <ul className="mt-4 grid gap-1 text-xs">
         {(restores.data?.data ?? []).map((item) => (
           <li key={item.id} className="flex flex-wrap items-center gap-2 rounded border border-border px-2 py-1">
