@@ -8,8 +8,9 @@ All notable changes to this project. Dates are 2026.
 
 - **Guidance layer**: a `NextAction` card on the run page (approve the plan,
   retry a failed development run, fix the review findings, review and merge),
-  a `HelpTip` tooltip with a glossary, and a help panel (the docs, the
-  shortcuts and the glossary) in the top bar.
+  a `HelpTip` tooltip with a glossary, a help panel (the docs, the shortcuts and
+  the glossary) in the top bar, the term tips in the task composer and the run
+  summary, and an actionable empty state for the agent runs.
 
 ### Fixed
 

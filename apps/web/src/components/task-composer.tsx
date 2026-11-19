@@ -12,6 +12,7 @@ import { ApiError, createTask, startRun, transitionTask, updateTask, uploadTaskA
 import { useUnsavedChanges, useZodForm } from "@/lib/form";
 import { taskComposerSchema, type TaskComposerValues } from "@/lib/schemas";
 import { completeAcceptance, dependencyRefs, dorIssues, linesList, linesText, tagList, taskInput, type TaskComposerAction } from "@/components/task-composer-model";
+import { HelpTip } from "@/components/ui/help-tip";
 
 const blankAC = { given: "", when: "", then: "" };
 const priorities: { value: "low" | "med" | "high"; label: string }[] = [
@@ -250,7 +251,7 @@ export function TaskComposer({ orgID, projectID, tasks, task, onClose, onSaved }
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="task-section-number">2</span>
-                <h3 className="text-sm font-semibold">Acceptance criteria</h3>
+                <h3 className="text-sm font-semibold">Acceptance criteria <HelpTip term="acceptance" /></h3>
               </div>
               <span className="text-xs text-text-muted">{completeCount} complete</span>
             </div>
@@ -432,7 +433,7 @@ export function TaskComposer({ orgID, projectID, tasks, task, onClose, onSaved }
           </div>
 
           <div className="rounded-lg border border-border bg-bg-surface p-4">
-            <h3 className="text-sm font-semibold">Definition of Ready</h3>
+            <h3 className="text-sm font-semibold">Definition of Ready <HelpTip term="dor" /></h3>
             <ul className="mt-2 space-y-2 text-xs">
               <li className={title.trim() ? "text-status-success" : "text-text-muted"}>{title.trim() ? "✓" : "○"} Title</li>
               <li className={completeCount > 0 ? "text-status-success" : "text-text-muted"}>

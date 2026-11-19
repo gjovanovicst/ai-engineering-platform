@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -88,9 +90,18 @@ export default function AgentsPage() {
       ) : null}
 
       {runs.isSuccess && runs.data.data.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border bg-bg-surface p-8 text-center text-sm text-text-secondary">
-          No runs for this filter.
-        </p>
+        <div className="rounded-lg border border-dashed border-border bg-bg-surface p-8 text-center">
+          <p className="text-sm font-medium">No runs for this filter</p>
+          <p className="mt-1 text-xs text-text-secondary">
+            Every run starts from a task: pick one and start planning, or clear the filter to see the whole history.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+            <Link href="/projects" className="inline-flex h-8 items-center rounded-md bg-brand px-3 text-xs font-medium text-white hover:opacity-90">
+              Open the projects
+            </Link>
+            <Button variant="secondary" className="h-8 text-xs" onClick={() => setStatus("all")}>Clear the filter</Button>
+          </div>
+        </div>
       ) : null}
 
       {runs.isSuccess && runs.data.data.length > 0 ? (

@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { DiffViewer } from "@/components/diff-viewer";
 import { NextAction, type NextActionItem } from "@/components/next-action";
+import { HelpTip } from "@/components/ui/help-tip";
 import { Button } from "@/components/ui/button";
 import {
   ApiError,
@@ -300,7 +301,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
             <div className="run-summary-card"><span>Execution status</span><strong className="capitalize">{run.status.replaceAll("_", " ")}</strong><small>{events.length} live events received</small></div>
             <div className="run-summary-card"><span>Agent</span><strong>{run.agent_type || "Development"}</strong><small>{run.model || "Default model"}</small></div>
             <div className="run-summary-card"><span>Estimated / recorded cost</span><strong>${(usage.data?.totals.cost_usd ?? 0).toFixed(4)}</strong><small>{usage.data?.totals.input_tokens ?? 0} input tokens</small></div>
-            <div className="run-summary-card"><span>Review gate</span><strong>{approval ? "Needs your review" : run.status === "succeeded" ? "Ready" : "Tracked"}</strong><small>{approval ? "Human approval required" : "Changes remain auditable"}</small></div>
+            <div className="run-summary-card"><span>Review gate <HelpTip term="review" /></span><strong>{approval ? "Needs your review" : run.status === "succeeded" ? "Ready" : "Tracked"}</strong><small>{approval ? "Human approval required" : "Changes remain auditable"}</small></div>
           </section>
           {run.trace_id ? (
             <p className="mt-2 text-xs text-text-secondary">
