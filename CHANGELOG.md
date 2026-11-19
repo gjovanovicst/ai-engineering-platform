@@ -6,12 +6,12 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
-- **AI assistant (parts 1-2)**: the conversation store (migration 0083) and the
-  assistant service — the read tools (projects, tasks, runs), the write tools
-  (create task, retry, cancel) behind a preview + confirmation, the untrusted
-  tool-output wrapping, the per-user rate limit and the tests (the tool loop,
-  the prompt-injection wrapping, the limiter). The SSE endpoint and the web
-  panel follow.
+- **AI assistant (parts 1-3)**: the conversation store (migration 0083), the
+  assistant service (the read/write tools behind a preview + confirmation, the
+  untrusted tool-output wrapping, the per-user rate limit) and the endpoint —
+  `POST /orgs/{org}/assistant/messages` with the JSON answer or the SSE
+  `text`/`pending`/`done` events, plus the Anthropic adapter. The web panel
+  follows.
 
 - **Command palette**: `⌘K` (or `Ctrl+K`) opens a keyboard-first palette with
   the actions (projects, agents, search, settings, help), the projects, the
