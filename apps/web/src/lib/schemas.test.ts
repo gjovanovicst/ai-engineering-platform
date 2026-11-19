@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { commandSchema, taskComposerSchema, type TaskComposerValues } from "./schemas";
+import { commandSchema, componentEntrySchema, designTokenSchema, taskComposerSchema, type TaskComposerValues } from "./schemas";
 
 function composer(overrides: Partial<TaskComposerValues> = {}): TaskComposerValues {
   return {
@@ -45,5 +45,23 @@ describe("command schema", () => {
 
   it("rejects a command longer than 500 characters", () => {
     expect(commandSchema.safeParse({ command: "x".repeat(501) }).success).toBe(false);
+  });
+});
+
+describe("registry schemas", () => {
+  it("requires a component name and caps the purpose", () => {
+    const base = {
+      name: "Button", status: "approved", category: "form", purpose: "", rules: "",
+      framework: "", package: "", import_path: "", version: "", docs: "", example: "",
+    };
+    expect(componentEntrySchema.safeParse(base).success).toBe(true);
+    expect(componentEntrySchema.safeParse({ ...base, name: "  " }).success).toBe(false);
+    expect(componentEntrySchema.safeParse({ ...base, purpose: "x".repeat(501) }).success).toBe(false);
+  });
+
+  it("requires a token name and value", () => {
+    expect(designTokenSchema.safeParse({ name: "color-brand", value: "#2563eb", category: "color" }).success).toBe(true);
+    expect(designTokenSchema.safeParse({ name: "", value: "#2563eb", category: "color" }).success).toBe(false);
+    expect(designTokenSchema.safeParse({ name: "a", value: "", category: "color" }).success).toBe(false);
   });
 });

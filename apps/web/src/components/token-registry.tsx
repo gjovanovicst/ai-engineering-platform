@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
+import { useZodForm } from "@/lib/form";
+import { designTokenSchema, tokenCategories, type DesignTokenValues } from "@/lib/schemas";
 import {
   ApiError,
   exportDesignTokens,
@@ -17,12 +19,19 @@ import {
   updateDesignToken,
 } from "@/lib/api";
 
-const categories = ["color", "typography", "spacing", "radius", "layout", "other"];
+
 
 export function TokenRegistry({ orgID }: { orgID: string }) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", value: "", category: "color" });
   const [showForm, setShowForm] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useZodForm<DesignTokenValues>(designTokenSchema, {
+    defaultValues: { name: "", value: "", category: "color" },
+  });
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
@@ -38,9 +47,9 @@ export function TokenRegistry({ orgID }: { orgID: string }) {
   });
 
   const create = useMutation({
-    mutationFn: () => createDesignToken(orgID, form),
+    mutationFn: (input: DesignTokenValues) => createDesignToken(orgID, input),
     onSuccess: () => {
-      setForm({ name: "", value: "", category: "color" });
+      reset({ name: "", value: "", category: "color" });
       setShowForm(false);
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["design-tokens", orgID] });
@@ -101,6 +110,7 @@ export function TokenRegistry({ orgID }: { orgID: string }) {
                 </span>
                 <Input
                   aria-label={`${token.name} value`}
+                  placeholder="value"
                   value={edits[token.id] ?? token.value}
                   onChange={(e) => setEdits({ ...edits, [token.id]: e.target.value })}
                   className="max-w-[200px] font-mono text-xs"
@@ -143,25 +153,21 @@ export function TokenRegistry({ orgID }: { orgID: string }) {
       <form
         id="token-form"
         className="space-y-4 p-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          create.mutate();
-        }}
+        onSubmit={handleSubmit((values) => create.mutate(values))}
       >
-        <Field label="Name" htmlFor="token-name">
-          <Input id="token-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        <Field label="Name" htmlFor="token-name" error={errors.name?.message}>
+          <Input id="token-name" aria-invalid={Boolean(errors.name)} {...register("name")} placeholder="e.g. color-brand" />
         </Field>
-        <Field label="Value" htmlFor="token-value">
-          <Input id="token-value" required value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} />
+        <Field label="Value" htmlFor="token-value" error={errors.value?.message}>
+          <Input id="token-value" aria-invalid={Boolean(errors.value)} {...register("value")} placeholder="e.g. #2563eb or 37 99 235" />
         </Field>
         <Field label="Category" htmlFor="token-category">
           <select
             id="token-category"
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            {...register("category")}
             className="h-9 w-full rounded-md border border-border bg-bg-surface px-3 text-sm"
           >
-            {categories.map((category) => (
+            {tokenCategories.map((category) => (
               <option key={category} value={category}>
                 {category}
               </option>

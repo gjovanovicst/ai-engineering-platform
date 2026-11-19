@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
+import { useZodForm } from "@/lib/form";
+import { componentCategories, componentEntrySchema, componentStatuses, type ComponentEntryValues } from "@/lib/schemas";
 import {
   ApiError,
   importComponents,
@@ -17,26 +19,29 @@ import {
   updateComponentEntry,
 } from "@/lib/api";
 
-const statuses = ["approved", "draft", "published", "deprecated", "forbidden"];
-const categories = ["layout", "navigation", "data", "form", "feedback", "overlay", "typography", "other"];
-const emptyForm = {
+const emptyForm: ComponentEntryValues = {
   name: "", purpose: "", rules: "", status: "approved", category: "other",
   framework: "", package: "", import_path: "", version: "", docs: "", example: "",
 };
 
 export function ComponentRegistry({ orgID }: { orgID: string }) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState(emptyForm);
-  const [drafts, setDrafts] = useState<Record<string, typeof emptyForm>>({});
+  const [drafts, setDrafts] = useState<Record<string, ComponentEntryValues>>({});
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useZodForm<ComponentEntryValues>(componentEntrySchema, { defaultValues: emptyForm });
 
   const entries = useQuery({ queryKey: ["component-entries", orgID], queryFn: () => listComponentEntries(orgID) });
 
   const create = useMutation({
-    mutationFn: () => createComponentEntry(orgID, form),
+    mutationFn: (input: ComponentEntryValues) => createComponentEntry(orgID, input),
     onSuccess: () => {
-      setForm(emptyForm);
+      reset(emptyForm);
       setShowForm(false);
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["component-entries", orgID] });
@@ -45,7 +50,7 @@ export function ComponentRegistry({ orgID }: { orgID: string }) {
   });
 
   const update = useMutation({
-    mutationFn: (input: { id: string } & typeof emptyForm) =>
+    mutationFn: (input: { id: string } & ComponentEntryValues) =>
       updateComponentEntry(orgID, input.id, input),
     onSuccess: () => {
       setError(null);
@@ -94,9 +99,11 @@ export function ComponentRegistry({ orgID }: { orgID: string }) {
       <ul className="divide-y divide-border">
         {entries.isSuccess
           ? entries.data.data.map((entry) => {
-              const draft = drafts[entry.id] ?? {
-                name: entry.name, purpose: entry.purpose, rules: entry.rules, status: entry.status,
-                category: entry.category, framework: entry.framework, package: entry.package,
+              const draft: ComponentEntryValues = drafts[entry.id] ?? {
+                name: entry.name, purpose: entry.purpose, rules: entry.rules,
+                status: entry.status as ComponentEntryValues["status"],
+                category: entry.category as ComponentEntryValues["category"],
+                framework: entry.framework, package: entry.package,
                 import_path: entry.import_path, version: entry.version, docs: entry.docs, example: entry.example,
               };
               return (
@@ -109,10 +116,10 @@ export function ComponentRegistry({ orgID }: { orgID: string }) {
                     <select
                       aria-label={`${entry.name} status`}
                       value={draft.status}
-                      onChange={(e) => setDrafts({ ...drafts, [entry.id]: { ...draft, status: e.target.value } })}
+                      onChange={(e) => setDrafts({ ...drafts, [entry.id]: { ...draft, status: e.target.value as ComponentEntryValues["status"] } })}
                       className="h-8 rounded-md border border-border bg-bg-surface px-2 text-xs"
                     >
-                      {statuses.map((status) => (
+                      {componentStatuses.map((status) => (
                         <option key={status} value={status}>
                           {status}
                         </option>
@@ -197,46 +204,60 @@ export function ComponentRegistry({ orgID }: { orgID: string }) {
       <form
         id="component-form"
         className="grid gap-3 p-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          create.mutate();
-        }}
+        onSubmit={handleSubmit((values) => create.mutate(values))}
       >
-        <Field label="Name" htmlFor="component-name">
-          <Input id="component-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        <Field label="Name" htmlFor="component-name" error={errors.name?.message}>
+          <Input id="component-name" aria-invalid={Boolean(errors.name)} {...register("name")} placeholder="e.g. Button" />
         </Field>
         <Field label="Status" htmlFor="component-status">
           <select
             id="component-status"
-            value={form.status}
-            onChange={(e) => setForm({ ...form, status: e.target.value })}
+            {...register("status")}
             className="h-9 w-full rounded-md border border-border bg-bg-surface px-3 text-sm"
           >
-            {statuses.map((status) => (
+            {componentStatuses.map((status) => (
               <option key={status} value={status}>
                 {status}
               </option>
             ))}
           </select>
         </Field>
-        <Field label="Purpose" htmlFor="component-purpose">
-          <Input id="component-purpose" value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} />
+        <Field label="Purpose" htmlFor="component-purpose" error={errors.purpose?.message}>
+          <Input id="component-purpose" aria-invalid={Boolean(errors.purpose)} {...register("purpose")} placeholder="What the component is for and when to use it" />
         </Field>
-        <Field label="Rules" htmlFor="component-rules">
-          <Input id="component-rules" value={form.rules} onChange={(e) => setForm({ ...form, rules: e.target.value })} />
+        <Field label="Rules" htmlFor="component-rules" error={errors.rules?.message}>
+          <Input id="component-rules" aria-invalid={Boolean(errors.rules)} {...register("rules")} placeholder="States, a11y rules and do/don't" />
         </Field>
         <div className="grid gap-2 md:col-span-2 md:grid-cols-3">
-          <select aria-label="Category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="h-9 rounded-md border border-border bg-bg-surface px-2 text-sm">
-            {categories.map((category) => <option key={category} value={category}>{category}</option>)}
-          </select>
-          <Input aria-label="Framework" placeholder="framework (react, vue…)" value={form.framework} onChange={(e) => setForm({ ...form, framework: e.target.value })} />
-          <Input aria-label="Version" placeholder="version" value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} />
-          <Input aria-label="Package" placeholder="package" value={form.package} onChange={(e) => setForm({ ...form, package: e.target.value })} />
-          <Input aria-label="Import path" placeholder="import path" value={form.import_path} onChange={(e) => setForm({ ...form, import_path: e.target.value })} />
-          <Input aria-label="Docs" placeholder="docs URL" value={form.docs} onChange={(e) => setForm({ ...form, docs: e.target.value })} />
+          <Field label="Category" htmlFor="component-category">
+            <select id="component-category" {...register("category")} className="h-9 w-full rounded-md border border-border bg-bg-surface px-2 text-sm">
+              {componentCategories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Framework" htmlFor="component-framework" error={errors.framework?.message}>
+            <Input id="component-framework" aria-invalid={Boolean(errors.framework)} {...register("framework")} placeholder="react, vue…" />
+          </Field>
+          <Field label="Version" htmlFor="component-version" error={errors.version?.message}>
+            <Input id="component-version" aria-invalid={Boolean(errors.version)} {...register("version")} placeholder="1.2.0" />
+          </Field>
+          <Field label="Package" htmlFor="component-package" error={errors.package?.message}>
+            <Input id="component-package" aria-invalid={Boolean(errors.package)} {...register("package")} placeholder="@acme/ui" />
+          </Field>
+          <Field label="Import path" htmlFor="component-import" error={errors.import_path?.message}>
+            <Input id="component-import" aria-invalid={Boolean(errors.import_path)} {...register("import_path")} placeholder="@acme/ui/button" />
+          </Field>
+          <Field label="Docs" htmlFor="component-docs" error={errors.docs?.message}>
+            <Input id="component-docs" aria-invalid={Boolean(errors.docs)} {...register("docs")} placeholder="https://docs.example.com/button" />
+          </Field>
         </div>
         <div className="md:col-span-2">
-          <Input aria-label="Example" placeholder="example usage" value={form.example} onChange={(e) => setForm({ ...form, example: e.target.value })} />
+          <Field label="Example usage" htmlFor="component-example" error={errors.example?.message}>
+            <Input id="component-example" aria-invalid={Boolean(errors.example)} {...register("example")} placeholder={'<Button variant="primary">Save</Button>'} />
+          </Field>
         </div>
       </form>
       </SidePanel>

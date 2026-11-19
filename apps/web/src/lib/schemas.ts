@@ -33,3 +33,33 @@ export const taskComposerSchema = z.object({
 });
 
 export type TaskComposerValues = z.infer<typeof taskComposerSchema>;
+
+export const componentStatuses = ["approved", "draft", "published", "deprecated", "forbidden"] as const;
+export const componentCategories = ["layout", "navigation", "data", "form", "feedback", "overlay", "typography", "other"] as const;
+export const tokenCategories = ["color", "typography", "spacing", "radius", "layout", "other"] as const;
+
+/** The component registry entry (the add/edit form). */
+export const componentEntrySchema = z.object({
+  name: z.string().trim().min(1, "A name is required.").max(80, "At most 80 characters."),
+  status: z.enum(componentStatuses),
+  category: z.enum(componentCategories),
+  purpose: z.string().max(500, "At most 500 characters."),
+  rules: z.string().max(2000, "At most 2000 characters."),
+  framework: z.string().max(40, "At most 40 characters."),
+  package: z.string().max(200, "At most 200 characters."),
+  import_path: z.string().max(300, "At most 300 characters."),
+  version: z.string().max(40, "At most 40 characters."),
+  docs: z.string().max(500, "At most 500 characters."),
+  example: z.string().max(2000, "At most 2000 characters."),
+});
+
+export type ComponentEntryValues = z.infer<typeof componentEntrySchema>;
+
+/** A design token (the add form). */
+export const designTokenSchema = z.object({
+  name: z.string().trim().min(1, "A name is required.").max(80, "At most 80 characters."),
+  value: z.string().trim().min(1, "A value is required.").max(200, "At most 200 characters."),
+  category: z.enum(tokenCategories),
+});
+
+export type DesignTokenValues = z.infer<typeof designTokenSchema>;
