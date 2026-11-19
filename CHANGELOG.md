@@ -4,6 +4,13 @@ All notable changes to this project. Dates are 2026.
 
 ## Unreleased
 
+### Added
+
+- **Guidance layer**: a `NextAction` card on the run page (approve the plan,
+  retry a failed development run, fix the review findings, review and merge),
+  a `HelpTip` tooltip with a glossary, and a help panel (the docs, the
+  shortcuts and the glossary) in the top bar.
+
 ### Fixed
 
 - The auth forms (login, register, invite accept, search), the create project

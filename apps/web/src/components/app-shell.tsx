@@ -9,6 +9,7 @@ import { decodeClaims, type Claims } from "@/lib/auth";
 import { ensureSession, listNotifications, logout, logoutAll, markNotificationsRead } from "@/lib/api";
 import { getAccessToken } from "@/lib/session";
 import { BrandMark } from "@/components/brand-mark";
+import { HelpPanel } from "@/components/help-panel";
 
 type NavItem = { label: string; href: string; icon: string; group: string; developerOnly?: boolean };
 
@@ -55,6 +56,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [claims, setClaims] = useState<Claims | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -178,6 +180,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
                 </ul>
               </div>}
             </div>
+            <button type="button" onClick={() => setHelpOpen(true)} aria-label="Help" className="icon-button"><span aria-hidden="true">?</span></button>
             <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Light theme" : "Dark theme"} className="icon-button"><Icon name={theme === "dark" ? "sun" : "moon"} size={18} /></button>
             <span className="topbar-divider" />
             <div className="popover-anchor">
@@ -194,6 +197,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
               </div>}
             </div>
           </div>
+          {helpOpen ? <HelpPanel onClose={() => setHelpOpen(false)} /> : null}
         </header>
         <main id="main-content" tabIndex={-1} className="app-content">{children}</main>
       </div>

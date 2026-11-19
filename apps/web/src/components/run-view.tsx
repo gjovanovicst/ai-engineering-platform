@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { DiffViewer } from "@/components/diff-viewer";
+import { NextAction, type NextActionItem } from "@/components/next-action";
 import { Button } from "@/components/ui/button";
 import {
   ApiError,
@@ -235,6 +236,30 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     }
   }
 
+  const nextActions: NextActionItem[] = [];
+  let nextTitle = "";
+  let nextDescription = "";
+  if (run && (approval || run.status === "awaiting_approval")) {
+    nextTitle = "Approve the plan";
+    nextDescription = "The planning run is waiting for a human decision. Approving starts development; rejecting blocks the task.";
+    nextActions.push({ label: "Approve plan", onClick: () => void decide("approved") });
+    nextActions.push({ label: "Reject plan", variant: "secondary", onClick: () => setShowReject(true) });
+  } else if (run?.status === "failed") {
+    if (run.agent_type === "review") {
+      nextTitle = "Fix the review findings";
+      nextDescription = "The review run found blockers. A fix run addresses them and re-runs the gates.";
+      nextActions.push({ label: "Fix review findings", onClick: () => void fixReviewFindings() });
+    } else {
+      nextTitle = "Retry the development run";
+      nextDescription = "The run failed. Retrying re-queues it and puts the task back in progress.";
+      nextActions.push({ label: "Retry development", onClick: () => void retryDevelopment() });
+    }
+  } else if (run?.status === "succeeded") {
+    nextTitle = "The gates passed — review and merge";
+    nextDescription = "Open the project's pull requests to review the diff. A human merges; the platform never merges for you.";
+    nextActions.push({ label: "Go to the project", onClick: () => router.push(`/projects/${projectId}`) });
+  }
+
   return (
     <div>
       <nav aria-label="Breadcrumb" className="mb-1 text-xs text-text-muted">
@@ -264,6 +289,10 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
           {run?.status ?? "queued"}
         </span>
       </header>
+
+      {nextActions.length > 0 ? (
+        <NextAction title={nextTitle} description={nextDescription} actions={nextActions} />
+      ) : null}
 
       {run ? (
         <>
