@@ -5,15 +5,12 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import {
   ApiError,
   downloadTaskAttachment,
   listRunChecks,
   listTaskAttachments,
   listTaskRuns,
-  updateTask,
   uploadTaskAttachment,
   type Task,
 } from "@/lib/api";
@@ -43,20 +40,15 @@ export function TaskDrawer({
   projectID,
   task,
   onClose,
+  onEdit,
 }: {
   orgID: string;
   projectID: string;
   task: Task;
   onClose: () => void;
+  onEdit: (task: Task) => void;
 }) {
   const queryClient = useQueryClient();
-  const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({
-    title: task.title,
-    description: task.description,
-    priority: task.priority,
-  });
-  const [error, setError] = useState<string | null>(null);
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const attachments = useQuery({
@@ -71,16 +63,6 @@ export function TaskDrawer({
       queryClient.invalidateQueries({ queryKey: ["task-attachments", orgID, projectID, task.id] });
     },
     onError: (err) => setAttachmentError(err instanceof ApiError ? err.message : "Could not upload the file"),
-  });
-
-  const save = useMutation({
-    mutationFn: () => updateTask(orgID, projectID, task.id, form),
-    onSuccess: () => {
-      setEditing(false);
-      setError(null);
-      queryClient.invalidateQueries({ queryKey: ["tasks", orgID, projectID] });
-    },
-    onError: (err) => setError(err instanceof ApiError ? err.message : "Could not save the task"),
   });
 
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -203,57 +185,11 @@ export function TaskDrawer({
           <section>
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-xs font-semibold uppercase text-text-muted">Details</h3>
-              {!editing ? (
-                <Button variant="secondary" className="h-7 px-2 text-xs" onClick={() => setEditing(true)}>
-                  Edit
-                </Button>
-              ) : null}
+              <Button variant="secondary" className="h-7 px-2 text-xs" onClick={() => onEdit(task)}>
+                Edit
+              </Button>
             </div>
-            {editing ? (
-              <div className="space-y-2">
-                <Field label="Title" htmlFor="edit-title">
-                  <Input id="edit-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-                </Field>
-                <Field label="Description" htmlFor="edit-description">
-                  <textarea
-                    id="edit-description"
-                    rows={3}
-                    value={form.description}
-                    onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    className="w-full rounded-md border border-border bg-bg-surface px-3 py-2 text-sm"
-                  />
-                </Field>
-                <Field label="Priority" htmlFor="edit-priority">
-                  <select
-                    id="edit-priority"
-                    value={form.priority}
-                    onChange={(e) => setForm({ ...form, priority: e.target.value as "low" | "med" | "high" })}
-                    className="h-9 w-full rounded-md border border-border bg-bg-surface px-3 text-sm"
-                  >
-                    {["low", "med", "high"].map((p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <div className="flex gap-2">
-                  <Button loading={save.isPending} onClick={() => save.mutate()}>
-                    Save
-                  </Button>
-                  <Button variant="ghost" onClick={() => setEditing(false)}>
-                    Cancel
-                  </Button>
-                </div>
-                {error ? (
-                  <p role="alert" className="text-xs text-status-danger">
-                    {error}
-                  </p>
-                ) : null}
-              </div>
-            ) : (
-              <p className="text-xs text-text-secondary">{task.description || "No description."}</p>
-            )}
+            <p className="text-xs text-text-secondary">{task.description || "No description."}</p>
           </section>
 
           <section>

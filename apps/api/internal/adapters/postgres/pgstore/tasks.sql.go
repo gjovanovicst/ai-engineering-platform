@@ -243,7 +243,8 @@ func (q *Queries) NextTaskRef(ctx context.Context, arg NextTaskRefParams) (int64
 
 const updateTask = `-- name: UpdateTask :one
 UPDATE tasks
-SET title = $3, description = $4, priority = $5, assignee_id = $6, tags = $7
+SET title = $3, description = $4, priority = $5, assignee_id = $6, tags = $7,
+    acceptance = $8, depends_on = $9
 WHERE id = $1 AND org_id = $2 AND deleted_at IS NULL
 RETURNING id, org_id, project_id, ref, title, description, acceptance, status, priority, tags, assignee_id, parent_id, blocked_reason, created_by, ready_at, done_at, deleted_at, created_at, updated_at, depends_on
 `
@@ -256,6 +257,8 @@ type UpdateTaskParams struct {
 	Priority    string
 	AssigneeID  pgtype.UUID
 	Tags        []string
+	Acceptance  []byte
+	DependsOn   []pgtype.UUID
 }
 
 func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, error) {
@@ -267,6 +270,8 @@ func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, e
 		arg.Priority,
 		arg.AssigneeID,
 		arg.Tags,
+		arg.Acceptance,
+		arg.DependsOn,
 	)
 	var i Task
 	err := row.Scan(

@@ -3,18 +3,26 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+const panelWidths = {
+  md: "max-w-[640px]",
+  lg: "max-w-[960px]",
+  xl: "max-w-[1200px]",
+} as const;
+
 export function SidePanel({
   title,
   description,
   onClose,
   children,
   footer,
+  size = "md",
 }: {
   title: string;
   description?: string;
   onClose: () => void;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  size?: keyof typeof panelWidths;
 }) {
   const [mounted, setMounted] = useState(false);
 
@@ -50,7 +58,7 @@ export function SidePanel({
         role="dialog"
         aria-modal="true"
         aria-labelledby="side-panel-title"
-        className="relative flex h-full w-full max-w-[640px] flex-col border-l border-border bg-bg-surface shadow-2xl"
+        className={`relative flex h-full w-full ${panelWidths[size]} flex-col border-l border-border bg-bg-surface shadow-2xl`}
       >
         <header className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
           <div>

@@ -35,7 +35,8 @@ RETURNING *;
 
 -- name: UpdateTask :one
 UPDATE tasks
-SET title = $3, description = $4, priority = $5, assignee_id = $6, tags = $7
+SET title = $3, description = $4, priority = $5, assignee_id = $6, tags = $7,
+    acceptance = $8, depends_on = $9
 WHERE id = $1 AND org_id = $2 AND deleted_at IS NULL
 RETURNING *;
 

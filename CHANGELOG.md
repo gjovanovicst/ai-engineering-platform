@@ -2,6 +2,16 @@
 
 All notable changes to this project. Dates are 2026.
 
+## Unreleased
+
+### Added
+
+- **Task composer 2.0**: a full window for creating and editing a task — the
+  acceptance criteria builder (multiple given/when/then rows), dependency
+  picker, attachments, the live Definition of Ready, a card preview and three
+  actions (Save draft, Create & ready, Create & start planning). The task
+  update API accepts the acceptance criteria and dependencies.
+
 ## 0.1.1 — 2026-11-18
 
 ### Security

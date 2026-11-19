@@ -210,12 +210,21 @@ func timePtr(t *time.Time) pgtype.Timestamptz {
 
 // Update edits the mutable task fields.
 func (s *TaskStore) Update(ctx context.Context, task domain.Task) (domain.Task, error) {
+	acceptance, err := json.Marshal(task.Acceptance)
+	if err != nil {
+		return domain.Task{}, err
+	}
+	depends := make([]pgtype.UUID, 0, len(task.DependsOn))
+	for _, id := range task.DependsOn {
+		depends = append(depends, toUUID(id))
+	}
 	var out domain.Task
-	err := db.WithOrg(ctx, s.pool, task.OrgID, func(ctx context.Context, tx pgx.Tx) error {
+	err = db.WithOrg(ctx, s.pool, task.OrgID, func(ctx context.Context, tx pgx.Tx) error {
 		row, err := s.q.WithTx(tx).UpdateTask(ctx, pgstore.UpdateTaskParams{
 			ID: toUUID(task.ID), OrgID: toUUID(task.OrgID), Title: task.Title,
 			Description: task.Description, Priority: string(task.Priority),
 			AssigneeID: optionalUUID(task.AssigneeID), Tags: task.Tags,
+			Acceptance: acceptance, DependsOn: depends,
 		})
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {

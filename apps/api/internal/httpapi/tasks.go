@@ -282,14 +282,31 @@ func (h *taskHandlers) update(w http.ResponseWriter, r *http.Request) {
 		Priority    domain.Priority `json:"priority"`
 		AssigneeID  string          `json:"assignee_id"`
 		Tags        []string        `json:"tags"`
+		Acceptance  *[]struct {
+			Given string `json:"given"`
+			When  string `json:"when"`
+			Then  string `json:"then"`
+		} `json:"acceptance"`
+		DependsOn *[]string `json:"depends_on"`
 	}
 	if !decode(w, r, 1<<20, &req) {
 		return
+	}
+	var acceptance []domain.AcceptanceCriterion
+	if req.Acceptance != nil {
+		for _, a := range *req.Acceptance {
+			acceptance = append(acceptance, domain.AcceptanceCriterion{Given: a.Given, When: a.When, Then: a.Then})
+		}
+	}
+	var dependsOn []string
+	if req.DependsOn != nil {
+		dependsOn = *req.DependsOn
 	}
 	task, err := h.svc.Update(r.Context(), tasks.UpdateInput{
 		OrgID: claims.OrgID, ProjectID: r.PathValue("project"), IDOrRef: r.PathValue("task"),
 		Title: req.Title, Description: req.Description, Priority: req.Priority,
 		AssigneeID: req.AssigneeID, Tags: req.Tags,
+		Acceptance: acceptance, DependsOn: dependsOn,
 	})
 	if err != nil {
 		switch {
