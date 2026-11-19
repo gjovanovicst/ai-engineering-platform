@@ -5,14 +5,18 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { ApiError, deleteOrg, getOrg, logout, renameOrg, setOrgRegion } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { workspaceDeleteSchema, workspaceNameSchema, type WorkspaceDeleteValues, type WorkspaceNameValues } from "@/lib/schemas";
 
 export function WorkspacePanel({ orgID }: { orgID: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const org = useQuery({ queryKey: ["org", orgID], queryFn: () => getOrg(orgID) });
-  const [name, setName] = useState("");
-  const [confirmSlug, setConfirmSlug] = useState("");
+  const nameForm = useZodForm<WorkspaceNameValues>(workspaceNameSchema, { defaultValues: { name: "" } });
+  const deleteForm = useZodForm<WorkspaceDeleteValues>(workspaceDeleteSchema, { defaultValues: { confirmSlug: "" } });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [region, setRegion] = useState("eu-central");
@@ -20,23 +24,23 @@ export function WorkspacePanel({ orgID }: { orgID: string }) {
 
   useEffect(() => {
     if (org.data) {
-      setName(org.data.name);
+      nameForm.reset({ name: org.data.name });
       setRegion(org.data.region ?? "eu-central");
     }
   }, [org.data]);
 
-  const save = async () => {
+  const save = nameForm.handleSubmit(async (values) => {
     setBusy(true);
     setError(null);
     try {
-      await renameOrg(orgID, name);
+      await renameOrg(orgID, values.name);
       await queryClient.invalidateQueries({ queryKey: ["org", orgID] });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not rename the workspace");
     } finally {
       setBusy(false);
     }
-  };
+  });
 
   const saveRegion = async () => {
     setRegionNote(null);
@@ -49,18 +53,18 @@ export function WorkspacePanel({ orgID }: { orgID: string }) {
     }
   };
 
-  const remove = async () => {
+  const remove = deleteForm.handleSubmit(async (values) => {
     setBusy(true);
     setError(null);
     try {
-      await deleteOrg(orgID, confirmSlug);
+      await deleteOrg(orgID, values.confirmSlug);
       await logout();
       router.replace("/login");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not delete the workspace");
       setBusy(false);
     }
-  };
+  });
 
   if (org.isPending) return <p className="text-sm text-text-muted">Loading workspace…</p>;
   if (org.isError || !org.data) return <p role="alert" className="text-sm text-status-danger">Could not load the workspace.</p>;
@@ -72,16 +76,18 @@ export function WorkspacePanel({ orgID }: { orgID: string }) {
         <p className="mt-1 text-xs text-text-secondary">
           Slug <span className="font-mono">{org.data.slug}</span> is permanent.
         </p>
-        <div className="mt-3 flex flex-wrap items-end gap-2">
-          <label className="text-xs text-text-muted" htmlFor="org-name">Name</label>
-          <input
-            id="org-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="h-9 min-w-[240px] flex-1 rounded-md border border-border bg-bg-surface px-3 text-sm"
-          />
-          <Button loading={busy} onClick={save}>Save</Button>
-        </div>
+        <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={save}>
+          <Field label="Name" htmlFor="org-name" error={nameForm.formState.errors.name?.message}>
+            <Input
+              id="org-name"
+              aria-invalid={Boolean(nameForm.formState.errors.name)}
+              {...nameForm.register("name")}
+              placeholder="Acme Engineering"
+              className="h-9 min-w-[240px] flex-1"
+            />
+          </Field>
+          <Button type="submit" loading={busy}>Save</Button>
+        </form>
       </section>
 
       <section className="rounded-lg border border-border bg-bg-surface p-4">
@@ -107,15 +113,18 @@ export function WorkspacePanel({ orgID }: { orgID: string }) {
         <p className="mt-1 text-xs text-text-secondary">
           Removes every project, task and run. Type the slug <span className="font-mono">{org.data.slug}</span> to confirm.
         </p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <input
-            aria-label="Confirm slug"
-            value={confirmSlug}
-            onChange={(e) => setConfirmSlug(e.target.value)}
-            className="h-9 min-w-[240px] flex-1 rounded-md border border-border bg-bg-surface px-3 text-sm"
-          />
-          <Button variant="danger" loading={busy} onClick={remove}>Delete</Button>
-        </div>
+        <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={remove}>
+          <Field label="Confirm slug" htmlFor="confirm-slug" error={deleteForm.formState.errors.confirmSlug?.message}>
+            <Input
+              id="confirm-slug"
+              aria-invalid={Boolean(deleteForm.formState.errors.confirmSlug)}
+              {...deleteForm.register("confirmSlug")}
+              placeholder={org.data.slug}
+              className="h-9 min-w-[240px]"
+            />
+          </Field>
+          <Button type="submit" variant="danger" loading={busy} className="mt-5">Delete</Button>
+        </form>
       </section>
 
       {error ? <p role="alert" className="text-sm text-status-danger">{error}</p> : null}

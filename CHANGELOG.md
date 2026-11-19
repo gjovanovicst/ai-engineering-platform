@@ -11,8 +11,8 @@ All notable changes to this project. Dates are 2026.
   environments) and the access panels (invites, API keys, rules) use the zod
   validation: inline field errors, the `aria-invalid` danger border and the
   server error at the form level; so do the agent plugin, design standard,
-  preview, incident, SCIM token and GitHub App installation forms (parts 1-3c
-  of the forms consistency sweep #49).
+  preview, incident, SCIM token, GitHub App installation, backup request, SSO,
+  workspace and BYOK forms (parts 1-3c of the forms consistency sweep #49).
 
 ### Added
 

@@ -222,3 +222,34 @@ export const githubAppSchema = z.object({
     .refine((value) => Number(value) > 0, "A positive installation id."),
 });
 export type GitHubAppValues = z.infer<typeof githubAppSchema>;
+
+export const restoreSchema = z.object({
+  target: z.string().min(1, "Choose a target time to restore to."),
+});
+export type RestoreValues = z.infer<typeof restoreSchema>;
+
+export const ssoSchema = z.object({
+  entity_id: z.string().trim().max(300, "At most 300 characters."),
+  metadata_url: z.string().trim().max(300, "At most 300 characters."),
+  sso_url: z.string().trim().max(300, "At most 300 characters."),
+  certificate_pem: z.string().max(20000, "At most 20000 characters."),
+  enabled: z.boolean(),
+});
+export type SSOValues = z.infer<typeof ssoSchema>;
+
+export const workspaceNameSchema = z.object({
+  name: z.string().trim().min(1, "A name is required.").max(80, "At most 80 characters."),
+});
+export type WorkspaceNameValues = z.infer<typeof workspaceNameSchema>;
+
+export const workspaceDeleteSchema = z.object({
+  confirmSlug: z.string().trim().min(1, "Type the slug to confirm."),
+});
+export type WorkspaceDeleteValues = z.infer<typeof workspaceDeleteSchema>;
+
+export const byokSchema = z.object({
+  kmsURL: z.string().trim().min(1, "A KMS URL is required.").max(300, "At most 300 characters."),
+  keyID: z.string().trim().min(1, "A key id is required.").max(200, "At most 200 characters."),
+  token: z.string().max(500, "At most 500 characters."),
+});
+export type ByokValues = z.infer<typeof byokSchema>;
