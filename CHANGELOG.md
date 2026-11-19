@@ -10,8 +10,9 @@ All notable changes to this project. Dates are 2026.
   assistant service (the read/write tools behind a preview + confirmation, the
   untrusted tool-output wrapping, the per-user rate limit) and the endpoint —
   `POST /orgs/{org}/assistant/messages` with the JSON answer or the SSE
-  `text`/`pending`/`done` events, plus the Anthropic adapter. The web panel
-  follows.
+  `text`/`pending`/`done` events, the Anthropic adapter and the web side panel
+  (the page context, the streamed answer, the tool preview and the confirmation
+  before any write).
 
 - **Command palette**: `⌘K` (or `Ctrl+K`) opens a keyboard-first palette with
   the actions (projects, agents, search, settings, help), the projects, the
