@@ -10,6 +10,7 @@ import (
 
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/assistant"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/auth"
+	"github.com/gjovanovicst/ai-engineering-platform/internal/domain"
 )
 
 type mockAssistant struct {
@@ -19,6 +20,14 @@ type mockAssistant struct {
 
 func (m *mockAssistant) Send(context.Context, assistant.SendInput) (assistant.SendOutput, error) {
 	return m.out, m.err
+}
+
+func (m *mockAssistant) ListConversations(context.Context, string, string, int) ([]domain.AssistantConversation, error) {
+	return nil, nil
+}
+
+func (m *mockAssistant) ListMessages(context.Context, string, string, int) ([]domain.AssistantMessage, error) {
+	return nil, nil
 }
 
 func assistantReq(t *testing.T, body string, accept string) *http.Request {

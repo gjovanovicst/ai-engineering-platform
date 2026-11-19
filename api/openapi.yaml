@@ -418,6 +418,64 @@ paths:
       responses:
         "204": { description: Deleted }
 
+  /orgs/{org}/assistant/conversations:
+    get:
+      tags: [assistant]
+      summary: The user's recent assistant conversations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: org
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The conversations, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/AssistantConversation" }
+        "401":
+          description: Not signed in
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /orgs/{org}/assistant/conversations/{conversation}:
+    get:
+      tags: [assistant]
+      summary: One conversation's messages
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: org
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: conversation
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The messages in order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/AssistantMessage" }
+        "401":
+          description: Not signed in
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
   /orgs/{org}/assistant/messages:
     post:
       tags: [assistant]
@@ -2872,6 +2930,20 @@ components:
       type: string
       enum: [low, med, high]
 
+    AssistantConversation:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        updated_at: { type: string, format: date-time }
+    AssistantMessage:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        role: { type: string, enum: [user, assistant, tool] }
+        content: { type: string }
+        tool_name: { type: string }
+        created_at: { type: string, format: date-time }
     AssistantMessageInput:
       type: object
       required: [prompt]

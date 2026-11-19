@@ -111,6 +111,18 @@ export async function assistantStream(
     }
   }
 }
+
+export type AssistantConversation = { id: string; title: string; updated_at: string };
+export type AssistantHistoryMessage = { id: string; role: "user" | "assistant" | "tool"; content: string; tool_name: string; created_at: string };
+
+export function listAssistantConversations(orgID: string) {
+  return request<{ data: AssistantConversation[] }>(`/api/v1/orgs/${orgID}/assistant/conversations`);
+}
+
+export function listAssistantMessages(orgID: string, conversationID: string) {
+  return request<{ data: AssistantHistoryMessage[] }>(`/api/v1/orgs/${orgID}/assistant/conversations/${conversationID}`);
+}
+
 export type TokenPair = {
   access_token: string;
   refresh_token: string;

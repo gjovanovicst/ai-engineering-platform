@@ -25,6 +25,10 @@ func (s *memStore) CreateConversation(_ context.Context, c domain.AssistantConve
 	return c, nil
 }
 
+func (s *memStore) ListConversations(_ context.Context, _, _ string, _ int) ([]domain.AssistantConversation, error) {
+	return s.conversations, nil
+}
+
 func (s *memStore) ListMessages(_ context.Context, _, conversationID string, _ int) ([]domain.AssistantMessage, error) {
 	var out []domain.AssistantMessage
 	for _, m := range s.messages {
