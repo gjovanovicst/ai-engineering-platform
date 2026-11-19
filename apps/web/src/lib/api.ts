@@ -166,7 +166,15 @@ export function updateTask(
   orgID: string,
   projectID: string,
   taskID: string,
-  input: { title: string; description: string; priority: string; assignee_id?: string | null },
+  input: {
+    title: string;
+    description: string;
+    priority: string;
+    assignee_id?: string | null;
+    tags?: string[];
+    acceptance?: Acceptance[];
+    depends_on?: string[];
+  },
 ) {
   return request<Task>(`/api/v1/orgs/${orgID}/projects/${projectID}/tasks/${taskID}`, {
     method: "PATCH",

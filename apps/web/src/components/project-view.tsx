@@ -11,6 +11,7 @@ import { ProjectMembersPanel } from "@/components/project-members-panel";
 import { PullRequestsPanel } from "@/components/pull-requests-panel";
 import { RepoPanel } from "@/components/repo-panel";
 import { TaskBoard } from "@/components/task-board";
+import { TaskComposer } from "@/components/task-composer";
 import { TaskDrawer } from "@/components/task-drawer";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -19,7 +20,6 @@ import { SidePanel } from "@/components/ui/side-panel";
 import { Tabs } from "@/components/ui/tabs";
 import {
   ApiError,
-  createTask,
   ensureSession,
   getProject,
   getProjectPreflight,
@@ -68,10 +68,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
   const queryClient = useQueryClient();
   const [claims, setClaims] = useState<Claims | null | undefined>(undefined);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({
-    title: "", description: "", priority: "med" as "low" | "med" | "high",
-    tags: "", dependsOn: "", given: "", when: "", then: "", references: "",
-  });
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [checks, setChecks] = useState("");
   const [checksError, setChecksError] = useState<string | null>(null);
@@ -353,28 +350,6 @@ export function ProjectView({ projectId }: { projectId: string }) {
       setFormError(err instanceof ApiError ? err.message : "Could not start the run"),
   });
 
-  const create = useMutation({
-    mutationFn: () =>
-      createTask(claims!.org, projectId, {
-        title: form.title.trim(),
-        description: [form.description.trim(), form.references.trim() ? `\n\nDesign references\n${form.references.trim()}` : ""].filter(Boolean).join(""),
-        priority: form.priority,
-        tags: form.tags.split(",").map((tag) => tag.trim()).filter(Boolean),
-        depends_on: form.dependsOn.split(",").map((ref) => ref.trim()).filter(Boolean),
-        acceptance: form.given.trim() || form.when.trim() || form.then.trim()
-          ? [{ given: form.given.trim(), when: form.when.trim(), then: form.then.trim() }]
-          : [],
-      }),
-    onSuccess: () => {
-      setForm({ title: "", description: "", priority: "med", tags: "", dependsOn: "", given: "", when: "", then: "", references: "" });
-      setShowForm(false);
-      setFormError(null);
-      queryClient.invalidateQueries({ queryKey: ["tasks", claims?.org, projectId] });
-    },
-    onError: (err) =>
-      setFormError(err instanceof ApiError ? err.message : "Could not create the task"),
-  });
-
   const taskItems = tasks.data?.data ?? [];
   const readyTasks = taskItems.filter((task) => task.status === "ready").length;
   const activeTasks = taskItems.filter((task) => ["planning", "in_progress", "review"].includes(task.status)).length;
@@ -418,91 +393,41 @@ export function ProjectView({ projectId }: { projectId: string }) {
       </section>
       ) : null}
 
-      {showForm ? (
-        <SidePanel
-          title="New task"
-          description="A clear task gives the agent the context and proof it needs. You can create it as a draft and refine later."
+      {showForm && claims ? (
+        <TaskComposer
+          orgID={claims.org}
+          projectID={projectId}
+          projectName={project.data?.name ?? "Project"}
+          tasks={taskItems}
           onClose={() => setShowForm(false)}
-          footer={
-            <>
-              <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
-              <Button type="submit" form="new-task-form" loading={create.isPending}>Create task</Button>
-            </>
-          }
-        >
-        <form
-          id="new-task-form"
-          className="task-composer overflow-hidden bg-bg-surface"
-          onSubmit={(event) => {
-            event.preventDefault();
-            create.mutate();
+          onSaved={() => {
+            setShowForm(false);
+            setFormError(null);
+            queryClient.invalidateQueries({ queryKey: ["tasks", claims.org, projectId] });
           }}
-        >
-          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-brand">Task specification</p>
-              <h2 className="mt-1 text-lg font-semibold">Create a well-defined task</h2>
-              <p className="mt-1 max-w-2xl text-sm text-text-secondary">Give the developer or AI agent the context, expected outcome and references needed to deliver the right result.</p>
-            </div>
-            <span className="rounded-full bg-bg-hover px-3 py-1 text-xs text-text-muted">Draft → Ready for execution</span>
-          </div>
-          <div className="grid gap-6 p-5">
-            <div className="space-y-5">
-              <section className="space-y-3">
-                <div className="flex items-center gap-2"><span className="task-section-number">1</span><h3 className="text-sm font-semibold">What needs to be done?</h3></div>
-                <Field label="Task title" htmlFor="task-title">
-                  <Input id="task-title" required maxLength={200} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Add SSO login with Microsoft Entra ID" />
-                </Field>
-                <Field label="Description and context" htmlFor="task-description">
-                  <textarea id="task-description" rows={5} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Describe the problem, user story, current behaviour, expected behaviour, constraints and relevant technical context…" className="w-full rounded-md border border-border bg-bg-surface px-3 py-2.5 text-sm placeholder:text-text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20" />
-                </Field>
-              </section>
-              <section className="space-y-3 border-t border-border pt-5">
-                <div className="flex items-center gap-2"><span className="task-section-number">2</span><h3 className="text-sm font-semibold">Acceptance criteria</h3></div>
-                <p className="text-xs text-text-secondary">Describe what must be true for the task to be considered complete. You can leave these blank while drafting.</p>
-                <div className="grid gap-3 md:grid-cols-3">
-                  <Field label="Given — context" htmlFor="given"><textarea id="given" rows={3} value={form.given} onChange={(e) => setForm({ ...form, given: e.target.value })} placeholder="A user is on the login page" className="w-full rounded-md border border-border bg-bg-surface px-3 py-2 text-sm" /></Field>
-                  <Field label="When — action" htmlFor="when"><textarea id="when" rows={3} value={form.when} onChange={(e) => setForm({ ...form, when: e.target.value })} placeholder="They select Sign in with Microsoft" className="w-full rounded-md border border-border bg-bg-surface px-3 py-2 text-sm" /></Field>
-                  <Field label="Then — outcome" htmlFor="then"><textarea id="then" rows={3} value={form.then} onChange={(e) => setForm({ ...form, then: e.target.value })} placeholder="They are authenticated and redirected" className="w-full rounded-md border border-border bg-bg-surface px-3 py-2 text-sm" /></Field>
-                </div>
-              </section>
-              <section className="space-y-3 border-t border-border pt-5">
-                <div className="flex items-center gap-2"><span className="task-section-number">3</span><h3 className="text-sm font-semibold">Design references and technical context</h3></div>
-                <Field label="Figma, wireframe, screenshot or documentation links" htmlFor="task-references">
-                  <textarea id="task-references" rows={3} value={form.references} onChange={(e) => setForm({ ...form, references: e.target.value })} placeholder="Paste Figma URLs, wireframe links, API docs, related tickets or repository paths (one per line)…" className="w-full rounded-md border border-border bg-bg-surface px-3 py-2.5 text-sm placeholder:text-text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20" />
-                </Field>
-                <div className="flex items-start gap-2 rounded-lg border border-dashed border-border bg-bg-subtle p-3 text-xs text-text-secondary">
-                  <span className="mt-0.5">ⓘ</span><p>Use shareable Figma or file links for now. Direct file uploads and stored image/wireframe attachments require an attachment API and storage layer; the current backend does not expose one, so this form does not pretend local files were uploaded.</p>
-                </div>
-              </section>
-            </div>
-            <aside className="space-y-4 rounded-lg bg-bg-subtle p-4">
-              <div className="flex items-center gap-2"><span className="task-section-number">4</span><h3 className="text-sm font-semibold">Planning details</h3></div>
-              <Field label="Priority" htmlFor="task-priority">
-                <select id="task-priority" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value as "low" | "med" | "high" })} className="h-10 w-full rounded-md border border-border bg-bg-surface px-3 text-sm">
-                  <option value="low">Low</option><option value="med">Medium</option><option value="high">High</option>
-                </select>
-              </Field>
-              <Field label="Labels" htmlFor="task-tags">
-                <Input id="task-tags" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="frontend, auth, security" />
-                <span className="mt-1 block text-xs text-text-muted">Comma-separated labels</span>
-              </Field>
-              <Field label="Depends on" htmlFor="task-depends">
-                <Input id="task-depends" value={form.dependsOn} onChange={(e) => setForm({ ...form, dependsOn: e.target.value })} placeholder="T-12, T-15" />
-                <span className="mt-1 block text-xs text-text-muted">Task refs that must be done before this task can start</span>
-              </Field>
-              <div className="rounded-lg border border-border bg-bg-surface p-3">
-                <h4 className="text-xs font-semibold">Definition of a good task</h4>
-                <ul className="mt-2 space-y-2 text-xs text-text-secondary">
-                  <li>✓ Clear user or business outcome</li><li>✓ Useful implementation context</li><li>✓ Testable acceptance criteria</li><li>✓ Design references where relevant</li>
-                </ul>
-              </div>
-              <p className="text-xs leading-5 text-text-muted">A task can be created as a draft and refined later. Add enough detail for a teammate or AI agent to understand the intended outcome.</p>
-            </aside>
-          </div>
-          {formError ? <p role="alert" className="mx-5 mb-3 text-sm text-status-danger">{formError}</p> : null}
-        </form>
-        </SidePanel>
+        />
+      ) : null}
+
+      {editingTask && claims ? (
+        <TaskComposer
+          orgID={claims.org}
+          projectID={projectId}
+          projectName={project.data?.name ?? "Project"}
+          tasks={taskItems}
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onSaved={() => {
+            setEditingTask(null);
+            setSelectedTask(null);
+            queryClient.invalidateQueries({ queryKey: ["tasks", claims.org, projectId] });
+          }}
+        />
+      ) : null}
+
+      {formError ? (
+        <p role="alert" className="mb-3 rounded-lg border border-status-danger/30 bg-status-danger/10 p-3 text-sm text-status-danger">
+          {formError}
+        </p>
       ) : null}
 
       {tab === "overview" ? (<>
@@ -989,6 +914,10 @@ export function ProjectView({ projectId }: { projectId: string }) {
           projectID={projectId}
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
+          onEdit={(task) => {
+            setSelectedTask(null);
+            setEditingTask(task);
+          }}
         />
       ) : null}
       {tab === "delivery" && claims ? (

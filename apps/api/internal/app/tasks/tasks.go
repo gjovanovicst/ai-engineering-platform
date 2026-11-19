@@ -169,6 +169,8 @@ type UpdateInput struct {
 	Priority    domain.Priority
 	AssigneeID  string
 	Tags        []string
+	Acceptance  []domain.AcceptanceCriterion
+	DependsOn   []string
 }
 
 // Update edits a task (status changes go through Transition).
@@ -188,6 +190,33 @@ func (s *Service) Update(ctx context.Context, in UpdateInput) (domain.Task, erro
 	task.AssigneeID = in.AssigneeID
 	if in.Tags != nil {
 		task.Tags = in.Tags
+	}
+	if in.Acceptance != nil {
+		task.Acceptance = in.Acceptance
+	}
+	if in.DependsOn != nil {
+		task.DependsOn = nil
+		for _, ref := range in.DependsOn {
+			dep, derr := s.store.GetByRef(ctx, in.OrgID, in.ProjectID, ref)
+			if derr != nil {
+				return domain.Task{}, fmt.Errorf("%w: dependency %s not found", domain.ErrValidation, ref)
+			}
+			if dep.ID == task.ID {
+				return domain.Task{}, fmt.Errorf("%w: a task cannot depend on itself", domain.ErrValidation)
+			}
+			seen := false
+			for _, existing := range task.DependsOn {
+				if existing == dep.ID {
+					seen = true
+				}
+			}
+			if !seen {
+				task.DependsOn = append(task.DependsOn, dep.ID)
+			}
+		}
+		if len(task.DependsOn) > 20 {
+			return domain.Task{}, fmt.Errorf("%w: at most 20 dependencies", domain.ErrValidation)
+		}
 	}
 	if err := task.Validate(); err != nil {
 		return domain.Task{}, err
