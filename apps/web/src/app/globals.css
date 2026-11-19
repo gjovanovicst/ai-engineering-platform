@@ -469,3 +469,17 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* Form fields with a validation error get the danger border (aria-invalid is
+   set by the zod-bound forms and the Field error). */
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: rgb(var(--status-danger) / 0.8);
+}
+input[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus {
+  border-color: rgb(var(--status-danger));
+  --tw-ring-color: rgb(var(--status-danger) / 0.2);
+}
