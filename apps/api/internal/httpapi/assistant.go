@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/assistant"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/auth"
@@ -16,6 +17,8 @@ import (
 // AssistantService is the assistant the HTTP layer depends on.
 type AssistantService interface {
 	Send(ctx context.Context, in assistant.SendInput) (assistant.SendOutput, error)
+	ListConversations(ctx context.Context, orgID, userID string, limit int) ([]domain.AssistantConversation, error)
+	ListMessages(ctx context.Context, orgID, conversationID string, limit int) ([]domain.AssistantMessage, error)
 }
 
 type assistantHandlers struct {
@@ -94,4 +97,55 @@ func (h *assistantHandlers) stream(w http.ResponseWriter, out assistant.SendOutp
 	}
 	emit("done", map[string]any{"conversation_id": out.ConversationID})
 	flusher.Flush()
+}
+
+// conversations lists the user's recent conversations.
+func (h *assistantHandlers) conversations(w http.ResponseWriter, r *http.Request) {
+	claims, ok := bearerClaims(h.issuer, r)
+	if !ok {
+		writeProblem(w, http.StatusUnauthorized, "unauthenticated", "missing or invalid access token")
+		return
+	}
+	if org := r.PathValue("org"); org != claims.OrgID {
+		writeProblem(w, http.StatusNotFound, "not_found", "resource not found")
+		return
+	}
+	list, err := h.svc.ListConversations(r.Context(), claims.OrgID, claims.Subject, 20)
+	if err != nil {
+		h.log.Error("assistant.conversations", slog.Any("err", err))
+		writeProblem(w, http.StatusInternalServerError, "internal", "could not load the conversations")
+		return
+	}
+	out := make([]map[string]any, 0, len(list))
+	for _, c := range list {
+		out = append(out, map[string]any{"id": c.ID, "title": c.Title, "updated_at": c.UpdatedAt.UTC().Format(time.RFC3339)})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": out})
+}
+
+// messages returns one conversation's messages.
+func (h *assistantHandlers) messages(w http.ResponseWriter, r *http.Request) {
+	claims, ok := bearerClaims(h.issuer, r)
+	if !ok {
+		writeProblem(w, http.StatusUnauthorized, "unauthenticated", "missing or invalid access token")
+		return
+	}
+	if org := r.PathValue("org"); org != claims.OrgID {
+		writeProblem(w, http.StatusNotFound, "not_found", "resource not found")
+		return
+	}
+	list, err := h.svc.ListMessages(r.Context(), claims.OrgID, r.PathValue("conversation"), 100)
+	if err != nil {
+		h.log.Error("assistant.messages", slog.Any("err", err))
+		writeProblem(w, http.StatusInternalServerError, "internal", "could not load the messages")
+		return
+	}
+	out := make([]map[string]any, 0, len(list))
+	for _, m := range list {
+		out = append(out, map[string]any{
+			"id": m.ID, "role": string(m.Role), "content": m.Content, "tool_name": m.ToolName,
+			"created_at": m.CreatedAt.UTC().Format(time.RFC3339),
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": out})
 }

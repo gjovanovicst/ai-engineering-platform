@@ -51,6 +51,7 @@ type LLM interface {
 // Store persists the conversations and messages.
 type Store interface {
 	CreateConversation(ctx context.Context, c domain.AssistantConversation) (domain.AssistantConversation, error)
+	ListConversations(ctx context.Context, orgID, userID string, limit int) ([]domain.AssistantConversation, error)
 	ListMessages(ctx context.Context, orgID, conversationID string, limit int) ([]domain.AssistantMessage, error)
 	AppendMessage(ctx context.Context, m domain.AssistantMessage) (domain.AssistantMessage, error)
 }
@@ -102,6 +103,16 @@ func New(store Store, llm LLM, platform Platform, log *slog.Logger) (*Service, e
 		log = slog.New(slog.DiscardHandler)
 	}
 	return &Service{store: store, llm: llm, platform: platform, log: log, limit: NewLimiter(20, time.Minute), maxSteps: 6}, nil
+}
+
+// ListConversations returns the user's recent conversations.
+func (s *Service) ListConversations(ctx context.Context, orgID, userID string, limit int) ([]domain.AssistantConversation, error) {
+	return s.store.ListConversations(ctx, orgID, userID, limit)
+}
+
+// ListMessages returns one conversation's messages.
+func (s *Service) ListMessages(ctx context.Context, orgID, conversationID string, limit int) ([]domain.AssistantMessage, error) {
+	return s.store.ListMessages(ctx, orgID, conversationID, limit)
 }
 
 const systemPrompt = `You are the assistant inside an AI engineering platform.

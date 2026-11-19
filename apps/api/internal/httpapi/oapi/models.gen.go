@@ -87,6 +87,27 @@ func (e ApprovalStatus) Valid() bool {
 	}
 }
 
+// Defines values for AssistantMessageRole.
+const (
+	AssistantMessageRoleAssistant AssistantMessageRole = "assistant"
+	AssistantMessageRoleTool      AssistantMessageRole = "tool"
+	AssistantMessageRoleUser      AssistantMessageRole = "user"
+)
+
+// Valid indicates whether the value is a known member of the AssistantMessageRole enum.
+func (e AssistantMessageRole) Valid() bool {
+	switch e {
+	case AssistantMessageRoleAssistant:
+		return true
+	case AssistantMessageRoleTool:
+		return true
+	case AssistantMessageRoleUser:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AuditEntryActorKind.
 const (
 	AuditEntryActorKindApiKey AuditEntryActorKind = "api_key"
@@ -1088,6 +1109,25 @@ type ApprovalType string
 
 // ApprovalStatus defines model for ApprovalStatus.
 type ApprovalStatus string
+
+// AssistantConversation defines model for AssistantConversation.
+type AssistantConversation struct {
+	Id        *openapi_types.UUID `json:"id,omitempty"`
+	Title     *string             `json:"title,omitempty"`
+	UpdatedAt *time.Time          `json:"updated_at,omitempty"`
+}
+
+// AssistantMessage defines model for AssistantMessage.
+type AssistantMessage struct {
+	Content   *string               `json:"content,omitempty"`
+	CreatedAt *time.Time            `json:"created_at,omitempty"`
+	Id        *openapi_types.UUID   `json:"id,omitempty"`
+	Role      *AssistantMessageRole `json:"role,omitempty"`
+	ToolName  *string               `json:"tool_name,omitempty"`
+}
+
+// AssistantMessageRole defines model for AssistantMessage.Role.
+type AssistantMessageRole string
 
 // AssistantMessageInput defines model for AssistantMessageInput.
 type AssistantMessageInput struct {

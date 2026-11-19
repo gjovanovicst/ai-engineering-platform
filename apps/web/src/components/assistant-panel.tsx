@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AssistantMarkdown } from "@/components/assistant-markdown";
 import { Button } from "@/components/ui/button";
 import { SidePanel } from "@/components/ui/side-panel";
-import { assistantStream, type AssistantEvent } from "@/lib/api";
+import { assistantStream, listAssistantConversations, listAssistantMessages, type AssistantConversation, type AssistantEvent } from "@/lib/api";
 
 type ChatMessage = { role: "user" | "assistant" | "note"; text: string };
 
@@ -24,12 +24,38 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
   const [pendingTool, setPendingTool] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<AssistantConversation[]>([]);
   const endRef = useRef<HTMLDivElement | null>(null);
   const context = typeof window === "undefined" ? "" : window.location.pathname;
 
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: "end" });
   }, [messages, busy]);
+
+  useEffect(() => {
+    listAssistantConversations(orgID)
+      .then((result) => setConversations(result.data))
+      .catch(() => setConversations([]));
+  }, [orgID, conversationID]);
+
+  async function openConversation(id: string) {
+    setConversationID(id);
+    setPendingTool(null);
+    setError(null);
+    try {
+      const result = await listAssistantMessages(orgID, id);
+      setMessages(result.data.filter((message) => message.role !== "tool").map((message) => ({ role: message.role === "user" ? "user" : "assistant", text: message.content })));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load the conversation");
+    }
+  }
+
+  function newChat() {
+    setConversationID("");
+    setMessages([]);
+    setPendingTool(null);
+    setError(null);
+  }
 
   async function ask(text: string, confirm = false) {
     if (busy) return;
@@ -92,7 +118,25 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
         </form>
       }
     >
-      <div className="space-y-3 p-5 text-sm">
+      <div className="flex min-h-0 flex-1">
+        <aside className="w-48 shrink-0 space-y-1 border-r border-border p-2 text-xs">
+          <button type="button" onClick={newChat} className="w-full rounded-md border border-border px-2 py-1.5 text-left text-text-secondary hover:bg-bg-hover">
+            + New chat
+          </button>
+          {conversations.length === 0 ? <p className="px-2 py-1 text-text-muted">No earlier conversations.</p> : null}
+          {conversations.map((conversation) => (
+            <button
+              key={conversation.id}
+              type="button"
+              onClick={() => void openConversation(conversation.id)}
+              className={`block w-full truncate rounded-md px-2 py-1.5 text-left hover:bg-bg-hover ${conversation.id === conversationID ? "bg-bg-hover text-text-primary" : "text-text-secondary"}`}
+              title={conversation.title}
+            >
+              {conversation.title || "Untitled"}
+            </button>
+          ))}
+        </aside>
+        <div className="min-w-0 flex-1 space-y-3 overflow-y-auto p-5 text-sm">
         {messages.length === 0 ? (
           <div>
             <p className="text-xs text-text-secondary">
@@ -141,6 +185,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
         ) : null}
         {error ? <p role="alert" className="text-xs text-status-danger">{error}</p> : null}
         <div ref={endRef} />
+        </div>
       </div>
     </SidePanel>
   );
