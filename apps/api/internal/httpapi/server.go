@@ -141,7 +141,7 @@ func NewRouter(d Deps) http.Handler {
 		writeJSON(w, http.StatusOK, map[string]any{"status": "ready"})
 	})
 
-	mux.HandleFunc("POST /api/v1/orgs/{org}/assistant/messages", (&assistantHandlers{svc: d.Assistant, log: d.Log}).send)
+	mux.HandleFunc("POST /api/v1/orgs/{org}/assistant/messages", (&assistantHandlers{svc: d.Assistant, issuer: d.Issuer, log: d.Log}).send)
 	mux.HandleFunc("GET /api/v1/version", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"version": d.Version,

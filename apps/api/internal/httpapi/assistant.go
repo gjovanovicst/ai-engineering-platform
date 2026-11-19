@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/assistant"
+	"github.com/gjovanovicst/ai-engineering-platform/internal/app/auth"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/domain"
 )
 
@@ -18,8 +19,9 @@ type AssistantService interface {
 }
 
 type assistantHandlers struct {
-	svc AssistantService
-	log *slog.Logger
+	svc    AssistantService
+	issuer *auth.Issuer
+	log    *slog.Logger
 }
 
 type assistantMessageInput struct {
@@ -31,9 +33,13 @@ type assistantMessageInput struct {
 // send answers one message. With the SSE Accept header it streams the text and
 // the tool preview as events; otherwise it returns one JSON object.
 func (h *assistantHandlers) send(w http.ResponseWriter, r *http.Request) {
-	claims, ok := claimsFromContext(r.Context())
+	claims, ok := bearerClaims(h.issuer, r)
 	if !ok {
-		writeProblem(w, http.StatusUnauthorized, "unauthorized", "sign in first")
+		writeProblem(w, http.StatusUnauthorized, "unauthenticated", "missing or invalid access token")
+		return
+	}
+	if org := r.PathValue("org"); org != "" && org != claims.OrgID {
+		writeProblem(w, http.StatusNotFound, "not_found", "resource not found")
 		return
 	}
 	var input assistantMessageInput
