@@ -11,7 +11,7 @@ All notable changes to this project. Dates are 2026.
   environments) and the access panels (invites, API keys, rules) use the zod
   validation: inline field errors, the `aria-invalid` danger border and the
   server error at the form level (parts 1-3b of the forms consistency sweep
-  #49).
+  #49). The custom agent plugin form uses the same pattern (part 3c).
 
 ### Added
 

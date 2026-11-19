@@ -4,29 +4,48 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { ApiError, createAgentPlugin, listAgentPlugins, listProjects, selectAgentPlugin } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { agentPluginSchema, type AgentPluginValues } from "@/lib/schemas";
 
 export function AgentPluginsPanel({ orgID }: { orgID: string }) {
   const queryClient = useQueryClient();
   const plugins = useQuery({ queryKey: ["agent-plugins", orgID], queryFn: () => listAgentPlugins(orgID) });
   const projects = useQuery({ queryKey: ["projects", orgID], queryFn: () => listProjects(orgID) });
-  const [name, setName] = useState("");
-  const [version, setVersion] = useState("1.0.0");
-  const [image, setImage] = useState("");
-  const [command, setCommand] = useState("");
-  const [types, setTypes] = useState<string[]>(["development"]);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useZodForm<AgentPluginValues>(agentPluginSchema, {
+    defaultValues: { name: "", version: "1.0.0", image: "", command: "", types: ["development"] },
+  });
+  const types = watch("types");
   const [projectID, setProjectID] = useState("");
   const [pluginID, setPluginID] = useState("");
   const [note, setNote] = useState<string | null>(null);
 
-  async function register() {
+  const registerPlugin = handleSubmit(async (values) => {
     try {
-      await createAgentPlugin(orgID, { name, version, image, command, agent_types: types });
+      await createAgentPlugin(orgID, {
+        name: values.name,
+        version: values.version,
+        image: values.image,
+        command: values.command,
+        agent_types: values.types,
+      });
       setNote("Plugin registered");
       queryClient.invalidateQueries({ queryKey: ["agent-plugins", orgID] });
     } catch (err) {
       setNote(err instanceof ApiError ? err.message : "Could not register the plugin");
     }
+  });
+
+  function toggleType(type: string, checked: boolean) {
+    setValue("types", checked ? [...types, type] : types.filter((t) => t !== type));
   }
 
   async function select() {
@@ -45,24 +64,35 @@ export function AgentPluginsPanel({ orgID }: { orgID: string }) {
     <section className="rounded-lg border border-border bg-bg-surface p-4">
       <h2 className="text-sm font-semibold">Custom agent plugins</h2>
       <p className="mt-1 text-xs text-text-secondary">Images must be digest-pinned. The worker runs the command only for the selected agent types.</p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <input aria-label="Plugin name" value={name} onChange={(e) => setName(e.target.value)} placeholder="acme-reviewer" className="h-9 rounded-md border border-border bg-bg-surface px-3 text-xs" />
-        <input aria-label="Plugin version" value={version} onChange={(e) => setVersion(e.target.value)} placeholder="1.0.0" className="h-9 rounded-md border border-border bg-bg-surface px-3 text-xs" />
-        <input aria-label="Plugin image" value={image} onChange={(e) => setImage(e.target.value)} placeholder="ghcr.io/acme/agent@sha256:..." className="h-9 rounded-md border border-border bg-bg-surface px-3 text-xs sm:col-span-2" />
-        <input aria-label="Plugin command" value={command} onChange={(e) => setCommand(e.target.value)} placeholder="/agent --prompt /workspace/.aip/prompt.txt" className="h-9 rounded-md border border-border bg-bg-surface px-3 text-xs sm:col-span-2" />
-      </div>
-      <div className="mt-2 flex flex-wrap gap-3 text-xs">
-        {["planning", "development", "review"].map((type) => (
-          <label key={type} className="flex items-center gap-1">
-            <input type="checkbox" checked={types.includes(type)} onChange={(e) => setTypes(e.target.checked ? [...types, type] : types.filter((t) => t !== type))} />
-            {type}
-          </label>
-        ))}
-      </div>
-      <div className="mt-3 flex items-center gap-2">
-        <Button variant="secondary" onClick={register}>Register</Button>
+      <form className="mt-3 grid gap-2 sm:grid-cols-2" onSubmit={registerPlugin}>
+        <Field label="Plugin name" htmlFor="plugin-name" error={errors.name?.message}>
+          <Input id="plugin-name" aria-invalid={Boolean(errors.name)} {...register("name")} placeholder="acme-reviewer" className="h-9 text-xs" />
+        </Field>
+        <Field label="Plugin version" htmlFor="plugin-version" error={errors.version?.message}>
+          <Input id="plugin-version" aria-invalid={Boolean(errors.version)} {...register("version")} placeholder="1.0.0" className="h-9 text-xs" />
+        </Field>
+        <Field label="Plugin image" htmlFor="plugin-image" error={errors.image?.message}>
+          <Input id="plugin-image" aria-invalid={Boolean(errors.image)} {...register("image")} placeholder="ghcr.io/acme/agent@sha256:..." className="h-9 text-xs sm:col-span-2" />
+        </Field>
+        <Field label="Plugin command" htmlFor="plugin-command" error={errors.command?.message}>
+          <Input id="plugin-command" aria-invalid={Boolean(errors.command)} {...register("command")} placeholder="/agent --prompt /workspace/.aip/prompt.txt" className="h-9 text-xs sm:col-span-2" />
+        </Field>
+        <div className="sm:col-span-2">
+          <div className="flex flex-wrap gap-3 text-xs">
+            {["planning", "development", "review"].map((type) => (
+              <label key={type} className="flex items-center gap-1">
+                <input type="checkbox" checked={types.includes(type)} onChange={(e) => toggleType(type, e.target.checked)} />
+                {type}
+              </label>
+            ))}
+          </div>
+          {errors.types?.message ? <p role="alert" className="mt-1 text-xs text-status-danger">{errors.types.message}</p> : null}
+        </div>
+        <div className="flex items-center gap-2 sm:col-span-2">
+          <Button type="submit" variant="secondary">Register</Button>
         {note ? <span className="text-xs text-text-secondary">{note}</span> : null}
       </div>
+      </form>
 
       <ul className="mt-4 grid gap-1 text-xs">
         {items.map((plugin) => (
