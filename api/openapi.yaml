@@ -418,6 +418,45 @@ paths:
       responses:
         "204": { description: Deleted }
 
+  /orgs/{org}/assistant/messages:
+    post:
+      tags: [assistant]
+      summary: Ask the assistant (JSON or SSE)
+      description: |
+        Answers one message with the tool loop over the platform. Writes (create
+        a task, retry, cancel) are proposed as a preview and run only when
+        `confirm` is true. Accept `text/event-stream` to receive the answer as
+        the `text`/`pending` and `done` events.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: org
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssistantMessageInput" }
+      responses:
+        "200":
+          description: The answer (JSON) or the same fields as SSE events.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantMessageOutput" }
+            text/event-stream:
+              schema: { type: string }
+        "400":
+          description: The prompt is empty or a validation error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "401":
+          description: Not signed in
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
   /orgs/{org}/projects:
     parameters: [{ $ref: "#/components/parameters/OrgParam" }]
     get:
@@ -2833,6 +2872,19 @@ components:
       type: string
       enum: [low, med, high]
 
+    AssistantMessageInput:
+      type: object
+      required: [prompt]
+      properties:
+        conversation_id: { type: string, format: uuid }
+        prompt: { type: string, minLength: 1, maxLength: 4000 }
+        confirm: { type: boolean, default: false }
+    AssistantMessageOutput:
+      type: object
+      properties:
+        conversation_id: { type: string, format: uuid }
+        text: { type: string }
+        pending_tool: { type: string }
     AcceptanceCriterion:
       type: object
       required: [given, when, then]

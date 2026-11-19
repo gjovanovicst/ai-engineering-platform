@@ -1089,6 +1089,20 @@ type ApprovalType string
 // ApprovalStatus defines model for ApprovalStatus.
 type ApprovalStatus string
 
+// AssistantMessageInput defines model for AssistantMessageInput.
+type AssistantMessageInput struct {
+	Confirm        *bool               `json:"confirm,omitempty"`
+	ConversationId *openapi_types.UUID `json:"conversation_id,omitempty"`
+	Prompt         string              `json:"prompt"`
+}
+
+// AssistantMessageOutput defines model for AssistantMessageOutput.
+type AssistantMessageOutput struct {
+	ConversationId *openapi_types.UUID `json:"conversation_id,omitempty"`
+	PendingTool    *string             `json:"pending_tool,omitempty"`
+	Text           *string             `json:"text,omitempty"`
+}
+
 // AuditEntry defines model for AuditEntry.
 type AuditEntry struct {
 	Action    *string                 `json:"action,omitempty"`
@@ -2349,6 +2363,9 @@ type UpdateOrgJSONRequestBody UpdateOrgJSONBody
 
 // DecideApprovalJSONRequestBody defines body for DecideApproval for application/json ContentType.
 type DecideApprovalJSONRequestBody DecideApprovalJSONBody
+
+// PostOrgsOrgAssistantMessagesJSONRequestBody defines body for PostOrgsOrgAssistantMessages for application/json ContentType.
+type PostOrgsOrgAssistantMessagesJSONRequestBody = AssistantMessageInput
 
 // CreateBlueprintJSONRequestBody defines body for CreateBlueprint for application/json ContentType.
 type CreateBlueprintJSONRequestBody CreateBlueprintJSONBody

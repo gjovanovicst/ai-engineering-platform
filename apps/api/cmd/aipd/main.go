@@ -18,6 +18,7 @@ import (
 
 	"github.com/gjovanovicst/ai-engineering-platform/internal/adapters/clamav"
 	gitadapters "github.com/gjovanovicst/ai-engineering-platform/internal/adapters/git"
+	"github.com/gjovanovicst/ai-engineering-platform/internal/adapters/llm"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/adapters/mail"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/adapters/postgres"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/agent"
@@ -25,6 +26,7 @@ import (
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/agentplugins"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/analytics"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/apikeys"
+	"github.com/gjovanovicst/ai-engineering-platform/internal/app/assistant"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/attachments"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/auditwitness"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/auth"
@@ -204,6 +206,15 @@ func main() {
 	orgService := orgs.New(postgres.NewOrgStore(pool))
 	designStandardService := designstandards.New(postgres.NewDesignStandardStore(pool))
 	runService, err := runs.New(runStore, taskService, runner, queue.Enqueuer{Client: queueClient}, merger, logger)
+	assistantStore := postgres.NewAssistantStore(pool)
+	assistantPlatform := &assistantPlatform{projects: projectService, tasks: taskService, runs: runService}
+	assistantLLM := llm.NewAnthropic(os.Getenv("AIP_ASSISTANT_LLM_BASE_URL"), os.Getenv("AIP_ASSISTANT_LLM_API_KEY"), os.Getenv("AIP_ASSISTANT_LLM_MODEL"))
+	assistantService, assistantErr := assistant.New(assistantStore, assistantLLM, assistantPlatform, logger)
+	if assistantErr != nil {
+		logger.Error("assistant service", slog.Any("err", assistantErr))
+		os.Exit(1)
+	}
+
 	if err != nil {
 		logger.Error("run service", slog.Any("err", err))
 		os.Exit(1)
@@ -447,7 +458,8 @@ func main() {
 	srv := &http.Server{
 		Addr: cfg.HTTPAddr,
 		Handler: httpapi.NewRouter(httpapi.Deps{
-			Version: version, StartedAt: time.Now(), Log: logger, DB: pool, Readiness: writablePool{pool: pool},
+			Assistant: assistantService,
+			Version:   version, StartedAt: time.Now(), Log: logger, DB: pool, Readiness: writablePool{pool: pool},
 			AllowedOrigins: []string{cfg.WebURL},
 			Auth:           accounts, Projects: projectService, Tasks: taskService, Runs: runService, Repos: repoStore, RepoCredentials: repoCredentialService, Analytics: analyticsService, Blueprints: blueprintService, Invites: inviteService, Search: searchService, Providers: providerService, Prices: usageService, Design: designService, Directory: directoryService, Rules: rulesService, Deployments: deploymentService, Checks: checkService, Artifacts: artifactStore, Notifications: notificationService, OIDC: oidcService, WebURL: cfg.WebURL,
 			Issuer: issuer, Limits: limits, RateLimitPerMin: cfg.RateLimitPerMin, Events: bus, Usage: usageService, Orgs: orgService, DesignStandards: designStandardService, Attachments: attachmentService, GitHubApps: githubAppService, TestCommand: cfg.TestCommand, AgentBackend: cfg.AgentBackend, GitHubToken: cfg.GitHubToken, AllowedIPs: allowedIPs, GitLabToken: cfg.GitLabToken, AuditSigningKey: cfg.AuditSigningKey, AuditEd25519: auditKey, Figma: figma.New(cfg.FigmaAPIURL, cfg.FigmaToken), ApprovalReauthMinutes: cfg.ApprovalReauthMinutes, Objects: baselineObjects, MergeQueue: mergeQueueService, Previews: previewService, ProjectAccess: projectAccessService, APIKeys: apiKeyService, AuditWitness: auditWitnessService, Incidents: incidents.New(postgres.NewIncidentStore(pool)), SCIM: scim.New(postgres.NewSCIMStore(pool), inviteService), SAML: samlService, SAMLAccounts: accounts, SAMLReplay: samlReplay, SAMLAdminGroups: splitList(cfg.SAMLAdminGroups), SAMLRoleMap: roleMap, SSO: sso.New(postgres.NewSSOStore(pool), cfg.SSOAllowPrivateMetadata), OrgCrypto: orgCryptoService, Region: cfg.Region, OrgRegion: postgres.NewOrgRegion(pool), WALStats: postgres.NewWALStats(pool), BackupStats: postgres.NewBackupStats(pool), AgentPlugins: agentplugins.New(postgres.NewAgentPluginStore(pool), cfg.PluginAllowedDigests, imageverify.New(cfg.CosignBin, cfg.CosignIdentity, cfg.CosignIssuer, cfg.CosignKey)), Restores: restores.New(postgres.NewRestoreStore(pool)), GitHubAppConfigured: cfg.GitHubAppID > 0, GitHubAppWebhookSecret: cfg.GitHubAppWebhookSecret,
@@ -555,4 +567,39 @@ func parseRoleMap(raw string) (map[string]string, error) {
 		out[group] = role
 	}
 	return out, nil
+}
+
+// assistantPlatform adapts the app services to the assistant's Platform port.
+type assistantPlatform struct {
+	projects *projects.Service
+	tasks    *tasks.Service
+	runs     *runs.Service
+}
+
+func (p *assistantPlatform) ListProjects(ctx context.Context, orgID string, limit int) ([]domain.Project, error) {
+	return p.projects.List(ctx, orgID, limit)
+}
+
+func (p *assistantPlatform) ListTasks(ctx context.Context, orgID, projectID string) ([]domain.Task, error) {
+	return p.tasks.List(ctx, orgID, projectID, "", "", 200)
+}
+
+func (p *assistantPlatform) CreateTask(ctx context.Context, in tasks.CreateInput) (domain.Task, error) {
+	return p.tasks.Create(ctx, in)
+}
+
+func (p *assistantPlatform) GetRun(ctx context.Context, orgID, id string) (domain.Run, error) {
+	return p.runs.Get(ctx, orgID, id)
+}
+
+func (p *assistantPlatform) ListRuns(context.Context, string) ([]domain.Run, error) {
+	return nil, nil
+}
+
+func (p *assistantPlatform) RetryRun(ctx context.Context, in runs.RetryInput) (domain.Run, error) {
+	return p.runs.Retry(ctx, in)
+}
+
+func (p *assistantPlatform) CancelRun(ctx context.Context, orgID, id string) (domain.Run, error) {
+	return p.runs.Cancel(ctx, orgID, id)
 }
