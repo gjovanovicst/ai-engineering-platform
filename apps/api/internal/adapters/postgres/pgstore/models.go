@@ -207,6 +207,28 @@ type ApprovalVote struct {
 	CreatedAt  pgtype.Timestamptz
 }
 
+type AssistantConversation struct {
+	ID        pgtype.UUID
+	OrgID     pgtype.UUID
+	UserID    pgtype.UUID
+	ProjectID pgtype.UUID
+	Title     string
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
+type AssistantMessage struct {
+	ID             pgtype.UUID
+	ConversationID pgtype.UUID
+	OrgID          pgtype.UUID
+	Role           string
+	Content        string
+	ToolName       string
+	ToolInput      []byte
+	ToolOutput     []byte
+	CreatedAt      pgtype.Timestamptz
+}
+
 type AuditLog struct {
 	ID        int64
 	OrgID     pgtype.UUID
