@@ -138,3 +138,9 @@ Start with the [README](../README.md) for the product overview, or the [quicksta
 | [CHANGELOG.md](../CHANGELOG.md) | Releases and known gaps |
 | [design/mockups/](../design/mockups/) | 18 screens as HTML + PNG (visual reference) |
 | [site/](../site/) | GitHub Pages site: overview, workflow, quickstart, architecture, status |
+
+## Planning
+
+| Document | What it covers |
+|---|---|
+| [ROADMAP.md](../ROADMAP.md) | Release plan v0.2.0 → v1.0.0, issues, patch policy, pilots |

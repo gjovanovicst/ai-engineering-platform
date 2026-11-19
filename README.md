@@ -83,7 +83,9 @@ Every document: **[docs/README.md](docs/README.md)**.
 - **v0.1.0** — developer preview, self-hosted (current).
 - **v0.1.1** — self-hosting readiness: per-project test command, web dependencies
   in the sandbox, review/CI fix runs, retry with the same plan, `aipctl seed`.
-- **v0.2.0** — full self-hosting: the platform develops its own repository.
+- **v0.2.0** — UX + assistant (the task composer, guidance, the AI assistant).
+- **v0.3.0 → v1.0.0** — design 2.0, multi-stack, the flow, agent quality,
+  production, GA. The full plan: [ROADMAP.md](ROADMAP.md).
 
 The status is deliberately honest: the core ASDLC is verified, while some
 operational features are not production-ready yet. See
