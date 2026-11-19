@@ -26,8 +26,12 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conversations, setConversations] = useState<AssistantConversation[]>([]);
+  const [commandIndex, setCommandIndex] = useState(0);
   const endRef = useRef<HTMLDivElement | null>(null);
   const context = typeof window === "undefined" ? "" : window.location.pathname;
+  const matchingCommands = prompt.startsWith("/") && !prompt.includes(" ")
+    ? assistantCommands.filter((command) => command.name.startsWith(prompt.trim()))
+    : [];
 
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: "end" });
@@ -114,22 +118,39 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
             <input
               aria-label="Ask the assistant"
               value={prompt}
-              onChange={(event) => setPrompt(event.target.value)}
+              onChange={(event) => {
+                setPrompt(event.target.value);
+                setCommandIndex(0);
+              }}
+              onKeyDown={(event) => {
+                if (matchingCommands.length === 0) return;
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  setCommandIndex((index) => (index + 1) % matchingCommands.length);
+                } else if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  setCommandIndex((index) => (index - 1 + matchingCommands.length) % matchingCommands.length);
+                } else if (event.key === "Enter" && matchingCommands[commandIndex]) {
+                  event.preventDefault();
+                  setPrompt(`${matchingCommands[commandIndex].name} `);
+                  setCommandIndex(0);
+                }
+              }}
               placeholder="Ask, or type / for commands…"
               className="h-9 w-full rounded-md border border-border bg-bg-surface px-3 text-sm"
             />
-            {prompt.startsWith("/") && !prompt.includes(" ") ? (
+            {matchingCommands.length > 0 ? (
               <ul role="listbox" aria-label="Commands" className="absolute bottom-full left-0 z-10 mb-1 w-full rounded-md border border-border bg-bg-surface p-1 text-xs shadow-lg">
-                {assistantCommands
-                  .filter((command) => command.name.startsWith(prompt.trim()))
-                  .map((command) => (
+                {matchingCommands
+                  .map((command, index) => (
                     <li key={command.name}>
                       <button
                         type="button"
                         role="option"
-                        aria-selected={false}
+                        aria-selected={index === commandIndex}
+                        onMouseEnter={() => setCommandIndex(index)}
                         onClick={() => setPrompt(command.name + " ")}
-                        className="flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left hover:bg-bg-hover"
+                        className={`flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left ${index === commandIndex ? "bg-bg-hover" : ""}`}
                       >
                         <span className="font-mono">{command.name}</span>
                         <span className="text-text-muted">{command.description}</span>
@@ -197,7 +218,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
         ))}
         {busy ? <p className="text-xs text-text-muted">The assistant is thinking…</p> : null}
         {pendingTool ? (
-          <div className="rounded-lg border border-status-warning/40 bg-status-warning/10 p-3 text-xs">
+          <div className="sticky bottom-0 rounded-lg border border-status-warning/40 bg-bg-surface p-3 text-xs shadow-lg">
             <p className="font-medium">Confirmation needed</p>
             <p className="mt-1 text-text-secondary">
               The assistant wants to run <code>{pendingTool}</code>. Nothing is changed until you confirm.
