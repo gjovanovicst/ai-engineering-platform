@@ -19,13 +19,20 @@ import {
   saveRuleDraft,
   type Rule,
 } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { ruleSchema, type RuleValues } from "@/lib/schemas";
 
 const levels = ["organization", "project", "module", "task"];
 
 export function RulesPanel({ orgID }: { orgID: string }) {
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<Rule | null>(null);
-  const [form, setForm] = useState({ name: "", level: "organization", body: "" });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useZodForm<RuleValues>(ruleSchema, { defaultValues: { name: "", level: "organization", body: "" } });
   const [showForm, setShowForm] = useState(false);
   const [draft, setDraft] = useState("");
   const [compare, setCompare] = useState<{ left: number; right: number }>({ left: 0, right: 0 });
@@ -41,9 +48,9 @@ export function RulesPanel({ orgID }: { orgID: string }) {
   });
 
   const create = useMutation({
-    mutationFn: () => createRule(orgID, form),
+    mutationFn: (input: RuleValues) => createRule(orgID, input),
     onSuccess: () => {
-      setForm({ name: "", level: "organization", body: "" });
+      reset({ name: "", level: "organization", body: "" });
       setShowForm(false);
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["rules", orgID] });
@@ -135,19 +142,15 @@ export function RulesPanel({ orgID }: { orgID: string }) {
         <form
           id="rule-form"
           className="space-y-3 p-5"
-          onSubmit={(event) => {
-            event.preventDefault();
-            create.mutate();
-          }}
+          onSubmit={handleSubmit((values) => create.mutate(values))}
         >
-          <Field label="New rule name" htmlFor="rule-name">
-            <Input id="rule-name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Field label="New rule name" htmlFor="rule-name" error={errors.name?.message}>
+            <Input id="rule-name" aria-invalid={Boolean(errors.name)} {...register("name")} placeholder="e.g. Every API change ships with a test" />
           </Field>
           <Field label="Level" htmlFor="rule-level">
             <select
               id="rule-level"
-              value={form.level}
-              onChange={(e) => setForm({ ...form, level: e.target.value })}
+              {...register("level")}
               className="h-9 w-full rounded-md border border-border bg-bg-surface px-3 text-sm"
             >
               {levels.map((level) => (
@@ -157,13 +160,13 @@ export function RulesPanel({ orgID }: { orgID: string }) {
               ))}
             </select>
           </Field>
-          <Field label="Body (markdown)" htmlFor="rule-body">
+          <Field label="Body (markdown)" htmlFor="rule-body" error={errors.body?.message}>
             <textarea
               id="rule-body"
-              required
+              aria-invalid={Boolean(errors.body)}
               rows={4}
-              value={form.body}
-              onChange={(e) => setForm({ ...form, body: e.target.value })}
+              {...register("body")}
+              placeholder="The rule text the agent receives in every prompt"
               className="w-full rounded-md border border-border bg-bg-surface px-3 py-2 text-sm"
             />
           </Field>

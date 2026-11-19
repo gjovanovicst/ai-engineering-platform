@@ -4,21 +4,28 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { ApiError, createAPIKey, listAPIKeys, revokeAPIKey } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { apiKeySchema, type ApiKeyValues } from "@/lib/schemas";
 
 export function APIKeysPanel({ orgID }: { orgID: string }) {
   const queryClient = useQueryClient();
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("member");
-  const [days, setDays] = useState("90");
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useZodForm<ApiKeyValues>(apiKeySchema, { defaultValues: { name: "", role: "member", days: "90" } });
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const keys = useQuery({ queryKey: ["api-keys", orgID], queryFn: () => listAPIKeys(orgID) });
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["api-keys", orgID] });
 
   const create = useMutation({
-    mutationFn: () => createAPIKey(orgID, name.trim(), role, Number(days) || 0),
-    onSuccess: (key) => { setToken(key.token); setName(""); setError(null); invalidate(); },
+    mutationFn: (input: ApiKeyValues) => createAPIKey(orgID, input.name.trim(), input.role, Number(input.days) || 0),
+    onSuccess: (key) => { setToken(key.token); reset({ name: "" }); setError(null); invalidate(); },
     onError: (err) => setError(err instanceof ApiError ? err.message : "Could not create the key"),
   });
   const revoke = useMutation({
@@ -31,14 +38,20 @@ export function APIKeysPanel({ orgID }: { orgID: string }) {
     <section className="rounded-lg border border-border bg-bg-surface p-4">
       <h2 className="text-sm font-semibold">API keys</h2>
       <p className="mt-1 text-xs text-text-secondary">Service accounts for CI and automation. The token is shown once.</p>
-      <div className="mt-3 flex flex-wrap items-end gap-2">
-        <input aria-label="Key name" value={name} onChange={(e) => setName(e.target.value)} placeholder="ci-runner" className="h-9 min-w-[200px] flex-1 rounded-md border border-border bg-bg-surface px-3 text-xs" />
-        <select aria-label="Key role" value={role} onChange={(e) => setRole(e.target.value)} className="h-9 rounded-md border border-border bg-bg-surface px-2 text-xs">
-          <option value="admin">admin</option><option value="member">member</option><option value="viewer">viewer</option>
-        </select>
-        <input aria-label="Expires in days" value={days} onChange={(e) => setDays(e.target.value)} placeholder="90" className="h-9 w-24 rounded-md border border-border bg-bg-surface px-2 text-xs" title="0 = never" />
-        <Button variant="secondary" loading={create.isPending} onClick={() => create.mutate()}>Create key</Button>
-      </div>
+      <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={handleSubmit((values) => create.mutate(values))}>
+        <Field label="Key name" htmlFor="key-name" error={errors.name?.message}>
+          <Input id="key-name" aria-invalid={Boolean(errors.name)} {...register("name")} placeholder="ci-runner" className="h-9 min-w-[200px]" />
+        </Field>
+        <Field label="Role" htmlFor="key-role">
+          <select id="key-role" {...register("role")} className="h-9 rounded-md border border-border bg-bg-surface px-2 text-xs">
+            <option value="admin">admin</option><option value="member">member</option><option value="viewer">viewer</option>
+          </select>
+        </Field>
+        <Field label="Expires in days" htmlFor="key-days" error={errors.days?.message} help="0 = never">
+          <Input id="key-days" aria-invalid={Boolean(errors.days)} {...register("days")} placeholder="90" className="h-9 w-24" />
+        </Field>
+        <Button type="submit" variant="secondary" loading={create.isPending} className="mt-5">Create key</Button>
+      </form>
       {token ? (
         <div className="mt-3 rounded-md border border-status-warning/40 bg-status-warning/10 p-3 text-xs">
           <p className="font-medium">Copy this token now — it will not be shown again.</p>
