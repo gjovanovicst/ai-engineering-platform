@@ -253,3 +253,18 @@ export const byokSchema = z.object({
   token: z.string().max(500, "At most 500 characters."),
 });
 export type ByokValues = z.infer<typeof byokSchema>;
+
+export const checksSchema = z.object({
+  checks: z.string().max(500, "At most 500 characters."),
+});
+export type ChecksValues = z.infer<typeof checksSchema>;
+
+export const baselineSchema = z.object({
+  name: z.string().trim().min(1, "A baseline name is required.").max(80, "At most 80 characters."),
+});
+export type BaselineValues = z.infer<typeof baselineSchema>;
+
+export const deleteProjectSchema = z.object({
+  confirm: z.string().trim().min(1, "Type the project name to confirm."),
+});
+export type DeleteProjectValues = z.infer<typeof deleteProjectSchema>;

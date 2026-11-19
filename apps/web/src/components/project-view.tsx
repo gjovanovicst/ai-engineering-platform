@@ -11,6 +11,8 @@ import { ProjectMembersPanel } from "@/components/project-members-panel";
 import { PullRequestsPanel } from "@/components/pull-requests-panel";
 import { RepoPanel } from "@/components/repo-panel";
 import { CommandForm } from "@/components/command-form";
+import { useZodForm } from "@/lib/form";
+import { baselineSchema, checksSchema, deleteProjectSchema, type BaselineValues, type ChecksValues, type DeleteProjectValues } from "@/lib/schemas";
 import { TaskBoard } from "@/components/task-board";
 import { TaskComposer } from "@/components/task-composer";
 import { TaskDrawer } from "@/components/task-drawer";
@@ -71,12 +73,10 @@ export function ProjectView({ projectId }: { projectId: string }) {
   const [showForm, setShowForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [checks, setChecks] = useState("");
   const [checksError, setChecksError] = useState<string | null>(null);
   const [mcpConfig, setMCPConfig] = useState("");
   const [mcpError, setMCPError] = useState<string | null>(null);
   const [protection, setProtection] = useState<string | null>(null);
-  const [baselineName, setBaselineName] = useState("");
   const [baselineError, setBaselineError] = useState<string | null>(null);
   const [mcpTools, setMCPTools] = useState<MCPTool[] | null>(null);
   const [mcpToolsError, setMCPToolsError] = useState<string | null>(null);
@@ -84,8 +84,10 @@ export function ProjectView({ projectId }: { projectId: string }) {
   const [scaffoldName, setScaffoldName] = useState("");
   const [scaffoldKind, setScaffoldKind] = useState("react");
   const [scaffoldNote, setScaffoldNote] = useState<string | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const checksForm = useZodForm<ChecksValues>(checksSchema, { defaultValues: { checks: "" } });
+  const baselineForm = useZodForm<BaselineValues>(baselineSchema, { defaultValues: { name: "" } });
+  const deleteForm = useZodForm<DeleteProjectValues>(deleteProjectSchema, { defaultValues: { confirm: "" } });
   const [policyMax, setPolicyMax] = useState("0");
   const [policyPaths, setPolicyPaths] = useState("");
   const [policyError, setPolicyError] = useState<string | null>(null);
@@ -232,7 +234,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
   async function openBaseline() {
     setBaselineError(null);
     try {
-      const blob = await getVisualBaseline(claims!.org, projectId, baselineName.trim());
+      const blob = await getVisualBaseline(claims!.org, projectId, baselineForm.getValues("name").trim());
       const url = URL.createObjectURL(blob);
       window.open(url, "_blank", "noopener");
       setTimeout(() => URL.revokeObjectURL(url), 60000);
@@ -285,7 +287,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
     onError: (err) => setPluginError(err instanceof ApiError ? err.message : "Could not save the plugin checks"),
   });
   const removeProject = useMutation({
-    mutationFn: () => deleteProject(claims!.org, projectId, deleteConfirm),
+    mutationFn: (confirm: string) => deleteProject(claims!.org, projectId, confirm),
     onSuccess: () => router.push("/projects"),
     onError: (err) => setDeleteError(err instanceof ApiError ? err.message : "Could not delete the project"),
   });
@@ -302,8 +304,8 @@ export function ProjectView({ projectId }: { projectId: string }) {
     },
   });
   useEffect(() => {
-    setChecks(requiredKey);
-  }, [requiredKey]);
+    checksForm.reset({ checks: requiredKey });
+  }, [requiredKey, checksForm]);
   useEffect(() => {
     setMCPConfig(project.data?.mcp_servers ?? "");
   }, [project.data?.mcp_servers]);
@@ -627,22 +629,18 @@ export function ProjectView({ projectId }: { projectId: string }) {
           <p className="mt-1 text-xs text-text-secondary">
             Comma-separated check names that must pass before a PR can be merged (for example <code>ci</code> or <code>test</code>).
           </p>
-          <div className="mt-2 flex flex-wrap items-end gap-2">
-            <input
-              aria-label="Required checks"
-              value={checks}
-              onChange={(e) => setChecks(e.target.value)}
-              placeholder="ci, test"
-              className="h-9 min-w-[240px] flex-1 rounded-md border border-border bg-bg-surface px-3 text-sm"
-            />
-            <Button
-              variant="secondary"
-              loading={saveChecks.isPending}
-              onClick={() => saveChecks.mutate(checks.split(",").map((c) => c.trim()).filter(Boolean))}
-            >
-              Save
-            </Button>
-          </div>
+          <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={checksForm.handleSubmit((values) => saveChecks.mutate(values.checks.split(",").map((c) => c.trim()).filter(Boolean)))}>
+            <Field label="Required checks" htmlFor="required-checks" error={checksForm.formState.errors.checks?.message}>
+              <Input
+                id="required-checks"
+                aria-invalid={Boolean(checksForm.formState.errors.checks)}
+                {...checksForm.register("checks")}
+                placeholder="ci, test"
+                className="h-9 min-w-[240px] flex-1"
+              />
+            </Field>
+            <Button type="submit" variant="secondary" loading={saveChecks.isPending} className="mt-5">Save</Button>
+          </form>
           {checksError ? <p role="alert" className="mt-2 text-xs text-status-danger">{checksError}</p> : null}
           <p className="mt-2 text-xs text-text-muted">
             Current: {(project.data?.required_checks ?? []).join(", ") || "none"}
@@ -728,19 +726,21 @@ export function ProjectView({ projectId }: { projectId: string }) {
           initial={project.data?.visual_command ?? ""}
           onSave={(command) => saveVisual.mutateAsync(command)}
         >
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <input
-              aria-label="Baseline name"
-              value={baselineName}
-              onChange={(e) => setBaselineName(e.target.value)}
-              placeholder="baseline name (e.g. home)"
-              className="h-9 rounded-md border border-border bg-bg-surface px-3 text-xs"
-            />
-            <Button variant="secondary" onClick={openBaseline}>Open baseline</Button>
-            <Button variant="secondary" loading={protect.isPending} onClick={() => protect.mutate()}>Protect default branch</Button>
+          <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={baselineForm.handleSubmit(() => openBaseline())}>
+            <Field label="Baseline name" htmlFor="baseline-name" error={baselineForm.formState.errors.name?.message}>
+              <Input
+                id="baseline-name"
+                aria-invalid={Boolean(baselineForm.formState.errors.name)}
+                {...baselineForm.register("name")}
+                placeholder="baseline name (e.g. home)"
+                className="h-9 text-xs"
+              />
+            </Field>
+            <Button type="submit" variant="secondary" className="mt-5">Open baseline</Button>
+            <Button type="button" variant="secondary" className="mt-5" loading={protect.isPending} onClick={() => protect.mutate()}>Protect default branch</Button>
             {protection ? <span className="text-xs text-text-secondary">{protection}</span> : null}
             {baselineError ? <span className="text-xs text-status-danger">{baselineError}</span> : null}
-          </div>
+          </form>
         </CommandForm>
       ) : null}
 
@@ -875,10 +875,24 @@ export function ProjectView({ projectId }: { projectId: string }) {
         <section className="order-2 mt-5 rounded-lg border border-status-danger/40 bg-status-danger/5 p-4">
           <h2 className="text-sm font-semibold text-status-danger">Delete project</h2>
           <p className="mt-1 text-xs text-text-secondary">This removes the project, tasks, runs, repos and incidents. Type the project name to confirm.</p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <input aria-label="Confirm project name" value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder={project.data?.name ?? "project name"} className="h-9 min-w-[220px] flex-1 rounded-md border border-border bg-bg-surface px-3 text-xs" />
-            <Button variant="secondary" loading={removeProject.isPending} onClick={() => removeProject.mutate()}>Delete project</Button>
-          </div>
+          <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={deleteForm.handleSubmit((values) => {
+            if (values.confirm !== (project.data?.name ?? "")) {
+              deleteForm.setError("confirm", { message: "The name does not match." });
+              return;
+            }
+            removeProject.mutate(values.confirm);
+          })}>
+            <Field label="Confirm project name" htmlFor="confirm-project" error={deleteForm.formState.errors.confirm?.message}>
+              <Input
+                id="confirm-project"
+                aria-invalid={Boolean(deleteForm.formState.errors.confirm)}
+                {...deleteForm.register("confirm")}
+                placeholder={project.data?.name ?? "project name"}
+                className="h-9 min-w-[220px] text-xs"
+              />
+            </Field>
+            <Button type="submit" variant="secondary" loading={removeProject.isPending} className="mt-5">Delete project</Button>
+          </form>
           {deleteError ? <p role="alert" className="mt-2 text-xs text-status-danger">{deleteError}</p> : null}
         </section>
       ) : null}
