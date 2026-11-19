@@ -4,7 +4,11 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { ApiError, createPreview, destroyPreview, listPreviews } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { previewSchema, type PreviewValues } from "@/lib/schemas";
 
 const styles: Record<string, string> = {
   requested: "bg-status-warning/10 text-status-warning",
@@ -17,13 +21,17 @@ const styles: Record<string, string> = {
 
 export function PreviewsPanel({ orgID, projectID }: { orgID: string; projectID: string }) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "preview", image: "", port: "3000", ttl: "120" });
   const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useZodForm<PreviewValues>(previewSchema, { defaultValues: { image: "", port: "3000", ttl: "120" } });
   const previews = useQuery({ queryKey: ["previews", orgID, projectID], queryFn: () => listPreviews(orgID, projectID) });
 
   const create = useMutation({
-    mutationFn: () => createPreview(orgID, projectID, {
-      name: form.name.trim(), image: form.image.trim(), port: Number(form.port), ttl_minutes: Number(form.ttl),
+    mutationFn: (values: PreviewValues) => createPreview(orgID, projectID, {
+      name: "preview", image: values.image.trim(), port: Number(values.port), ttl_minutes: Number(values.ttl),
     }),
     onSuccess: () => {
       setError(null);
@@ -41,12 +49,18 @@ export function PreviewsPanel({ orgID, projectID }: { orgID: string; projectID: 
     <section className="mt-8 rounded-lg border border-border bg-bg-surface p-4">
       <h2 className="text-sm font-semibold">Preview environments</h2>
       <p className="mt-1 text-xs text-text-secondary">Ephemeral container per PR; destroyed when the TTL expires.</p>
-      <div className="mt-3 flex flex-wrap items-end gap-2">
-        <input aria-label="Image" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="ghcr.io/acme/app:sha" className="h-9 min-w-[220px] flex-1 rounded-md border border-border bg-bg-surface px-3 font-mono text-xs" />
-        <input aria-label="Port" value={form.port} onChange={(e) => setForm({ ...form, port: e.target.value })} placeholder="3000" className="h-9 w-20 rounded-md border border-border bg-bg-surface px-3 text-xs" />
-        <input aria-label="TTL minutes" value={form.ttl} onChange={(e) => setForm({ ...form, ttl: e.target.value })} placeholder="120" className="h-9 w-20 rounded-md border border-border bg-bg-surface px-3 text-xs" />
-        <Button variant="secondary" loading={create.isPending} onClick={() => create.mutate()}>Create preview</Button>
-      </div>
+      <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={handleSubmit((values) => create.mutate(values))}>
+        <Field label="Image" htmlFor="preview-image" error={errors.image?.message}>
+          <Input id="preview-image" aria-invalid={Boolean(errors.image)} {...register("image")} placeholder="ghcr.io/acme/app:sha" className="h-9 min-w-[220px] font-mono text-xs" />
+        </Field>
+        <Field label="Port" htmlFor="preview-port" error={errors.port?.message}>
+          <Input id="preview-port" aria-invalid={Boolean(errors.port)} {...register("port")} placeholder="3000" className="h-9 w-20 text-xs" />
+        </Field>
+        <Field label="TTL minutes" htmlFor="preview-ttl" error={errors.ttl?.message}>
+          <Input id="preview-ttl" aria-invalid={Boolean(errors.ttl)} {...register("ttl")} placeholder="120" className="h-9 w-20 text-xs" />
+        </Field>
+        <Button type="submit" variant="secondary" loading={create.isPending} className="mt-5">Create preview</Button>
+      </form>
       {error ? <p role="alert" className="mt-2 text-xs text-status-danger">{error}</p> : null}
       {previews.isSuccess && previews.data.items.length === 0 ? <p className="mt-3 text-xs text-text-secondary">No previews yet.</p> : null}
       {previews.isSuccess && previews.data.items.length > 0 ? (

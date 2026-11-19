@@ -4,12 +4,19 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ApiError, createGitHubAppManifest, getGitHubApp, setGitHubInstallation } from "@/lib/api";
+import { useZodForm } from "@/lib/form";
+import { githubAppSchema, type GitHubAppValues } from "@/lib/schemas";
 
 export function GitHubAppPanel({ orgID }: { orgID: string }) {
   const queryClient = useQueryClient();
-  const [installation, setInstallation] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useZodForm<GitHubAppValues>(githubAppSchema, { defaultValues: { installation: "" } });
   const [error, setError] = useState<string | null>(null);
   const status = useQuery({ queryKey: ["github-app", orgID], queryFn: () => getGitHubApp(orgID) });
 
@@ -31,7 +38,7 @@ export function GitHubAppPanel({ orgID }: { orgID: string }) {
   });
 
   const install = useMutation({
-    mutationFn: () => setGitHubInstallation(orgID, Number(installation)),
+    mutationFn: (values: GitHubAppValues) => setGitHubInstallation(orgID, Number(values.installation)),
     onSuccess: () => {
       setError(null);
       queryClient.invalidateQueries({ queryKey: ["github-app", orgID] });
@@ -66,18 +73,20 @@ export function GitHubAppPanel({ orgID }: { orgID: string }) {
               Install on repositories →
             </a>
           ) : null}
-          <div className="flex flex-wrap items-end gap-2">
-            <Input
-              aria-label="Installation id"
-              value={installation}
-              onChange={(event) => setInstallation(event.target.value)}
-              placeholder="installation id"
-              className="max-w-[220px]"
-            />
-            <Button variant="secondary" loading={install.isPending} onClick={() => install.mutate()}>
+          <form className="flex flex-wrap items-start gap-2" onSubmit={handleSubmit((values) => install.mutate(values))}>
+            <Field label="Installation id" htmlFor="gh-installation" error={errors.installation?.message}>
+              <Input
+                id="gh-installation"
+                aria-invalid={Boolean(errors.installation)}
+                {...register("installation")}
+                placeholder="installation id"
+                className="max-w-[220px]"
+              />
+            </Field>
+            <Button type="submit" variant="secondary" loading={install.isPending} className="mt-5">
               Save installation
             </Button>
-          </div>
+          </form>
         </div>
       ) : null}
       {error ? <p role="alert" className="mt-2 text-xs text-status-danger">{error}</p> : null}
