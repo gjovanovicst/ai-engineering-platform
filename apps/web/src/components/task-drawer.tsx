@@ -371,7 +371,8 @@ function taskTransitions(status: string): { label: string; to: string }[] {
     case "draft":
       return [{ label: "Move to ready", to: "ready" }];
     case "ready":
-      return [{ label: "Start", to: "in_progress" }];
+      // ready -> planning -> in_progress: the agent plans first (the state machine).
+      return [{ label: "Start planning", to: "planning" }];
     case "in_progress":
       return [{ label: "Move to review", to: "review" }];
     case "blocked":
