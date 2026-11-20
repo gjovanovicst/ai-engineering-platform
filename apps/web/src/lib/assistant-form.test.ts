@@ -1,25 +1,35 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   applyAssistantForm,
   assistantFormContext,
   currentAssistantForm,
   registerAssistantForm,
+  resetAssistantForms,
 } from "./assistant-form";
 
 describe("the assistant form bridge", () => {
+  beforeEach(() => resetAssistantForms());
+
   it("exposes the fields and applies only the registered ones", () => {
     const applied: Record<string, unknown>[] = [];
     const unregister = registerAssistantForm({
       id: "task-composer",
       title: "New task",
-      fields: [{ name: "title", label: "Title", type: "text" }],
+      fields: [
+        { name: "title", label: "Title", type: "text" },
+        { name: "priority", label: "Priority", type: "select", options: ["low", "med", "high"] },
+      ],
       apply: (values) => applied.push(values),
     });
-    expect(assistantFormContext()).toEqual({ id: "task-composer", fields: ["title"] });
-    const result = applyAssistantForm({ title: "Dummy task", nope: 1 });
-    expect(result).toEqual({ applied: ["title"], ignored: ["nope"] });
-    expect(applied).toHaveLength(1);
+    expect(assistantFormContext()?.fields.map((field) => field.name)).toEqual(["title", "priority"]);
+    const result = applyAssistantForm({ title: "Dummy task", nope: 1, priority: "medium" });
+    // "medium" is not an allowed option: it is ignored, never written.
+    expect(result).toEqual({ applied: ["title"], ignored: ["nope", "priority"] });
+    const ok = applyAssistantForm({ priority: "med" });
+    expect(ok).toEqual({ applied: ["priority"], ignored: [] });
+    // two applied batches: the title, then the priority
+    expect(applied).toHaveLength(2);
     unregister();
     expect(currentAssistantForm()).toBeNull();
   });

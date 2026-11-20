@@ -149,7 +149,7 @@ export function TaskComposer({ orgID, projectID, tasks, task, onClose, onSaved }
       { name: "title", label: "Title", type: "text" },
       { name: "description", label: "Description", type: "textarea" },
       { name: "acceptance", label: "Acceptance criteria", type: "list" },
-      { name: "priority", label: "Priority", type: "select" },
+      { name: "priority", label: "Priority", type: "select", options: ["low", "med", "high"] },
     ],
     apply: (values) => {
       const set = (name: string, kind: "string" | "list") => {
