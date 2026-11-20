@@ -21,6 +21,7 @@ export function SidePanel({
   size = "md",
   dirty = false,
   z = 100,
+  assistant = true,
 }: {
   title: string;
   description?: string;
@@ -32,6 +33,8 @@ export function SidePanel({
   dirty?: boolean;
   /** The stacking order: the assistant opens above a drawer (z 130). */
   z?: number;
+  /** Show the assistant trigger in the header (off on the assistant itself). */
+  assistant?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -97,15 +100,17 @@ export function SidePanel({
             {description ? <p className="mt-1 text-xs text-text-secondary">{description}</p> : null}
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <button
-              type="button"
-              aria-label="Open the assistant"
-              title="Open the assistant (⌘/)"
-              onClick={() => window.dispatchEvent(new CustomEvent("aip:assistant"))}
-              className="grid h-8 w-8 place-items-center rounded-md text-text-muted transition-colors hover:bg-bg-hover hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
-            >
-              <span aria-hidden="true" className="text-base leading-none">✦</span>
-            </button>
+            {assistant ? (
+              <button
+                type="button"
+                aria-label="Open the assistant"
+                title="Open the assistant (⌘/)"
+                onClick={() => window.dispatchEvent(new CustomEvent("aip:assistant"))}
+                className="grid h-8 w-8 place-items-center rounded-md border border-brand/40 bg-brand-subtle text-brand transition-colors hover:bg-brand hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
+              >
+                <span aria-hidden="true" className="text-base leading-none">✦</span>
+              </button>
+            ) : null}
             <button
               type="button"
               aria-label="Close panel"

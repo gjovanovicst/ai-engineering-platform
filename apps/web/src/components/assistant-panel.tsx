@@ -154,6 +154,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
     <SidePanel
       size="lg"
       z={130}
+      assistant={false}
       title="Assistant"
       description={`Ask about this workspace. Context: ${context || "/"}`}
       onClose={onClose}
