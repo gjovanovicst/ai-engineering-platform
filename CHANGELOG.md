@@ -32,6 +32,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **Web dependency audit**: `next` 15.5.28 → 15.5.29 fixes three moderate
+  advisories (the SVG rejection bypass in the image optimization, the HttpOnly
+  cookie exposure on the Edge runtime, the cross-client response injection);
+  `pnpm audit --prod` reports no known vulnerabilities.
+
 - The auth forms (login, register, invite accept, search), the create project
   form, the delivery panels (repo, providers, repository credential,
   environments) and the access panels (invites, API keys, rules) use the zod
