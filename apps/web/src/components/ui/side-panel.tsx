@@ -20,6 +20,8 @@ export function SidePanel({
   footer,
   size = "md",
   dirty = false,
+  z = 100,
+  assistant = true,
 }: {
   title: string;
   description?: string;
@@ -29,6 +31,10 @@ export function SidePanel({
   size?: keyof typeof panelWidths;
   /** A changed form: ask before the panel is closed and the input is lost. */
   dirty?: boolean;
+  /** The stacking order: the assistant opens above a drawer (z 130). */
+  z?: number;
+  /** Show the assistant trigger in the header (off on the assistant itself). */
+  assistant?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -74,7 +80,7 @@ export function SidePanel({
         }}
         onCancel={() => setConfirmOpen(false)}
       />
-    <div className="fixed inset-0 z-[100] flex justify-end" role="presentation">
+    <div className="fixed inset-0 z-[100] flex justify-end" style={{ zIndex: z }} role="presentation">
       <button
         type="button"
         aria-label="Close panel"
@@ -93,14 +99,27 @@ export function SidePanel({
             <h2 id="side-panel-title" className="text-base font-semibold">{title}</h2>
             {description ? <p className="mt-1 text-xs text-text-secondary">{description}</p> : null}
           </div>
-          <button
-            type="button"
-            aria-label="Close panel"
-            onClick={close}
-            className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
-          >
-            <span aria-hidden="true" className="text-lg leading-none">×</span>
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            {assistant ? (
+              <button
+                type="button"
+                aria-label="Open the assistant"
+                title="Open the assistant (⌘/)"
+                onClick={() => window.dispatchEvent(new CustomEvent("aip:assistant"))}
+                className="grid h-8 w-8 place-items-center rounded-md border border-brand/40 bg-brand-subtle text-brand transition-colors hover:bg-brand hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
+              >
+                <span aria-hidden="true" className="text-base leading-none">✦</span>
+              </button>
+            ) : null}
+            <button
+              type="button"
+              aria-label="Close panel"
+              onClick={close}
+              className="grid h-8 w-8 place-items-center rounded-md text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
+            >
+              <span aria-hidden="true" className="text-lg leading-none">×</span>
+            </button>
+          </div>
         </header>
         <div className="flex-1 overflow-y-auto overscroll-contain">{children}</div>
         <footer className="flex items-center justify-end gap-2 border-t border-border bg-bg-subtle px-5 py-3">

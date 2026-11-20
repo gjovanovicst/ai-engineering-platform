@@ -66,7 +66,18 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
+    const openAssistant = () => setAssistantOpen(true);
+    window.addEventListener("aip:assistant", openAssistant);
+    return () => window.removeEventListener("aip:assistant", openAssistant);
+  }, []);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "/") {
+        event.preventDefault();
+        setAssistantOpen(true);
+        return;
+      }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setPaletteOpen((open) => !open);
@@ -195,7 +206,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
                 </ul>
               </div>}
             </div>
-            <button type="button" onClick={() => setAssistantOpen(true)} aria-label="Assistant" className="icon-button"><span aria-hidden="true">✦</span></button>
+            <button type="button" onClick={() => setAssistantOpen(true)} aria-label="Assistant (⌘/)" title="Assistant (⌘/)" className="icon-button"><span aria-hidden="true">✦</span></button>
             <button type="button" onClick={() => setHelpOpen(true)} aria-label="Help" className="icon-button"><span aria-hidden="true">?</span></button>
             <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Light theme" : "Dark theme"} className="icon-button"><Icon name={theme === "dark" ? "sun" : "moon"} size={18} /></button>
             <span className="topbar-divider" />
@@ -218,6 +229,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
           {assistantOpen && claims?.org ? <AssistantPanel orgID={claims.org} onClose={() => setAssistantOpen(false)} /> : null}
         </header>
         <main id="main-content" tabIndex={-1} className="app-content">{children}</main>
+
       </div>
     </div>
   );

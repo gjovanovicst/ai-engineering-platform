@@ -6,6 +6,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Assistant from a drawer**: `⌘/` (or `Ctrl+/`) opens the assistant above any
+  drawer (`SidePanel` gains a `z` prop; the assistant opens at 130); every
+  drawer's header carries a "✦" button next to the close that opens the
+  assistant.
+
 - **UI contracts**: `make web-check` runs `scripts/check-ui-contracts.mjs` —
   the window dialogs, the SidePanel footers and the null-unsafe list renders
   fail the gate; the form-dirty and the remaining null-list warnings are a
