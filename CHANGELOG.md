@@ -6,6 +6,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Setup wizard** (`/setup`): four steps — the AI provider, the repository,
+  the test command and the sandbox — with the progress, the skip and the resume
+  (the step is remembered); the overview links it.
+
 - **Run UX**: the primary action is sticky while scrolling, the live log reads
   as a timeline, the review findings show the blockers first, and the summary
   grid stacks at 375px.
@@ -35,6 +39,9 @@ All notable changes to this project. Dates are 2026.
   summary, and an actionable empty state for the agent runs.
 
 ### Fixed
+
+- **Setup wizard build**: the steps moved to `steps.ts`; a custom export in
+  `page.tsx` fails the Next.js production build.
 
 - **Local dev postgres**: the compose postgres publishes on `15432` (the host's
   5432 was occupied, so Docker silently dropped the binding and the Go clients
