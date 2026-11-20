@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+
+import { PromptDialog } from "@/components/ui/prompt-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError, transitionTask, type Task } from "@/lib/api";
@@ -35,6 +37,7 @@ export function TaskBoard({
   const queryClient = useQueryClient();
   const [dragging, setDragging] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [blockPrompt, setBlockPrompt] = useState<{ task: string; to: string } | null>(null);
 
   const move = useMutation({
     mutationFn: (input: { task: Task; to: string; reason?: string }) =>
@@ -56,6 +59,7 @@ export function TaskBoard({
   });
 
   return (
+    <>
     <section className="mt-8">
       <header className="mb-3 flex items-center justify-between">
         <div>
@@ -83,13 +87,12 @@ export function TaskBoard({
                 const task = tasks.find((t) => t.id === id);
                 setDragging(null);
                 if (!task || task.status === column.status) return;
-                let reason: string | undefined;
                 if (column.status === "blocked") {
-                  const answer = window.prompt("Why is this task blocked?");
-                  if (!answer || answer.trim() === "") return; // a reason is required
-                  reason = answer.trim();
+                  // a reason is required: ask through the design dialog
+                  setBlockPrompt({ task: task.id, to: column.status });
+                  return;
                 }
-                move.mutate({ task, to: column.status, reason });
+                move.mutate({ task, to: column.status });
               }}
               className="task-board-column"
             >
@@ -129,5 +132,24 @@ export function TaskBoard({
         })}
       </div>
     </section>
+    <PromptDialog
+      open={blockPrompt !== null}
+      title="Why is this task blocked?"
+      message="The reason is recorded in the audit trail."
+      label="Blocked reason"
+      placeholder="Waiting for the API contract…"
+      confirmLabel="Block the task"
+      required
+      onConfirm={(reason) => {
+        const target = blockPrompt;
+        setBlockPrompt(null);
+        if (target) {
+          const task = tasks.find((entry) => entry.id === target.task);
+          if (task) move.mutate({ task, to: target.to, reason });
+        }
+      }}
+      onCancel={() => setBlockPrompt(null)}
+    />
+    </>
   );
 }
