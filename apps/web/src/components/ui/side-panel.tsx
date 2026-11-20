@@ -20,6 +20,7 @@ export function SidePanel({
   footer,
   size = "md",
   dirty = false,
+  z = 100,
 }: {
   title: string;
   description?: string;
@@ -29,6 +30,8 @@ export function SidePanel({
   size?: keyof typeof panelWidths;
   /** A changed form: ask before the panel is closed and the input is lost. */
   dirty?: boolean;
+  /** The stacking order: the assistant opens above a drawer (z 130). */
+  z?: number;
 }) {
   const [mounted, setMounted] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -74,7 +77,7 @@ export function SidePanel({
         }}
         onCancel={() => setConfirmOpen(false)}
       />
-    <div className="fixed inset-0 z-[100] flex justify-end" role="presentation">
+    <div className="fixed inset-0 z-[100] flex justify-end" style={{ zIndex: z }} role="presentation">
       <button
         type="button"
         aria-label="Close panel"
