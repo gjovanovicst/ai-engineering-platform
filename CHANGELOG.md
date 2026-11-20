@@ -46,6 +46,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **Task drawer**: the panel no longer scrolls as a whole; the header stays at
+  the top and only the body scrolls, so the close button and the actions stay
+  reachable.
+
 - **Web lists crash on empty data**: the analytics, the previews, the members,
   the pull-request queue and the preflight checks render `null` lists as empty
   (the analytics page crashed with "Cannot read properties of null").

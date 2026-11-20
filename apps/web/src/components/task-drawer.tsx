@@ -133,7 +133,7 @@ export function TaskDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-drawer-title"
-        className="relative z-50 flex h-full w-full max-w-md flex-col overflow-y-auto border-l border-border bg-bg-surface shadow-xl"
+        className="relative z-50 flex h-full w-full max-w-md flex-col border-l border-border bg-bg-surface shadow-xl"
       >
         <header className="flex items-start justify-between border-b border-border p-4">
           <div>
@@ -153,7 +153,7 @@ export function TaskDrawer({
           </button>
         </header>
 
-        <div className="space-y-6 p-4">
+        <div className="flex-1 space-y-6 overflow-y-auto overscroll-contain p-4">
           <div className="flex flex-wrap gap-2 text-xs">
             <span className={`rounded-md px-2 py-0.5 font-medium ${statusStyles[task.status] ?? ""}`}>
               {task.status}
