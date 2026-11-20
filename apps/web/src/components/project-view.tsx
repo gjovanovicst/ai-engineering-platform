@@ -850,7 +850,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
           {preflight.isError ? <p role="alert" className="mt-3 text-xs text-status-danger">Could not load preflight.</p> : null}
           {preflight.isSuccess ? (
             <ul className="mt-3 divide-y divide-border rounded-md border border-border">
-              {preflight.data.checks.map((check) => (
+              {(preflight.data.checks ?? []).map((check) => (
                 <li key={check.key} className="flex flex-wrap items-center gap-2 px-3 py-2 text-xs">
                   <span className={`rounded px-1.5 py-0.5 text-[10px] uppercase ${
                     check.status === "ok"

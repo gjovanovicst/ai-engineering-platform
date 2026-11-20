@@ -38,7 +38,7 @@ export function APIKeysPanel({ orgID }: { orgID: string }) {
     <section className="rounded-lg border border-border bg-bg-surface p-4">
       <h2 className="text-sm font-semibold">API keys</h2>
       <p className="mt-1 text-xs text-text-secondary">Service accounts for CI and automation. The token is shown once.</p>
-      <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={handleSubmit((values) => create.mutate(values))}>
+      <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={handleSubmit((values) => create.mutate(values))}>
         <Field label="Key name" htmlFor="key-name" error={errors.name?.message}>
           <Input id="key-name" aria-invalid={Boolean(errors.name)} {...register("name")} placeholder="ci-runner" className="h-9 min-w-[200px]" />
         </Field>
@@ -50,7 +50,7 @@ export function APIKeysPanel({ orgID }: { orgID: string }) {
         <Field label="Expires in days" htmlFor="key-days" error={errors.days?.message} help="0 = never">
           <Input id="key-days" aria-invalid={Boolean(errors.days)} {...register("days")} placeholder="90" className="h-9 w-24" />
         </Field>
-        <Button type="submit" variant="secondary" loading={create.isPending} className="mt-5">Create key</Button>
+        <Button type="submit" variant="secondary" loading={create.isPending}>Create key</Button>
       </form>
       {token ? (
         <div className="mt-3 rounded-md border border-status-warning/40 bg-status-warning/10 p-3 text-xs">

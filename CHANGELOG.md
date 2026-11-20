@@ -46,6 +46,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **Web lists crash on empty data**: the analytics, the previews, the members,
+  the pull-request queue and the preflight checks render `null` lists as empty
+  (the analytics page crashed with "Cannot read properties of null").
+- **API keys form**: the fields align on their baseline (no `mt-5` hack).
+
 - **Setup wizard build**: the steps moved to `steps.ts`; a custom export in
   `page.tsx` fails the Next.js production build.
 

@@ -62,10 +62,10 @@ export function PreviewsPanel({ orgID, projectID }: { orgID: string; projectID: 
         <Button type="submit" variant="secondary" loading={create.isPending} className="mt-5">Create preview</Button>
       </form>
       {error ? <p role="alert" className="mt-2 text-xs text-status-danger">{error}</p> : null}
-      {previews.isSuccess && previews.data.items.length === 0 ? <p className="mt-3 text-xs text-text-secondary">No previews yet.</p> : null}
-      {previews.isSuccess && previews.data.items.length > 0 ? (
+      {previews.isSuccess && (previews.data.items ?? []).length === 0 ? <p className="mt-3 text-xs text-text-secondary">No previews yet.</p> : null}
+      {previews.isSuccess && (previews.data.items ?? []).length > 0 ? (
         <ul className="mt-3 divide-y divide-border rounded-md border border-border">
-          {previews.data.items.map((preview) => (
+          {(previews.data.items ?? []).map((preview) => (
             <li key={preview.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-xs">
               <span className={`rounded px-1.5 py-0.5 ${styles[preview.status] ?? "bg-bg-hover"}`}>{preview.status}</span>
               <span className="font-medium">{preview.name}</span>
