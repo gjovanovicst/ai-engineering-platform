@@ -48,7 +48,7 @@ export default function SearchPage() {
         </p>
       </header>
 
-      <form className="search-box mb-6 flex flex-wrap items-start gap-2" onSubmit={handleSubmit((values) => setQuery(values.q))}>
+      <form className="search-box mb-6 flex flex-wrap items-end gap-2" onSubmit={handleSubmit((values) => setQuery(values.q))}>
         <Field label="Search tasks" htmlFor="search-term" error={errors.q?.message}>
           <Input
             id="search-term"
@@ -58,7 +58,7 @@ export default function SearchPage() {
             className="h-9 w-[340px] max-w-full"
           />
         </Field>
-        <Button type="submit" className="mt-0.5">
+        <Button type="submit">
           Search
         </Button>
       </form>

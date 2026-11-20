@@ -560,7 +560,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
           <p className="mt-1 text-xs text-text-secondary">
             Creates a task with the expected files, tokens, registry and test requirements for a new UI component.
           </p>
-          <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={scaffoldForm.handleSubmit((values) => scaffold.mutate(values))}>
+          <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={scaffoldForm.handleSubmit((values) => scaffold.mutate(values))}>
             <Field label="Component name" htmlFor="scaffold-name" error={scaffoldForm.formState.errors.name?.message}>
               <Input id="scaffold-name" aria-invalid={Boolean(scaffoldForm.formState.errors.name)} {...scaffoldForm.register("name")} placeholder="ButtonGroup" className="h-9 min-w-[200px] text-xs" />
             </Field>
@@ -633,7 +633,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
           <p className="mt-1 text-xs text-text-secondary">
             Comma-separated check names that must pass before a PR can be merged (for example <code>ci</code> or <code>test</code>).
           </p>
-          <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={checksForm.handleSubmit((values) => saveChecks.mutate(values.checks.split(",").map((c) => c.trim()).filter(Boolean)))}>
+          <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={checksForm.handleSubmit((values) => saveChecks.mutate(values.checks.split(",").map((c) => c.trim()).filter(Boolean)))}>
             <Field label="Required checks" htmlFor="required-checks" error={checksForm.formState.errors.checks?.message}>
               <Input
                 id="required-checks"
@@ -734,7 +734,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
           initial={project.data?.visual_command ?? ""}
           onSave={(command) => saveVisual.mutateAsync(command)}
         >
-          <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={baselineForm.handleSubmit(() => openBaseline())}>
+          <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={baselineForm.handleSubmit(() => openBaseline())}>
             <Field label="Baseline name" htmlFor="baseline-name" error={baselineForm.formState.errors.name?.message}>
               <Input
                 id="baseline-name"
@@ -756,7 +756,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
         <section className="mt-5 rounded-lg border border-border bg-bg-surface p-4">
           <h2 className="text-sm font-semibold">Diff policy</h2>
           <p className="mt-1 text-xs text-text-secondary">0 disables the size limit. Forbidden paths are relative to the repository.</p>
-          <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={policyForm.handleSubmit((values) => savePolicy.mutate(values))}>
+          <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={policyForm.handleSubmit((values) => savePolicy.mutate(values))}>
             <Field label="Max diff bytes" htmlFor="policy-max" error={policyForm.formState.errors.max?.message}>
               <Input id="policy-max" aria-invalid={Boolean(policyForm.formState.errors.max)} {...policyForm.register("max")} placeholder="0" className="h-9 w-32 text-xs" />
             </Field>
@@ -771,7 +771,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
             <p className="mt-1 text-xs text-text-secondary">
               JSON: {'{"days":[1,2,3,4,5],"start":"09:00","end":"17:00","tz":"Europe/Belgrade"}'}. Empty means always.
             </p>
-            <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={windowForm.handleSubmit((values) => saveWindow.mutate(values))}>
+            <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={windowForm.handleSubmit((values) => saveWindow.mutate(values))}>
               <Field label="Change window" htmlFor="change-window" error={windowForm.formState.errors.window?.message}>
                 <Input id="change-window" aria-invalid={Boolean(windowForm.formState.errors.window)} {...windowForm.register("window")} placeholder="empty = always" className="h-9 min-w-[280px] font-mono text-xs" />
               </Field>
@@ -782,7 +782,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
           <div className="mt-4 border-t border-border pt-3">
             <h3 className="text-xs font-semibold">Allowed models</h3>
             <p className="mt-1 text-xs text-text-secondary">Comma-separated model names; empty means any model.</p>
-            <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={modelsForm.handleSubmit((values) => saveModels.mutate(values))}>
+            <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={modelsForm.handleSubmit((values) => saveModels.mutate(values))}>
               <Field label="Allowed models" htmlFor="allowed-models" error={modelsForm.formState.errors.models?.message}>
                 <Input id="allowed-models" aria-invalid={Boolean(modelsForm.formState.errors.models)} {...modelsForm.register("models")} placeholder="claude-sonnet-4, gpt-5" className="h-9 min-w-[280px] font-mono text-xs" />
               </Field>
@@ -793,7 +793,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
           <div className="mt-4 border-t border-border pt-3">
             <h3 className="text-xs font-semibold">Allowed MCP tools</h3>
             <p className="mt-1 text-xs text-text-secondary">Comma-separated exact names or prefixes ending in * (e.g. mcp__fs__read, mcp__git__*). Empty means all.</p>
-            <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={toolsForm.handleSubmit((values) => saveTools.mutate(values))}>
+            <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={toolsForm.handleSubmit((values) => saveTools.mutate(values))}>
               <Field label="Allowed MCP tools" htmlFor="allowed-tools" error={toolsForm.formState.errors.tools?.message}>
                 <Input id="allowed-tools" aria-invalid={Boolean(toolsForm.formState.errors.tools)} {...toolsForm.register("tools")} placeholder="mcp__fs__read, mcp__git__*" className="h-9 min-w-[280px] font-mono text-xs" />
               </Field>
@@ -905,7 +905,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
         <section className="order-2 mt-5 rounded-lg border border-status-danger/40 bg-status-danger/5 p-4">
           <h2 className="text-sm font-semibold text-status-danger">Delete project</h2>
           <p className="mt-1 text-xs text-text-secondary">This removes the project, tasks, runs, repos and incidents. Type the project name to confirm.</p>
-          <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={deleteForm.handleSubmit((values) => {
+          <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={deleteForm.handleSubmit((values) => {
             if (values.confirm !== (project.data?.name ?? "")) {
               deleteForm.setError("confirm", { message: "The name does not match." });
               return;

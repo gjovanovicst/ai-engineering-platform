@@ -39,7 +39,7 @@ export function ScimPanel({ orgID }: { orgID: string }) {
       <p className="mt-1 text-xs text-text-secondary">
         Bearer token for <code>/scim/v2/Users</code> (read-only). The token is shown once; revoke it to disable access.
       </p>
-      <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={handleSubmit((values) => create.mutate(values))}>
+      <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={handleSubmit((values) => create.mutate(values))}>
         <Field label="SCIM token name" htmlFor="scim-name" error={errors.name?.message}>
           <Input id="scim-name" aria-invalid={Boolean(errors.name)} {...register("name")} placeholder="okta" className="h-9 min-w-[200px] text-xs" />
         </Field>

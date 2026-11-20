@@ -113,7 +113,7 @@ export function WorkspacePanel({ orgID }: { orgID: string }) {
         <p className="mt-1 text-xs text-text-secondary">
           Removes every project, task and run. Type the slug <span className="font-mono">{org.data.slug}</span> to confirm.
         </p>
-        <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={remove}>
+        <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={remove}>
           <Field label="Confirm slug" htmlFor="confirm-slug" error={deleteForm.formState.errors.confirmSlug?.message}>
             <Input
               id="confirm-slug"
