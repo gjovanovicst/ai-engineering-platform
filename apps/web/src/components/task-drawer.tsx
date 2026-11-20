@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +14,7 @@ import {
   listTaskAttachments,
   listTaskRuns,
   uploadTaskAttachment,
+  startRun,
   transitionTask,
   type Task,
 } from "@/lib/api";
@@ -50,6 +52,7 @@ export function TaskDrawer({
   onClose: () => void;
   onEdit: (task: Task) => void;
 }) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -58,6 +61,13 @@ export function TaskDrawer({
   const attachments = useQuery({
     queryKey: ["task-attachments", orgID, projectID, task.id],
     queryFn: () => listTaskAttachments(orgID, projectID, task.id),
+  });
+  const start = useMutation({
+    mutationFn: () => startRun(orgID, projectID, task.ref),
+    onSuccess: (run) => {
+      void queryClient.invalidateQueries();
+      router.push(`/projects/${projectID}/runs/${run.id}`);
+    },
   });
   const transition = useMutation({
     mutationFn: (to: string) => transitionTask(orgID, projectID, task.id, to),
@@ -349,8 +359,15 @@ export function TaskDrawer({
               <Button
                 key={next.to}
                 variant={next.to === "in_progress" ? "primary" : "secondary"}
-                loading={transition.isPending}
-                onClick={() => transition.mutate(next.to)}
+                loading={next.run ? start.isPending : transition.isPending}
+                onClick={() => {
+                  if (next.run) {
+                    // Start planning: the API creates the run and moves the task.
+                    start.mutate();
+                    return;
+                  }
+                  transition.mutate(next.to);
+                }}
               >
               {next.label}
             </Button>
@@ -366,13 +383,13 @@ export function TaskDrawer({
 }
 
 /** The human transitions the drawer offers for a status. */
-function taskTransitions(status: string): { label: string; to: string }[] {
+function taskTransitions(status: string): { label: string; to: string; run?: boolean }[] {
   switch (status) {
     case "draft":
       return [{ label: "Move to ready", to: "ready" }];
     case "ready":
       // ready -> planning -> in_progress: the agent plans first (the state machine).
-      return [{ label: "Start planning", to: "planning" }];
+      return [{ label: "Start planning", to: "planning", run: true }];
     case "in_progress":
       return [{ label: "Move to review", to: "review" }];
     case "blocked":
