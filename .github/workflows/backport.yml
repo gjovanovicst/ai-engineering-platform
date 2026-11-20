@@ -1,0 +1,52 @@
+name: backport
+
+# When a fix lands on main with a `backport/vX.Y` label, open a cherry-pick PR
+# against the release/vX.Y branch. The patch release itself follows
+# ROADMAP.md ("Patch releases between features").
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  backport:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Find the backport label
+        id: label
+        run: |
+          branch=$(echo '${{ toJSON(github.event.pull_request.labels) }}' \
+            | jq -r '.[].name | select(startswith("backport/"))' | head -1)
+          echo "branch=${branch#backport/}" >> "$GITHUB_OUTPUT"
+          [ -n "$branch" ] && echo "found=$branch"
+      - name: Open the cherry-pick PR
+        if: steps.label.outputs.branch != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET: ${{ steps.label.outputs.branch }}
+          SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          TITLE: ${{ github.event.pull_request.title }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          git config user.name "aip-backport"
+          git config user.email "backport@aip.local"
+          git checkout -b "backport/V$TARGET-$PR" "origin/release/v$TARGET"
+          if git cherry-pick -x "$SHA"; then
+            git push origin "backport/V$TARGET-$PR"
+            gh pr create --base "release/v$TARGET" --head "backport/V$TARGET-$PR" \
+              --title "backport(v$TARGET): $TITLE" \
+              --body "Cherry-pick of #$PR onto release/v$TARGET. Opened by the backport workflow; a human reviews and merges."
+          else
+            git cherry-pick --abort
+            echo "::warning::the cherry-pick conflicts; open it by hand"
+            exit 1
+          fi
