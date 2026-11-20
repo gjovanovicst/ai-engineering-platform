@@ -63,6 +63,24 @@ func (s *Service) tools() map[string]tool {
 				return map[string]string{"id": project.ID, "name": project.Name, "slug": project.Slug}, nil
 			},
 		},
+		"fill_form": {
+			name:        "fill_form",
+			description: "Fill the open form with the given values. The values are shown as a preview; the human confirms and the client writes the fields. It never submits the form.",
+			schema:      json.RawMessage(`{"type":"object","properties":{"form_id":{"type":"string"},"values":{"type":"object"}},"required":["form_id","values"]}`),
+			readOnly:    false,
+			preview: func(input json.RawMessage) string {
+				var args struct {
+					FormID string         `json:"form_id"`
+					Values map[string]any `json:"values"`
+				}
+				_ = json.Unmarshal(input, &args)
+				return fmt.Sprintf("I will fill the form %q with %d value(s). Confirm to fill it (it does not submit).", args.FormID, len(args.Values))
+			},
+			run: func(_ context.Context, _ string, input json.RawMessage) (any, error) {
+				// No database write: the client applies the values to the form.
+				return map[string]any{"ready": true}, nil
+			},
+		},
 		"list_tasks": {
 			name:        "list_tasks",
 			description: "List the tasks of a project (ref, title, status, priority, acceptance criteria).",

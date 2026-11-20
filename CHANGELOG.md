@@ -6,6 +6,12 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **The assistant fills the open form**: a drawer registers its fields
+  (`useAssistantForm`), `ui_context` carries them, and the new `fill_form` tool
+  proposes the values as a preview; the human confirms and the client writes the
+  fields — the assistant never submits the form and nothing reaches the
+  database.
+
 - **The assistant knows the screen**: the panel sends the route and the open
   drawer (its title and the dirty state) with each message; the system prompt
   carries it, so the assistant answers about what is on screen.

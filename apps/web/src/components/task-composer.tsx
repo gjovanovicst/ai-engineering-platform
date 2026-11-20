@@ -9,6 +9,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
 import { ApiError, createTask, startRun, transitionTask, updateTask, uploadTaskAttachment, type Task } from "@/lib/api";
+import { useAssistantForm } from "@/lib/assistant-form";
 import { useZodForm } from "@/lib/form";
 import { taskComposerSchema, type TaskComposerValues } from "@/lib/schemas";
 import { completeAcceptance, dependencyRefs, dorIssues, linesList, linesText, tagList, taskInput, type TaskComposerAction } from "@/components/task-composer-model";
@@ -139,6 +140,29 @@ export function TaskComposer({ orgID, projectID, tasks, task, onClose, onSaved }
     }
     void handleSubmit((formValues) => perform(formValues, action))();
   }
+
+  // The assistant can read the fields and fill them (the human still submits).
+  useAssistantForm({
+    id: "task-composer",
+    title: editing ? "Edit task" : "New task",
+    fields: [
+      { name: "title", label: "Title", type: "text" },
+      { name: "description", label: "Description", type: "textarea" },
+      { name: "acceptance", label: "Acceptance criteria", type: "list" },
+      { name: "priority", label: "Priority", type: "select" },
+    ],
+    apply: (values) => {
+      const set = (name: string, kind: "string" | "list") => {
+        const value = values[name];
+        if (kind === "string" && typeof value === "string") setValue(name as never, value as never, { shouldDirty: true });
+        if (kind === "list" && Array.isArray(value)) setValue(name as never, value as never, { shouldDirty: true });
+      };
+      set("title", "string");
+      set("description", "string");
+      set("acceptance", "list");
+      set("priority", "string");
+    },
+  });
 
   return (
     <SidePanel
