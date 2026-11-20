@@ -10,6 +10,7 @@ import { SidePanel } from "@/components/ui/side-panel";
 import { assistantStream, clearAssistantConversations, deleteAssistantConversation, listAssistantConversations, listAssistantMessages, type AssistantConversation, type AssistantEvent } from "@/lib/api";
 import { assistantCommands, expandCommand } from "@/lib/assistant-commands";
 import { applyAssistantForm, assistantFormContext } from "@/lib/assistant-form";
+import { pageSelection } from "@/lib/assistant-context";
 
 type ChatMessage = { role: "user" | "assistant" | "note"; text: string };
 
@@ -55,6 +56,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
           }
         : null,
       form: assistantFormContext(),
+      selection: pageSelection(window.location.pathname),
     });
   }
   const matchingCommands = prompt.startsWith("/") && !prompt.includes(" ")
