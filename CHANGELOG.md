@@ -11,6 +11,9 @@ All notable changes to this project. Dates are 2026.
   "this run" with the read tools instead of asking for an id.
 - **More forms registered**: the project create, the AI provider and the
   blueprint wizard expose their fields to the assistant (fill_form).
+- **The field options**: a select field declares its allowed values (the task
+  priority: low/med/high); a value outside the options is ignored, so the model
+  cannot write "medium" where the API expects "med".
 
 - **The assistant fills the open form**: a drawer registers its fields
   (`useAssistantForm`), `ui_context` carries them, and the new `fill_form` tool
