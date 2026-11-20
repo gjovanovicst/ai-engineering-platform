@@ -182,7 +182,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
       </aside>
 
       <div className="app-main">
-        <header className="app-topbar">
+        <header className="app-topbar relative z-[140]">
           <button type="button" className="icon-button mobile-menu-button" aria-label="Open navigation" onClick={() => setMobileNavOpen(true)}><Icon name="menu" /></button>
           <div className="breadcrumbs"><span>Workspace</span><span className="breadcrumb-slash">/</span><strong>{nav.find((item) => isActive(item.href))?.label ?? "Overview"}</strong></div>
           <button type="button" onClick={() => setPaletteOpen(true)} className="global-search"><Icon name="search" size={16} /><span>Search anything...</span><kbd>⌘ K</kbd></button>
@@ -223,17 +223,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
           {assistantOpen && claims?.org ? <AssistantPanel orgID={claims.org} onClose={() => setAssistantOpen(false)} /> : null}
         </header>
         <main id="main-content" tabIndex={-1} className="app-content">{children}</main>
-        {claims?.org ? (
-          <button
-            type="button"
-            onClick={() => setAssistantOpen(true)}
-            aria-label="Open the assistant (⌘/)"
-            title="Open the assistant (⌘/)"
-            className="assistant-fab fixed bottom-24 right-6 z-[140] grid h-12 w-12 place-items-center rounded-full bg-brand text-white shadow-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-          >
-            <span aria-hidden="true" className="text-xl leading-none">✦</span>
-          </button>
-        ) : null}
+
       </div>
     </div>
   );
