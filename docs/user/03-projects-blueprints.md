@@ -72,3 +72,12 @@ For GitHub, the App installation grants access to selected repositories. For Git
 
 - [Tasks and board](tasks-and-board.html)
 - [Agents and models](models-byok.html)
+
+## The per-project test command
+
+Each project sets the command the development run must pass (`go test ./...`,
+`pnpm test`, ...). The run executes it in the sandbox; a red command fails the
+run and starts a CI-fix flow.
+
+Set it in the project settings, or in the `/setup` wizard's third step. A new
+blueprint's starter task inherits the project's test command.

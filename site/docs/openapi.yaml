@@ -418,6 +418,143 @@ paths:
       responses:
         "204": { description: Deleted }
 
+  /orgs/{org}/assistant/conversations:
+    get:
+      tags: [assistant]
+      summary: The user's recent assistant conversations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: org
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The conversations, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/AssistantConversation" }
+        "401":
+          description: Not signed in
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+    delete:
+      tags: [assistant]
+      summary: Delete all of the user's conversations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: org
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Not signed in
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /orgs/{org}/assistant/conversations/{conversation}:
+    get:
+      tags: [assistant]
+      summary: One conversation's messages
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: org
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: conversation
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: The messages in order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/AssistantMessage" }
+        "401":
+          description: Not signed in
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+    delete:
+      tags: [assistant]
+      summary: Delete one conversation (the owner only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: org
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: conversation
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Not signed in
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /orgs/{org}/assistant/messages:
+    post:
+      tags: [assistant]
+      summary: Ask the assistant (JSON or SSE)
+      description: |
+        Answers one message with the tool loop over the platform. Writes (create
+        a task, retry, cancel) are proposed as a preview and run only when
+        `confirm` is true. Accept `text/event-stream` to receive the answer as
+        the `text`/`pending` and `done` events.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: org
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssistantMessageInput" }
+      responses:
+        "200":
+          description: The answer (JSON) or the same fields as SSE events.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantMessageOutput" }
+            text/event-stream:
+              schema: { type: string }
+        "400":
+          description: The prompt is empty or a validation error
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "401":
+          description: Not signed in
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
   /orgs/{org}/projects:
     parameters: [{ $ref: "#/components/parameters/OrgParam" }]
     get:
@@ -477,6 +614,34 @@ paths:
       operationId: archiveProject
       responses:
         "204": { description: Arhiviran }
+
+  /orgs/{org}/projects/{project}/test-command:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/ProjectParam"
+    put:
+      tags: [projects]
+      operationId: setProjectTestCommand
+      description: |
+        Stores the project test command. An empty string means the project uses
+        the global `AIP_TEST_COMMAND`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [command]
+              properties:
+                command: { type: string, maxLength: 500 }
+      responses:
+        "200":
+          description: The updated project
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /orgs/{org}/projects/{project}/tasks:
     parameters:
@@ -898,6 +1063,73 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Run" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/runs/{run}/retry:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/RunParam"
+    post:
+      tags: [runs]
+      operationId: retryRun
+      description: |
+        Starts a new development run with the failed run's approved plan. No
+        planning run and no new plan approval are needed; the task returns to
+        `in_progress` and the new run is queued.
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      responses:
+        "202":
+          description: A new development run was queued with the same plan
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Run" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/runs/{run}/fix-review:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - $ref: "#/components/parameters/RunParam"
+    post:
+      tags: [runs]
+      operationId: fixReviewRun
+      description: |
+        Starts a development run that fixes the blocker findings of a finished
+        review on the existing pull request: the same approved plan and branch;
+        the review re-runs after the fix.
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      responses:
+        "202":
+          description: A fix development run was queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Run" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /orgs/{org}/pull-requests/{pr}/checks/{check}/fix:
+    parameters:
+      - { $ref: "#/components/parameters/OrgParam" }
+      - { name: pr, in: path, required: true, schema: { type: string } }
+      - { name: check, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [runs]
+      operationId: fixFailedCheck
+      description: |
+        Starts a development run that fixes a failed CI check on the existing
+        pull request: the same approved plan and branch, with the check log in
+        the prompt.
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyParam" }]
+      responses:
+        "202":
+          description: A fix development run was queued
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Run" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
   /orgs/{org}/runs/{run}/events:
@@ -2722,6 +2954,7 @@ components:
           properties:
             id: { type: string, format: uuid }
             slug: { type: string }
+            test_command: { type: string }
             required_checks:
               type: array
               items: { type: string }
@@ -2737,6 +2970,33 @@ components:
       type: string
       enum: [low, med, high]
 
+    AssistantConversation:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        updated_at: { type: string, format: date-time }
+    AssistantMessage:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        role: { type: string, enum: [user, assistant, tool] }
+        content: { type: string }
+        tool_name: { type: string }
+        created_at: { type: string, format: date-time }
+    AssistantMessageInput:
+      type: object
+      required: [prompt]
+      properties:
+        conversation_id: { type: string, format: uuid }
+        prompt: { type: string, minLength: 1, maxLength: 4000 }
+        confirm: { type: boolean, default: false }
+    AssistantMessageOutput:
+      type: object
+      properties:
+        conversation_id: { type: string, format: uuid }
+        text: { type: string }
+        pending_tool: { type: string }
     AcceptanceCriterion:
       type: object
       required: [given, when, then]
@@ -2763,6 +3023,22 @@ components:
           type: array
           maxItems: 20
           items: { type: string, example: T-12 }
+        files:
+          type: array
+          maxItems: 50
+          items: { type: string }
+        out_of_scope:
+          type: array
+          maxItems: 50
+          items: { type: string }
+        test_plan:
+          type: array
+          maxItems: 50
+          items: { type: string }
+        rollback:
+          type: array
+          maxItems: 50
+          items: { type: string }
 
     Task:
       allOf:

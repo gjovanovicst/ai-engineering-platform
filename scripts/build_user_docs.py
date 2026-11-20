@@ -37,7 +37,7 @@ GROUP_FOR = {
     "pull-requests": "work", "git-providers": "work", "quality": "quality", "analytics": "quality",
     "users-access": "admin", "security-audit": "admin", "models-byok": "admin",
     "backups-recovery": "admin", "troubleshooting": "admin",
-    "api-basics": "api",
+    "api-basics": "api", "release-notes": "start",
 }
 
 
