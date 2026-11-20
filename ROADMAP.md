@@ -10,6 +10,14 @@ release.
 
 - **6–8 stories per feature release** (plus a small process story or two).
 - **Patch releases between features**: `0.2.1`, `0.2.2`, `0.3.1`… only fixes,
+  cut from a `release/vX.Y` branch. A fix on `main` labelled `backport/vX.Y`
+  opens a cherry-pick PR against that branch (`.github/workflows/backport.yml`);
+  once it merges, the patch tag follows the existing tag flow
+  (`.github/workflows/image-release.yml` reads `docs/releases/<tag>.md`).
+  Severity labels: `severity:s1`..`severity:s4`; a `regression` label marks a
+  defect that worked in a previous release. The nightly
+  (`.github/workflows/nightly.yml`) runs the migrations up/down, the seed, the
+  gates and the audit.
   additive migrations, no new features, no breaking changes.
 - **The pilots are the test bench**: each release is exercised on real pilot
   apps before and after the release; their findings feed the patches.

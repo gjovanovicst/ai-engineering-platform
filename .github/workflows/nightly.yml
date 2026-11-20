@@ -1,0 +1,57 @@
+name: nightly
+
+# The nightly proves the upgrade path and the gates on a throwaway stack:
+# the migrations up/down, the seed, the checks and the audit.
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migrations-and-checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: aip
+          POSTGRES_PASSWORD: aip
+          POSTGRES_DB: aip
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U aip -d aip"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    env:
+      AIP_DB_ADMIN_DSN: postgres://aip:aip@127.0.0.1:5432/aip?sslmode=disable
+      AIP_DB_DSN: postgres://aip:aip@127.0.0.1:5432/aip?sslmode=disable
+      AIP_DB_MIGRATOR_DSN: postgres://aip:aip@127.0.0.1:5432/aip?sslmode=disable
+      AIP_REDIS_URL: redis://127.0.0.1:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api/go.mod
+          cache-dependency-path: apps/api/go.sum
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - name: Migrations up and seed
+        run: make migrate-up && make seed
+      - name: The gates
+        run: make check && make web-check
+      - name: The audit
+        run: make security
+      - name: The migrations down
+        run: make migrate-down

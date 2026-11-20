@@ -49,3 +49,20 @@ body:
       label: Relevant logs
       description: Redact secrets first.
       render: text
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options: [local compose, pilot app, staging, production]
+    validations:
+      required: true
+  - type: input
+    id: run_id
+    attributes:
+      label: Run id (if an agent run is involved)
+  - type: checkboxes
+    id: regression
+    attributes:
+      label: Regression
+      options:
+        - label: This worked in a previous release

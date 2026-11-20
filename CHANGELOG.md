@@ -6,6 +6,12 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Patch-release mechanism**: the `backport/vX.Y` labels and the backport
+  workflow (a cherry-pick PR against `release/vX.Y`), the nightly workflow (the
+  migrations up/down, the seed, the gates and the audit), the bug template's
+  environment/run-id/regression fields, the severity/regression/pilot labels
+  and the policy in `ROADMAP.md`.
+
 - **Setup wizard** (`/setup`): four steps — the AI provider, the repository,
   the test command and the sandbox — with the progress, the skip and the resume
   (the step is remembered); the overview links it.
