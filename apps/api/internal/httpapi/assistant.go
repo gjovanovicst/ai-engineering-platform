@@ -19,6 +19,8 @@ type AssistantService interface {
 	Send(ctx context.Context, in assistant.SendInput) (assistant.SendOutput, error)
 	ListConversations(ctx context.Context, orgID, userID string, limit int) ([]domain.AssistantConversation, error)
 	ListMessages(ctx context.Context, orgID, conversationID string, limit int) ([]domain.AssistantMessage, error)
+	DeleteConversation(ctx context.Context, orgID, userID, id string) error
+	DeleteConversations(ctx context.Context, orgID, userID string) error
 }
 
 type assistantHandlers struct {
@@ -91,7 +93,7 @@ func (h *assistantHandlers) stream(w http.ResponseWriter, out assistant.SendOutp
 		_, _ = w.Write([]byte("event: " + event + "\ndata: " + string(data) + "\n\n"))
 	}
 	if out.PendingTool != "" {
-		emit("pending", map[string]any{"tool": out.PendingTool, "text": out.Text, "conversation_id": out.ConversationID})
+		emit("pending", map[string]any{"pending_tool": out.PendingTool, "text": out.Text, "conversation_id": out.ConversationID})
 	} else {
 		emit("text", map[string]any{"text": out.Text, "conversation_id": out.ConversationID})
 	}
@@ -148,4 +150,42 @@ func (h *assistantHandlers) messages(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"data": out})
+}
+
+// deleteConversation removes one conversation.
+func (h *assistantHandlers) deleteConversation(w http.ResponseWriter, r *http.Request) {
+	claims, ok := bearerClaims(h.issuer, r)
+	if !ok {
+		writeProblem(w, http.StatusUnauthorized, "unauthenticated", "missing or invalid access token")
+		return
+	}
+	if org := r.PathValue("org"); org != claims.OrgID {
+		writeProblem(w, http.StatusNotFound, "not_found", "resource not found")
+		return
+	}
+	if err := h.svc.DeleteConversation(r.Context(), claims.OrgID, claims.Subject, r.PathValue("conversation")); err != nil {
+		h.log.Error("assistant.delete", slog.Any("err", err))
+		writeProblem(w, http.StatusInternalServerError, "internal", "could not delete the conversation")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// deleteConversations removes all of the user's conversations.
+func (h *assistantHandlers) deleteConversations(w http.ResponseWriter, r *http.Request) {
+	claims, ok := bearerClaims(h.issuer, r)
+	if !ok {
+		writeProblem(w, http.StatusUnauthorized, "unauthenticated", "missing or invalid access token")
+		return
+	}
+	if org := r.PathValue("org"); org != claims.OrgID {
+		writeProblem(w, http.StatusNotFound, "not_found", "resource not found")
+		return
+	}
+	if err := h.svc.DeleteConversations(r.Context(), claims.OrgID, claims.Subject); err != nil {
+		h.log.Error("assistant.clear", slog.Any("err", err))
+		writeProblem(w, http.StatusInternalServerError, "internal", "could not clear the conversations")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

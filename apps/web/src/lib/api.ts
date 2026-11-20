@@ -74,7 +74,7 @@ async function request<T>(path: string, init: RequestInit = {}, retry = true): P
 }
 
 
-export type AssistantEvent = { type: "text" | "pending" | "done" | "error"; text?: string; pending_tool?: string; conversation_id?: string };
+export type AssistantEvent = { type: "text" | "pending" | "done" | "error"; text?: string; pending_tool?: string; tool?: string; conversation_id?: string };
 
 /** Streams one assistant message (SSE). Events: text, pending, done. */
 export async function assistantStream(
@@ -121,6 +121,14 @@ export function listAssistantConversations(orgID: string) {
 
 export function listAssistantMessages(orgID: string, conversationID: string) {
   return request<{ data: AssistantHistoryMessage[] }>(`/api/v1/orgs/${orgID}/assistant/conversations/${conversationID}`);
+}
+
+export function deleteAssistantConversation(orgID: string, conversationID: string) {
+  return request<void>(`/api/v1/orgs/${orgID}/assistant/conversations/${conversationID}`, { method: "DELETE" });
+}
+
+export function clearAssistantConversations(orgID: string) {
+  return request<void>(`/api/v1/orgs/${orgID}/assistant/conversations`, { method: "DELETE" });
 }
 
 export type TokenPair = {

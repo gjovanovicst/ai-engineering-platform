@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gjovanovicst/ai-engineering-platform/internal/app/projects"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/runs"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/tasks"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/domain"
@@ -27,6 +28,22 @@ func (s *memStore) CreateConversation(_ context.Context, c domain.AssistantConve
 
 func (s *memStore) ListConversations(_ context.Context, _, _ string, _ int) ([]domain.AssistantConversation, error) {
 	return s.conversations, nil
+}
+
+func (s *memStore) DeleteConversation(_ context.Context, _, _, id string) error {
+	var kept []domain.AssistantConversation
+	for _, c := range s.conversations {
+		if c.ID != id {
+			kept = append(kept, c)
+		}
+	}
+	s.conversations = kept
+	return nil
+}
+
+func (s *memStore) DeleteConversations(context.Context, string, string) error {
+	s.conversations = nil
+	return nil
 }
 
 func (s *memStore) ListMessages(_ context.Context, _, conversationID string, _ int) ([]domain.AssistantMessage, error) {
@@ -71,6 +88,10 @@ type mockPlatform struct {
 func (m *mockPlatform) ListProjects(context.Context, string, int) ([]domain.Project, error) {
 	return []domain.Project{{ID: "p1", Name: "Portal", Status: "active"}}, nil
 }
+func (m *mockPlatform) CreateProject(_ context.Context, in projects.CreateInput) (domain.Project, error) {
+	return domain.Project{ID: "p2", Name: in.Name, Slug: "p2"}, nil
+}
+
 func (m *mockPlatform) ListTasks(context.Context, string, string) ([]domain.Task, error) {
 	return nil, nil
 }

@@ -445,6 +445,24 @@ paths:
           content:
             application/problem+json:
               schema: { $ref: "#/components/schemas/Problem" }
+    delete:
+      tags: [assistant]
+      summary: Delete all of the user's conversations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: org
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Not signed in
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
   /orgs/{org}/assistant/conversations/{conversation}:
     get:
       tags: [assistant]
@@ -471,6 +489,28 @@ paths:
                   data:
                     type: array
                     items: { $ref: "#/components/schemas/AssistantMessage" }
+        "401":
+          description: Not signed in
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+    delete:
+      tags: [assistant]
+      summary: Delete one conversation (the owner only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: org
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: conversation
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: Deleted
         "401":
           description: Not signed in
           content:

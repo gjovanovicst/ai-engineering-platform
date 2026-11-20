@@ -30,6 +30,14 @@ func (m *mockAssistant) ListMessages(context.Context, string, string, int) ([]do
 	return nil, nil
 }
 
+func (m *mockAssistant) DeleteConversation(context.Context, string, string, string) error {
+	return nil
+}
+
+func (m *mockAssistant) DeleteConversations(context.Context, string, string) error {
+	return nil
+}
+
 func assistantReq(t *testing.T, body string, accept string) *http.Request {
 	t.Helper()
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/orgs/o/assistant/messages", strings.NewReader(body))

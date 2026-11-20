@@ -93,6 +93,24 @@ func (s *RunStore) Get(ctx context.Context, orgID, id string) (domain.Run, error
 }
 
 // ListForTask returns the runs of a task, newest first.
+func (s *RunStore) ListRuns(ctx context.Context, orgID string, limit int) ([]domain.Run, error) {
+	var out []domain.Run
+	err := db.WithOrg(ctx, s.pool, orgID, func(ctx context.Context, tx pgx.Tx) error {
+		rows, err := s.q.WithTx(tx).ListRuns(ctx, pgstore.ListRunsParams{
+			OrgID: toUUID(orgID), Limit: int32(limit), //nolint:gosec // clamped by the service
+		})
+		if err != nil {
+			return err
+		}
+		out = make([]domain.Run, 0, len(rows))
+		for _, row := range rows {
+			out = append(out, runFromRow(row))
+		}
+		return nil
+	})
+	return out, err
+}
+
 func (s *RunStore) ListForTask(ctx context.Context, orgID, taskID string, limit int) ([]domain.Run, error) {
 	var out []domain.Run
 	err := db.WithOrg(ctx, s.pool, orgID, func(ctx context.Context, tx pgx.Tx) error {

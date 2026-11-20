@@ -33,6 +33,7 @@ type Store interface {
 	SetTraceID(ctx context.Context, orgID, runID, traceID string) error
 	AddApprovalVote(ctx context.Context, orgID, approvalID, userID, decision, reason string) error
 	CountApprovalVotes(ctx context.Context, orgID, approvalID string) (int, error)
+	ListRuns(ctx context.Context, orgID string, limit int) ([]domain.Run, error)
 	LatestReviewForTask(ctx context.Context, orgID, taskID string) ([]byte, error)
 	LatestRun(ctx context.Context, orgID, taskID, agentType string) (domain.Run, error)
 	ListForTask(ctx context.Context, orgID, taskID string, limit int) ([]domain.Run, error)
@@ -242,6 +243,14 @@ func (s *Service) Start(ctx context.Context, in StartInput) (domain.Run, error) 
 }
 
 // Get returns one run.
+// ListOrg returns the org's recent runs (the assistant and the agents page).
+func (s *Service) ListOrg(ctx context.Context, orgID string, limit int) ([]domain.Run, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	return s.store.ListRuns(ctx, orgID, limit)
+}
+
 func (s *Service) Get(ctx context.Context, orgID, id string) (domain.Run, error) {
 	return s.store.Get(ctx, orgID, id)
 }

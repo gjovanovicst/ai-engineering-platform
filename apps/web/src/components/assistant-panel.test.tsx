@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -19,7 +20,12 @@ vi.mock("@/lib/api", async (importOriginal) => {
 
 describe("AssistantPanel", () => {
   it("shows the pending tool and asks for the confirmation", async () => {
-    render(<AssistantPanel orgID="o" onClose={() => undefined} />);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <AssistantPanel orgID="o" onClose={() => undefined} />
+      </QueryClientProvider>,
+    );
     await userEvent.click(screen.getByRole("button", { name: /draft a task/i }));
     expect(await screen.findByText("I will create the task.")).toBeInTheDocument();
     expect(screen.getByText("Confirmation needed")).toBeInTheDocument();

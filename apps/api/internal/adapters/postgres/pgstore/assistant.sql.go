@@ -85,6 +85,35 @@ func (q *Queries) CreateAssistantConversation(ctx context.Context, arg CreateAss
 	return i, err
 }
 
+const deleteAssistantConversation = `-- name: DeleteAssistantConversation :exec
+DELETE FROM assistant_conversations WHERE id = $1 AND org_id = $2 AND user_id = $3
+`
+
+type DeleteAssistantConversationParams struct {
+	ID     pgtype.UUID
+	OrgID  pgtype.UUID
+	UserID pgtype.UUID
+}
+
+func (q *Queries) DeleteAssistantConversation(ctx context.Context, arg DeleteAssistantConversationParams) error {
+	_, err := q.db.Exec(ctx, deleteAssistantConversation, arg.ID, arg.OrgID, arg.UserID)
+	return err
+}
+
+const deleteAssistantConversations = `-- name: DeleteAssistantConversations :exec
+DELETE FROM assistant_conversations WHERE org_id = $1 AND user_id = $2
+`
+
+type DeleteAssistantConversationsParams struct {
+	OrgID  pgtype.UUID
+	UserID pgtype.UUID
+}
+
+func (q *Queries) DeleteAssistantConversations(ctx context.Context, arg DeleteAssistantConversationsParams) error {
+	_, err := q.db.Exec(ctx, deleteAssistantConversations, arg.OrgID, arg.UserID)
+	return err
+}
+
 const getAssistantConversation = `-- name: GetAssistantConversation :one
 SELECT id, org_id, user_id, project_id, title, created_at, updated_at
 FROM assistant_conversations WHERE id = $1 AND org_id = $2

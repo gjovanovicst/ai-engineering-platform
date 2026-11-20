@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gjovanovicst/ai-engineering-platform/internal/app/projects"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/runs"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/app/tasks"
 	"github.com/gjovanovicst/ai-engineering-platform/internal/domain"
@@ -54,12 +55,15 @@ type Store interface {
 	ListConversations(ctx context.Context, orgID, userID string, limit int) ([]domain.AssistantConversation, error)
 	ListMessages(ctx context.Context, orgID, conversationID string, limit int) ([]domain.AssistantMessage, error)
 	AppendMessage(ctx context.Context, m domain.AssistantMessage) (domain.AssistantMessage, error)
+	DeleteConversation(ctx context.Context, orgID, userID, id string) error
+	DeleteConversations(ctx context.Context, orgID, userID string) error
 }
 
 // Platform is the read/write surface the tools use. It is the existing app
 // services, narrow to what the assistant needs.
 type Platform interface {
 	ListProjects(ctx context.Context, orgID string, limit int) ([]domain.Project, error)
+	CreateProject(ctx context.Context, in projects.CreateInput) (domain.Project, error)
 	ListTasks(ctx context.Context, orgID, projectID string) ([]domain.Task, error)
 	CreateTask(ctx context.Context, in tasks.CreateInput) (domain.Task, error)
 	GetRun(ctx context.Context, orgID, id string) (domain.Run, error)
@@ -113,6 +117,16 @@ func (s *Service) ListConversations(ctx context.Context, orgID, userID string, l
 // ListMessages returns one conversation's messages.
 func (s *Service) ListMessages(ctx context.Context, orgID, conversationID string, limit int) ([]domain.AssistantMessage, error) {
 	return s.store.ListMessages(ctx, orgID, conversationID, limit)
+}
+
+// DeleteConversation removes one of the user's conversations (the owner only).
+func (s *Service) DeleteConversation(ctx context.Context, orgID, userID, id string) error {
+	return s.store.DeleteConversation(ctx, orgID, userID, id)
+}
+
+// DeleteConversations removes all of the user's conversations.
+func (s *Service) DeleteConversations(ctx context.Context, orgID, userID string) error {
+	return s.store.DeleteConversations(ctx, orgID, userID)
 }
 
 const systemPrompt = `You are the assistant inside an AI engineering platform.
