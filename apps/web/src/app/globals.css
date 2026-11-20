@@ -126,7 +126,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .sidebar-status { display: flex; align-items: center; gap: 8px; color: rgb(var(--sidebar-status)); font-size: 10px; }
 .sidebar-footer-note { margin-top: 8px; color: rgb(var(--sidebar-note)); font-size: 10px; line-height: 1.5; }
 .app-main { min-height: 100vh; margin-left: 248px; }
-.app-topbar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 22px; height: 66px; padding: 0 32px; border-bottom: 1px solid rgb(var(--border)); background: rgb(var(--bg-surface) / .91); backdrop-filter: blur(16px); }
+.app-topbar { position: sticky; top: 0; z-index: 140; display: flex; align-items: center; gap: 22px; height: 66px; padding: 0 32px; border-bottom: 1px solid rgb(var(--border)); background: rgb(var(--bg-surface) / .91); backdrop-filter: blur(16px); }
 .breadcrumbs { display: flex; align-items: center; gap: 10px; min-width: max-content; color: rgb(var(--text-muted)); font-size: 12px; }
 .breadcrumbs strong { color: rgb(var(--text-primary)); font-weight: 650; }
 .breadcrumb-slash { color: rgb(var(--border-strong)); }

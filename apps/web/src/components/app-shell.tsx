@@ -182,7 +182,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
       </aside>
 
       <div className="app-main">
-        <header className="app-topbar relative z-[140]">
+        <header className="app-topbar">
           <button type="button" className="icon-button mobile-menu-button" aria-label="Open navigation" onClick={() => setMobileNavOpen(true)}><Icon name="menu" /></button>
           <div className="breadcrumbs"><span>Workspace</span><span className="breadcrumb-slash">/</span><strong>{nav.find((item) => isActive(item.href))?.label ?? "Overview"}</strong></div>
           <button type="button" onClick={() => setPaletteOpen(true)} className="global-search"><Icon name="search" size={16} /><span>Search anything...</span><kbd>⌘ K</kbd></button>
