@@ -52,6 +52,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **The bare window globals**: the ESLint `no-restricted-globals` rule rejects
+  a bare `close`/`origin`/`self`/`parent`, so a dead handler like
+  `onClick={close}` fails the lint instead of silently calling `window.close`.
+
 - **Drawer footers**: every SidePanel has a footer — "Close" when there is no
   submit, and the form's own actions otherwise; the task drawer always shows
   "Close" next to the transitions; a form with unsaved changes asks before the
