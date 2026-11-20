@@ -168,10 +168,11 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
       onCancel={() => setConfirmClear(false)}
     />
     <SidePanel
-      size="lg"
+      size="md"
       z={130}
       assistant={false}
       side="left"
+      overlay={false}
       title="Assistant"
       description={`Ask about this workspace. Context: ${context || "/"}`}
       onClose={onClose}

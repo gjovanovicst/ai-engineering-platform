@@ -23,6 +23,7 @@ export function SidePanel({
   z = 100,
   assistant = true,
   side = "right",
+  overlay = true,
 }: {
   title: string;
   description?: string;
@@ -38,6 +39,8 @@ export function SidePanel({
   assistant?: boolean;
   /** The edge the panel docks to; the assistant opens left, over a drawer. */
   side?: "left" | "right";
+  /** Dim and block the page. Off when the panel docks beside another drawer. */
+  overlay?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -83,14 +86,20 @@ export function SidePanel({
         }}
         onCancel={() => setConfirmOpen(false)}
       />
-    <div className={`fixed inset-0 z-[100] flex ${side === "left" ? "justify-start" : "justify-end"}`} style={{ zIndex: z }} role="presentation">
-      <button
-        type="button"
-        aria-label="Close panel"
-        className="absolute inset-0"
-        style={{ backgroundColor: "rgb(var(--overlay))" }}
-        onClick={close}
-      />
+    <div
+      className={`fixed inset-0 z-[100] flex ${side === "left" ? "justify-start" : "justify-end"} ${overlay ? "" : "pointer-events-none"}`}
+      style={{ zIndex: z }}
+      role="presentation"
+    >
+      {overlay ? (
+        <button
+          type="button"
+          aria-label="Close panel"
+          className="absolute inset-0"
+          style={{ backgroundColor: "rgb(var(--overlay))" }}
+          onClick={close}
+        />
+      ) : null}
       <aside
         role="dialog"
         aria-modal="true"
@@ -98,7 +107,7 @@ export function SidePanel({
         data-drawer="true"
         data-drawer-title={title}
         data-drawer-dirty={dirty ? "true" : "false"}
-        className={`relative flex h-full w-full ${panelWidths[size]} flex-col ${side === "left" ? "border-r" : "border-l"} border-border bg-bg-surface shadow-2xl`}
+        className={`relative flex h-full w-full ${panelWidths[size]} flex-col ${side === "left" ? "border-r" : "border-l"} border-border bg-bg-surface shadow-2xl ${overlay ? "" : "pointer-events-auto"}`}
       >
         <header className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
           <div>
