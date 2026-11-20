@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+
+import { useAssistantForm } from "@/lib/assistant-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -179,6 +181,27 @@ export default function BlueprintsPage() {
   function update<K extends keyof Form>(key: K, value: Form[K]) {
     setForm((current) => ({ ...current, [key]: value }));
   }
+
+  useAssistantForm({
+    id: "blueprint-form",
+    title: "New blueprint",
+    fields: [
+      { name: "name", label: "Name", type: "text" },
+      { name: "description", label: "Description", type: "textarea" },
+      { name: "backend", label: "Backend", type: "text" },
+      { name: "frontend", label: "Frontend", type: "text" },
+      { name: "defaultBranch", label: "Default branch", type: "text" },
+    ],
+    apply: (values) => {
+      setForm((current) => {
+        const next = { ...current };
+        for (const key of ["name", "description", "backend", "frontend", "defaultBranch"] as const) {
+          if (typeof values[key] === "string") next[key] = values[key];
+        }
+        return next;
+      });
+    },
+  });
 
   // Closing the wizard drops the draft: the next open starts clean.
   function closeWizard() {

@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useAssistantForm } from "@/lib/assistant-form";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
@@ -28,6 +29,7 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isDirty },
   } = useZodForm<AiProviderValues>(aiProviderSchema, {
     defaultValues: { name: "", base_url: "https://api.openai.com/v1", model: "", api_key: "" },
@@ -97,6 +99,25 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
       queryClient.invalidateQueries({ queryKey: ["prices", orgID] });
     },
     onError: (err) => setError(err instanceof ApiError ? err.message : "Could not save the price"),
+  });
+
+  useAssistantForm({
+    id: "provider-form",
+    title: "Add AI provider",
+    fields: [
+      { name: "name", label: "Name", type: "text" },
+      { name: "base_url", label: "Base URL", type: "text" },
+      { name: "model", label: "Model", type: "text" },
+    ],
+    apply: (values) => {
+      const write = (name: string) => {
+        const value = values[name];
+        if (typeof value === "string") setValue(name as never, value as never, { shouldDirty: true });
+      };
+      write("name");
+      write("base_url");
+      write("model");
+    },
   });
 
   return (
