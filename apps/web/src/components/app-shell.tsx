@@ -229,7 +229,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
             onClick={() => setAssistantOpen(true)}
             aria-label="Open the assistant (⌘/)"
             title="Open the assistant (⌘/)"
-            className="assistant-fab fixed bottom-6 right-6 z-[140] grid h-12 w-12 place-items-center rounded-full bg-brand text-white shadow-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+            className="assistant-fab fixed bottom-24 right-6 z-[140] grid h-12 w-12 place-items-center rounded-full bg-brand text-white shadow-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
           >
             <span aria-hidden="true" className="text-xl leading-none">✦</span>
           </button>
