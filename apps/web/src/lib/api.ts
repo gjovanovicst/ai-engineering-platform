@@ -987,6 +987,17 @@ export function listRunChecks(orgID: string, runID: string) {
   return request<{ data: CheckResult[] }>(`/api/v1/orgs/${orgID}/runs/${runID}/checks`);
 }
 
+export function updateProject(
+  orgID: string,
+  projectID: string,
+  input: { test_command?: string; e2e_command?: string },
+) {
+  return request<Project>(`/api/v1/orgs/${orgID}/projects/${projectID}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
 export function updateProjectRequiredChecks(orgID: string, projectID: string, checks: string[]) {
   return request<Project>(`/api/v1/orgs/${orgID}/projects/${projectID}/required-checks`, {
     method: "PUT",
