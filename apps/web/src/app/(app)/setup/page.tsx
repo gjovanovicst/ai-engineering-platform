@@ -17,15 +17,9 @@ import {
   updateProject,
 } from "@/lib/api";
 import type { Claims } from "@/lib/auth";
+import { steps } from "./steps";
 
 const STORAGE_KEY = "aip.setup.step";
-
-export const steps = [
-  { key: "provider", title: "Connect an AI provider", detail: "The model your agents may use." },
-  { key: "repository", title: "Connect a repository", detail: "Where the agent opens its pull requests." },
-  { key: "test", title: "Set the test command", detail: "The gate every development run must pass." },
-  { key: "sandbox", title: "Confirm the sandbox", detail: "The isolated image the agent runs in." },
-] as const;
 
 export default function SetupPage() {
   const router = useRouter();

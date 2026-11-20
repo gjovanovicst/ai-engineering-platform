@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { steps } from "./page";
+import { steps } from "./steps";
 
 describe("setup wizard", () => {
   it("walks the four setup steps in order", () => {
