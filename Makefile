@@ -152,7 +152,7 @@ web-dev: ## run Next.js on :3000
 	cd apps/web && pnpm dev
 
 web-check: ## lint, type-check and test the web app
-	cd apps/web && pnpm lint && pnpm tsc && pnpm test
+	cd apps/web && pnpm lint && pnpm tsc && pnpm test && pnpm run check:ui
 
 compose-down: ## stop the containers
 	docker compose down

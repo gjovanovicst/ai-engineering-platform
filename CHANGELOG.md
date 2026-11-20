@@ -6,6 +6,12 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **UI contracts**: `make web-check` runs `scripts/check-ui-contracts.mjs` —
+  the window dialogs, the SidePanel footers and the null-unsafe list renders
+  fail the gate; the form-dirty and the remaining null-list warnings are a
+  progressive cleanup; the TaskDrawer's component tests cover the Close and the
+  transitions.
+
 - **Patch-release mechanism**: the `backport/vX.Y` labels and the backport
   workflow (a cherry-pick PR against `release/vX.Y`), the nightly workflow (the
   migrations up/down, the seed, the gates and the audit), the bug template's
