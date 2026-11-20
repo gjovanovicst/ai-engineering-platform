@@ -6,6 +6,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Run UX**: the primary action is sticky while scrolling, the live log reads
+  as a timeline, the review findings show the blockers first, and the summary
+  grid stacks at 375px.
+
 - **AI assistant (parts 1-4)**: the conversation store (migration 0083), the
   assistant service (the read/write tools behind a preview + confirmation, the
   untrusted tool-output wrapping, the per-user rate limit), the endpoint —
