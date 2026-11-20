@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { AssistantMarkdown } from "@/components/assistant-markdown";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SidePanel } from "@/components/ui/side-panel";
 import { assistantStream, clearAssistantConversations, deleteAssistantConversation, listAssistantConversations, listAssistantMessages, type AssistantConversation, type AssistantEvent } from "@/lib/api";
 import { assistantCommands, expandCommand } from "@/lib/assistant-commands";
@@ -29,6 +30,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
   const queryClient = useQueryClient();
   const [conversations, setConversations] = useState<AssistantConversation[]>([]);
   const [commandIndex, setCommandIndex] = useState(0);
+  const [confirmClear, setConfirmClear] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
   const context = typeof window === "undefined" ? "" : window.location.pathname;
   const matchingCommands = prompt.startsWith("/") && !prompt.includes(" ")
@@ -74,8 +76,12 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
     }
   }
 
-  async function clearHistory() {
-    if (typeof window !== "undefined" && !window.confirm("Delete all earlier conversations?")) return;
+  function clearHistory() {
+    setConfirmClear(true);
+  }
+
+  async function doClearHistory() {
+    setConfirmClear(false);
     try {
       await clearAssistantConversations(orgID);
       setConversations([]);
@@ -135,6 +141,16 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
   }
 
   return (
+    <>
+    <ConfirmDialog
+      open={confirmClear}
+      title="Delete all earlier conversations?"
+      message="Every conversation in the history is removed. This cannot be undone."
+      confirmLabel="Delete all"
+      cancelLabel="Keep"
+      onConfirm={() => void doClearHistory()}
+      onCancel={() => setConfirmClear(false)}
+    />
     <SidePanel
       size="lg"
       title="Assistant"
@@ -284,5 +300,6 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
         </div>
       </div>
     </SidePanel>
+    </>
   );
 }

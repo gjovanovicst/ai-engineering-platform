@@ -73,11 +73,6 @@ export function TaskComposer({ orgID, projectID, tasks, task, onClose, onSaved }
   const completeCount = completeAcceptance(acceptance).length;
 
 
-  function close() {
-    if (isDirty && !window.confirm("Discard the unsaved changes?")) return;
-    onClose();
-  }
-
   function toggleDependency(ref: string) {
     setValue("dependsOn", dependsOn.includes(ref) ? dependsOn.filter((r) => r !== ref) : [...dependsOn, ref], {
       shouldDirty: true,
@@ -155,7 +150,7 @@ export function TaskComposer({ orgID, projectID, tasks, task, onClose, onSaved }
           ? "Update the task; the agent sees the same acceptance criteria and scope."
           : "A well-defined task gives the agent the context and the proof it needs. Create it as a draft, ready, or start planning immediately."
       }
-      onClose={close}
+      onClose={onClose}
       footer={
         <>
           <Button type="button" variant="secondary" onClick={close}>
