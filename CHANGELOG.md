@@ -46,9 +46,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
-- **Task drawer**: the panel no longer scrolls as a whole; the header stays at
-  the top and only the body scrolls, so the close button and the actions stay
-  reachable.
+- **Task drawer**: it renders through a portal (it reaches the viewport's top
+  instead of anchoring to a transformed parent), only its body scrolls, and it
+  offers the status transitions (Move to ready, Start, Move to review,
+  Unblock) with the human actor.
 
 - **Web lists crash on empty data**: the analytics, the previews, the members,
   the pull-request queue and the preflight checks render `null` lists as empty

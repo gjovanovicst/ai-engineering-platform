@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import {
   listTaskAttachments,
   listTaskRuns,
   uploadTaskAttachment,
+  transitionTask,
   type Task,
 } from "@/lib/api";
 
@@ -49,11 +51,20 @@ export function TaskDrawer({
   onEdit: (task: Task) => void;
 }) {
   const queryClient = useQueryClient();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const attachments = useQuery({
     queryKey: ["task-attachments", orgID, projectID, task.id],
     queryFn: () => listTaskAttachments(orgID, projectID, task.id),
+  });
+  const transition = useMutation({
+    mutationFn: (to: string) => transitionTask(orgID, projectID, task.id, to),
+    onSuccess: () => {
+      void queryClient.invalidateQueries();
+      onClose();
+    },
   });
   const uploadAttachment = useMutation({
     mutationFn: (file: File) => uploadTaskAttachment(orgID, projectID, task.id, file),
@@ -120,7 +131,9 @@ export function TaskDrawer({
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-40 flex justify-end">
       <button
         type="button"
@@ -154,13 +167,24 @@ export function TaskDrawer({
         </header>
 
         <div className="flex-1 space-y-6 overflow-y-auto overscroll-contain p-4">
-          <div className="flex flex-wrap gap-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className={`rounded-md px-2 py-0.5 font-medium ${statusStyles[task.status] ?? ""}`}>
               {task.status}
             </span>
             <span className="rounded-md bg-bg-hover px-2 py-0.5 uppercase text-text-muted">
               {task.priority}
             </span>
+            {taskTransitions(task.status).map((next) => (
+              <Button
+                key={next.to}
+                variant={next.to === "in_progress" ? "primary" : "secondary"}
+                loading={transition.isPending}
+                onClick={() => transition.mutate(next.to)}
+                className="h-7 px-2 text-xs"
+              >
+                {next.label}
+              </Button>
+            ))}
           </div>
 
           {task.description ? (
@@ -332,6 +356,23 @@ export function TaskDrawer({
           </section>
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
+}
+
+/** The human transitions the drawer offers for a status. */
+function taskTransitions(status: string): { label: string; to: string }[] {
+  switch (status) {
+    case "draft":
+      return [{ label: "Move to ready", to: "ready" }];
+    case "ready":
+      return [{ label: "Start", to: "in_progress" }];
+    case "in_progress":
+      return [{ label: "Move to review", to: "review" }];
+    case "blocked":
+      return [{ label: "Unblock", to: "ready" }];
+    default:
+      return [];
+  }
 }
