@@ -96,14 +96,25 @@ export function SidePanel({
             <h2 id="side-panel-title" className="text-base font-semibold">{title}</h2>
             {description ? <p className="mt-1 text-xs text-text-secondary">{description}</p> : null}
           </div>
-          <button
-            type="button"
-            aria-label="Close panel"
-            onClick={close}
-            className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
-          >
-            <span aria-hidden="true" className="text-lg leading-none">×</span>
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              aria-label="Open the assistant"
+              title="Open the assistant (⌘/)"
+              onClick={() => window.dispatchEvent(new CustomEvent("aip:assistant"))}
+              className="grid h-8 w-8 place-items-center rounded-md text-text-muted transition-colors hover:bg-bg-hover hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
+            >
+              <span aria-hidden="true" className="text-base leading-none">✦</span>
+            </button>
+            <button
+              type="button"
+              aria-label="Close panel"
+              onClick={close}
+              className="grid h-8 w-8 place-items-center rounded-md text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
+            >
+              <span aria-hidden="true" className="text-lg leading-none">×</span>
+            </button>
+          </div>
         </header>
         <div className="flex-1 overflow-y-auto overscroll-contain">{children}</div>
         <footer className="flex items-center justify-end gap-2 border-t border-border bg-bg-subtle px-5 py-3">

@@ -66,6 +66,12 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
+    const openAssistant = () => setAssistantOpen(true);
+    window.addEventListener("aip:assistant", openAssistant);
+    return () => window.removeEventListener("aip:assistant", openAssistant);
+  }, []);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === "/") {
         event.preventDefault();
