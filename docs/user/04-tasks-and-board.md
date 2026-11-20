@@ -67,3 +67,25 @@ Tasks have a priority and labels. Use the board filters to focus on a project, a
 
 - [Agent runs](runs-and-approvals.html)
 - [Quality gates](quality.html)
+
+## The task composer
+
+The board's **New task** button opens the composer. It asks for the title and
+the description, then the acceptance criteria — the definition of done the
+agent must prove. A task without acceptance criteria cannot leave `draft`.
+
+The composer also records the scope: what is in (the required behaviour) and
+what is out (the boundaries the agent must not cross). The agent reads the
+scope when it plans, and a diff that touches an out-of-scope file is a review
+finding.
+
+## The scope (DoR)
+
+The Definition of Ready asks for:
+
+- the title and the description,
+- at least one acceptance criterion (given / when / then),
+- the priority (low / med / high),
+- the in-scope and out-of-scope notes when the task is ambiguous.
+
+A task that fails the DoR stays `draft`; the board shows what is missing.

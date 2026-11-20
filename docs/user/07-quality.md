@@ -62,3 +62,10 @@ A review run reports findings with severity. Findings are not automatically bloc
 
 - [Pull requests](pull-requests.html)
 - [Troubleshooting](troubleshooting.html)
+
+## The clean audit
+
+The clean audit re-runs the project's rules and the architecture checks over the
+merged code, independent of any run. Run it from the project's quality page.
+A clean audit is the proof that the rules still hold after a burst of merges;
+the result is recorded in the audit log and never rewritten.

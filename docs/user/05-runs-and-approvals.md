@@ -66,3 +66,16 @@ A run has a token and cost budget. The worker checks it between phases. When the
 - [Pull requests and merges](pull-requests.html)
 - [Quality gates](quality.html)
 - [Troubleshooting](troubleshooting.html)
+
+## Retry development, Fix review findings and Fix CI
+
+The run page offers a different action depending on where the run stopped:
+
+| The action | When to use it | What it does |
+|---|---|---|
+| **Retry development** | the development run failed (a build, a test, a timeout) | re-queues the same task from the plan; a human still approves the new run |
+| **Retry task** | any failed run | re-queues the task from the start |
+| **Fix review findings** | the review run found blockers | starts a fix run that addresses the findings and re-runs the gates |
+| **Fix CI** | the pull request's checks failed | starts a fix run that targets the failing check |
+
+Every one of them is a new run with its own trace; the platform never merges.

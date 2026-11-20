@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>API reference · AI Engineering Platform</title>
-<meta name="description" content="REST API reference: 126 operations and 60 schemas, generated from OpenAPI." />
+<meta name="description" content="REST API reference: 135 operations and 64 schemas, generated from OpenAPI." />
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="docs.css" />
 <script>try{var t=localStorage.getItem("aip-theme");var d=t?t==="dark":!window.matchMedia("(prefers-color-scheme: light)").matches;if(d)document.documentElement.dataset.theme="dark";else document.documentElement.dataset.theme="light";}catch(e){}</script>
@@ -28,7 +28,7 @@
 </header>
 <div class="docs-layout">
   <aside class="docs-nav" aria-label="User guide">
-    <nav><details class="nav-group"><summary>Getting started <span>3</span></summary><div class="nav-items"><a class="" href="pages/overview.html">Overview</a><a class="" href="pages/quickstart.html">Quickstart</a><a class="" href="pages/concepts.html">Key concepts</a></div></details><details class="nav-group"><summary>Build & ship <span>5</span></summary><div class="nav-items"><a class="" href="pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="pages/tasks-and-board.html">Tasks and board</a><a class="" href="pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="pages/pull-requests.html">Pull requests and merges</a><a class="" href="pages/git-providers.html">Git providers</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="pages/quality.html">Quality gates</a><a class="" href="pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="pages/users-access.html">Users and access</a><a class="" href="pages/security-audit.html">Security and audit</a><a class="" href="pages/models-byok.html">Agents, models and BYOK</a><a class="" href="pages/backups-recovery.html">Backups and recovery</a><a class="" href="pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="pages/api-events.html">SSE event catalog</a><a class="" href="pages/api-basics.html">API basics</a></div></details><a class="nav-api active" href="api.html">API reference <span>REST</span></a></nav>
+    <nav><details class="nav-group"><summary>Getting started <span>4</span></summary><div class="nav-items"><a class="" href="pages/overview.html">Overview</a><a class="" href="pages/quickstart.html">Quickstart</a><a class="" href="pages/concepts.html">Key concepts</a><a class="" href="pages/release-notes.html">Release notes</a></div></details><details class="nav-group"><summary>Build & ship <span>5</span></summary><div class="nav-items"><a class="" href="pages/projects-blueprints.html">Projects and blueprints</a><a class="" href="pages/tasks-and-board.html">Tasks and board</a><a class="" href="pages/runs-and-approvals.html">Agent runs and approvals</a><a class="" href="pages/pull-requests.html">Pull requests and merges</a><a class="" href="pages/git-providers.html">Git providers</a></div></details><details class="nav-group"><summary>Quality & insights <span>2</span></summary><div class="nav-items"><a class="" href="pages/quality.html">Quality gates</a><a class="" href="pages/analytics.html">Analytics</a></div></details><details class="nav-group"><summary>Administration <span>5</span></summary><div class="nav-items"><a class="" href="pages/users-access.html">Users and access</a><a class="" href="pages/security-audit.html">Security and audit</a><a class="" href="pages/models-byok.html">Agents, models and BYOK</a><a class="" href="pages/backups-recovery.html">Backups and recovery</a><a class="" href="pages/troubleshooting.html">Troubleshooting</a></div></details><details class="nav-group"><summary>API & integrations <span>2</span></summary><div class="nav-items"><a class="" href="pages/api-events.html">SSE event catalog</a><a class="" href="pages/api-basics.html">API basics</a></div></details><a class="nav-api active" href="api.html">API reference <span>REST</span></a></nav>
     <a class="nav-back" href="../index.html"><span aria-hidden="true">←</span> Back to product site</a>
     <p class="nav-note">AI Engineering Platform · User guide</p>
   </aside>
@@ -58,9 +58,10 @@ curl -H "Authorization: Bearer $TOKEN" \
 <section id="operations" class="api-section"><h2>Operations</h2>
 <div class="api-tag-summary"><a href="#tag-auth">auth</a><span>16</span></div>
 <div class="api-tag-summary"><a href="#tag-orgs">orgs</a><span>18</span></div>
-<div class="api-tag-summary"><a href="#tag-projects">projects</a><span>30</span></div>
+<div class="api-tag-summary"><a href="#tag-assistant">assistant</a><span>5</span></div>
+<div class="api-tag-summary"><a href="#tag-projects">projects</a><span>31</span></div>
 <div class="api-tag-summary"><a href="#tag-tasks">tasks</a><span>7</span></div>
-<div class="api-tag-summary"><a href="#tag-runs">runs</a><span>10</span></div>
+<div class="api-tag-summary"><a href="#tag-runs">runs</a><span>13</span></div>
 <div class="api-tag-summary"><a href="#tag-approvals">approvals</a><span>2</span></div>
 <div class="api-tag-summary"><a href="#tag-design">design</a><span>9</span></div>
 <div class="api-tag-summary"><a href="#tag-analytics">analytics</a><span>5</span></div>
@@ -349,7 +350,78 @@ curl -H "Authorization: Bearer $TOKEN" \
 </tbody></table></div>
 </article>
 </section>
-<section id="tag-projects" class="api-section"><div class="tag-head"><h2>projects</h2><span>30 operations</span></div>
+<section id="tag-assistant" class="api-section"><div class="tag-head"><h2>assistant</h2><span>5 operations</span></div>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/assistant/conversations</code></div>
+<h3>The user&#x27;s recent assistant conversations</h3>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>org</code></td><td>path</td><td>yes</td><td><code>uuid</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>The conversations, newest first</td><td><code>object</code></td></tr>
+<tr><td><code>401</code></td><td>Not signed in</td><td><a href="#schema-problem"><code>Problem</code></a></td></tr>
+</tbody></table></div>
+<p class="meta-line">Security: bearerAuth</p>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method delete">DELETE</span><code class="path">/orgs/{org}/assistant/conversations</code></div>
+<h3>Delete all of the user&#x27;s conversations</h3>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>org</code></td><td>path</td><td>yes</td><td><code>uuid</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Deleted</td><td></td></tr>
+<tr><td><code>401</code></td><td>Not signed in</td><td><a href="#schema-problem"><code>Problem</code></a></td></tr>
+</tbody></table></div>
+<p class="meta-line">Security: bearerAuth</p>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/assistant/conversations/{conversation}</code></div>
+<h3>One conversation&#x27;s messages</h3>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>org</code></td><td>path</td><td>yes</td><td><code>uuid</code></td><td></td></tr>
+<tr><td><code>conversation</code></td><td>path</td><td>yes</td><td><code>uuid</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>The messages in order</td><td><code>object</code></td></tr>
+<tr><td><code>401</code></td><td>Not signed in</td><td><a href="#schema-problem"><code>Problem</code></a></td></tr>
+</tbody></table></div>
+<p class="meta-line">Security: bearerAuth</p>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method delete">DELETE</span><code class="path">/orgs/{org}/assistant/conversations/{conversation}</code></div>
+<h3>Delete one conversation (the owner only)</h3>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>org</code></td><td>path</td><td>yes</td><td><code>uuid</code></td><td></td></tr>
+<tr><td><code>conversation</code></td><td>path</td><td>yes</td><td><code>uuid</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>204</code></td><td>Deleted</td><td></td></tr>
+<tr><td><code>401</code></td><td>Not signed in</td><td><a href="#schema-problem"><code>Problem</code></a></td></tr>
+</tbody></table></div>
+<p class="meta-line">Security: bearerAuth</p>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/assistant/messages</code></div>
+<h3>Ask the assistant (JSON or SSE)</h3>
+<p>Answers one message with the tool loop over the platform. Writes (create
+a task, retry, cancel) are proposed as a preview and run only when
+<code>confirm</code> is true. Accept <code>text/event-stream</code> to receive the answer as
+the <code>text</code>/<code>pending</code> and <code>done</code> events.
+</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>org</code></td><td>path</td><td>yes</td><td><code>uuid</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Request body</strong> (required): <code>application/json</code> <a href="#schema-assistantmessageinput"><code>AssistantMessageInput</code></a></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>The answer (JSON) or the same fields as SSE events.</td><td><a href="#schema-assistantmessageoutput"><code>AssistantMessageOutput</code></a></td></tr>
+<tr><td><code>400</code></td><td>The prompt is empty or a validation error</td><td><a href="#schema-problem"><code>Problem</code></a></td></tr>
+<tr><td><code>401</code></td><td>Not signed in</td><td><a href="#schema-problem"><code>Problem</code></a></td></tr>
+</tbody></table></div>
+<p class="meta-line">Security: bearerAuth</p>
+</article>
+</section>
+<section id="tag-projects" class="api-section"><div class="tag-head"><h2>projects</h2><span>31 operations</span></div>
 <article class="endpoint">
 <div class="endpoint-head"><span class="method get">GET</span><code class="path">/orgs/{org}/projects</code><span class="opid">listProjects</span></div>
 <div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
@@ -383,6 +455,18 @@ curl -H "Authorization: Bearer $TOKEN" \
 <div class="endpoint-head"><span class="method delete">DELETE</span><code class="path">/orgs/{org}/projects/{project}</code><span class="opid">archiveProject</span></div>
 <div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
 <tr><td><code>204</code></td><td>Arhiviran</td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method put">PUT</span><code class="path">/orgs/{org}/projects/{project}/test-command</code><span class="opid">setProjectTestCommand</span></div>
+<p>Stores the project test command. An empty string means the project uses
+the global <code>AIP_TEST_COMMAND</code>.
+</p>
+<p><strong>Request body</strong> (required): <code>application/json</code> <code>object</code></p>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>200</code></td><td>The updated project</td><td><a href="#schema-project"><code>Project</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
 </tbody></table></div>
 </article>
 <article class="endpoint">
@@ -665,7 +749,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 </tbody></table></div>
 </article>
 </section>
-<section id="tag-runs" class="api-section"><div class="tag-head"><h2>runs</h2><span>10 operations</span></div>
+<section id="tag-runs" class="api-section"><div class="tag-head"><h2>runs</h2><span>13 operations</span></div>
 <article class="endpoint">
 <div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/tasks/{task}/runs</code><span class="opid">startRun</span></div>
 <div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
@@ -704,6 +788,54 @@ curl -H "Authorization: Bearer $TOKEN" \
 </tbody></table></div>
 <div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
 <tr><td><code>202</code></td><td>Cancellation requested</td><td><a href="#schema-run"><code>Run</code></a></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/runs/{run}/retry</code><span class="opid">retryRun</span></div>
+<p>Starts a new development run with the failed run&#x27;s approved plan. No
+planning run and no new plan approval are needed; the task returns to
+<code>in_progress</code> and the new run is queued.
+</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>202</code></td><td>A new development run was queued with the same plan</td><td><a href="#schema-run"><code>Run</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/runs/{run}/fix-review</code><span class="opid">fixReviewRun</span></div>
+<p>Starts a development run that fixes the blocker findings of a finished
+review on the existing pull request: the same approved plan and branch;
+the review re-runs after the fix.
+</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>202</code></td><td>A fix development run was queued</td><td><a href="#schema-run"><code>Run</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
+<tr><td><code>409</code></td><td></td><td></td></tr>
+</tbody></table></div>
+</article>
+<article class="endpoint">
+<div class="endpoint-head"><span class="method post">POST</span><code class="path">/orgs/{org}/pull-requests/{pr}/checks/{check}/fix</code><span class="opid">fixFailedCheck</span></div>
+<p>Starts a development run that fixes a failed CI check on the existing
+pull request: the same approved plan and branch, with the check log in
+the prompt.
+</p>
+<div class="table-wrap"><table><thead><tr><th>Parameter</th><th>In</th><th>Required</th><th>Schema</th><th>Description</th></tr></thead><tbody>
+<tr><td><code></code></td><td></td><td>no</td><td><code>object</code></td><td></td></tr>
+</tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Status</th><th>Description</th><th>Schema</th></tr></thead><tbody>
+<tr><td><code>202</code></td><td>A fix development run was queued</td><td><a href="#schema-run"><code>Run</code></a></td></tr>
+<tr><td><code>400</code></td><td></td><td></td></tr>
+<tr><td><code>404</code></td><td></td><td></td></tr>
 <tr><td><code>409</code></td><td></td><td></td></tr>
 </tbody></table></div>
 </article>
@@ -1137,7 +1269,7 @@ adds the membership and returns a session.
 </tbody></table></div>
 </article>
 </section>
-<section id="schemas" class="api-section"><div class="tag-head"><h2>Schemas</h2><span>60 definitions</span></div>
+<section id="schemas" class="api-section"><div class="tag-head"><h2>Schemas</h2><span>64 definitions</span></div>
 <details class="schema" id="schema-problem"><summary><code>Problem</code><span>7 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>type</code> *</td><td><code>uri</code></td><td></td></tr><tr><td><code>title</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>status</code> *</td><td><code>integer</code></td><td></td></tr><tr><td><code>detail</code></td><td><code>string</code></td><td></td></tr><tr><td><code>instance</code></td><td><code>string</code></td><td></td></tr><tr><td><code>code</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>fields</code></td><td><code>array&lt;object&gt;</code></td><td></td></tr></tbody></table></div></details>
 <details class="schema" id="schema-tokenpair"><summary><code>TokenPair</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>access_token</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>refresh_token</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>expires_in</code> *</td><td><code>integer</code></td><td>seconds</td></tr></tbody></table></div></details>
 <details class="schema" id="schema-me"><summary><code>Me</code><span>2 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>user</code></td><td><a href="#schema-user"><code>User</code></a></td><td></td></tr><tr><td><code>orgs</code></td><td><code>array&lt;object&gt;</code></td><td></td></tr></tbody></table></div></details>
@@ -1148,8 +1280,12 @@ adds the membership and returns a session.
 <details class="schema" id="schema-project"><summary><code>Project</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
 <details class="schema" id="schema-taskstatus"><summary><code>TaskStatus</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
 <details class="schema" id="schema-taskpriority"><summary><code>TaskPriority</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
+<details class="schema" id="schema-assistantconversation"><summary><code>AssistantConversation</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>title</code></td><td><code>string</code></td><td></td></tr><tr><td><code>updated_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-assistantmessage"><summary><code>AssistantMessage</code><span>5 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>role</code></td><td><code>string</code></td><td></td></tr><tr><td><code>content</code></td><td><code>string</code></td><td></td></tr><tr><td><code>tool_name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>created_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-assistantmessageinput"><summary><code>AssistantMessageInput</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>conversation_id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>prompt</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>confirm</code></td><td><code>boolean</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-assistantmessageoutput"><summary><code>AssistantMessageOutput</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>conversation_id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>text</code></td><td><code>string</code></td><td></td></tr><tr><td><code>pending_tool</code></td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
 <details class="schema" id="schema-acceptancecriterion"><summary><code>AcceptanceCriterion</code><span>3 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>given</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>when</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>then</code> *</td><td><code>string</code></td><td></td></tr></tbody></table></div></details>
-<details class="schema" id="schema-taskinput"><summary><code>TaskInput</code><span>7 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>title</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>description</code></td><td><code>string</code></td><td></td></tr><tr><td><code>acceptance</code></td><td><code>array&lt;AcceptanceCriterion&gt;</code></td><td></td></tr><tr><td><code>priority</code></td><td><a href="#schema-taskpriority"><code>TaskPriority</code></a></td><td></td></tr><tr><td><code>tags</code></td><td><code>array&lt;string&gt;</code></td><td></td></tr><tr><td><code>assignee_id</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>depends_on</code></td><td><code>array&lt;string&gt;</code></td><td></td></tr></tbody></table></div></details>
+<details class="schema" id="schema-taskinput"><summary><code>TaskInput</code><span>11 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>title</code> *</td><td><code>string</code></td><td></td></tr><tr><td><code>description</code></td><td><code>string</code></td><td></td></tr><tr><td><code>acceptance</code></td><td><code>array&lt;AcceptanceCriterion&gt;</code></td><td></td></tr><tr><td><code>priority</code></td><td><a href="#schema-taskpriority"><code>TaskPriority</code></a></td><td></td></tr><tr><td><code>tags</code></td><td><code>array&lt;string&gt;</code></td><td></td></tr><tr><td><code>assignee_id</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>depends_on</code></td><td><code>array&lt;string&gt;</code></td><td></td></tr><tr><td><code>files</code></td><td><code>array&lt;string&gt;</code></td><td></td></tr><tr><td><code>out_of_scope</code></td><td><code>array&lt;string&gt;</code></td><td></td></tr><tr><td><code>test_plan</code></td><td><code>array&lt;string&gt;</code></td><td></td></tr><tr><td><code>rollback</code></td><td><code>array&lt;string&gt;</code></td><td></td></tr></tbody></table></div></details>
 <details class="schema" id="schema-task"><summary><code>Task</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
 <details class="schema" id="schema-agenttype"><summary><code>AgentType</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
 <details class="schema" id="schema-runstatus"><summary><code>RunStatus</code><span>0 fields</span></summary><p class="muted">No object properties.</p></details>
@@ -1200,7 +1336,7 @@ adds the membership and returns a session.
 <details class="schema" id="schema-designstandard"><summary><code>DesignStandard</code><span>8 fields</span></summary><div class="table-wrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>id</code></td><td><code>uuid</code></td><td></td></tr><tr><td><code>name</code></td><td><code>string</code></td><td></td></tr><tr><td><code>version</code></td><td><code>integer</code></td><td></td></tr><tr><td><code>status</code></td><td><code>string</code></td><td></td></tr><tr><td><code>spec</code></td><td><code>object</code></td><td></td></tr><tr><td><code>sha256</code></td><td><code>string</code></td><td></td></tr><tr><td><code>published_at</code></td><td><code>['string', 'null']</code></td><td></td></tr><tr><td><code>created_at</code></td><td><code>date-time</code></td><td></td></tr></tbody></table></div></details>
 </section>
     </main>
-    <aside class="page-toc"><p>On this page</p><a href="#authentication">Authentication</a><a href="#operations">Operations</a><a href="#tag-auth">auth</a><a href="#tag-orgs">orgs</a><a href="#tag-projects">projects</a><a href="#tag-tasks">tasks</a><a href="#tag-runs">runs</a><a href="#tag-approvals">approvals</a><a href="#tag-design">design</a><a href="#tag-analytics">analytics</a><a href="#tag-environments">environments</a><a href="#tag-blueprints">blueprints</a><a href="#tag-rules">rules</a><a href="#tag-audit">audit</a><a href="#tag-meta">meta</a><a href="#tag-invites">invites</a><a href="#tag-webhooks">webhooks</a><a href="#tag-git">git</a><a href="#schemas">Schemas</a></aside>
+    <aside class="page-toc"><p>On this page</p><a href="#authentication">Authentication</a><a href="#operations">Operations</a><a href="#tag-auth">auth</a><a href="#tag-orgs">orgs</a><a href="#tag-assistant">assistant</a><a href="#tag-projects">projects</a><a href="#tag-tasks">tasks</a><a href="#tag-runs">runs</a><a href="#tag-approvals">approvals</a><a href="#tag-design">design</a><a href="#tag-analytics">analytics</a><a href="#tag-environments">environments</a><a href="#tag-blueprints">blueprints</a><a href="#tag-rules">rules</a><a href="#tag-audit">audit</a><a href="#tag-meta">meta</a><a href="#tag-invites">invites</a><a href="#tag-webhooks">webhooks</a><a href="#tag-git">git</a><a href="#schemas">Schemas</a></aside>
   </div>
 </div>
 <div class="nav-backdrop" hidden></div>

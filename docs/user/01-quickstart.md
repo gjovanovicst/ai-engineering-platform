@@ -86,3 +86,22 @@ docker compose down -v
 - [Key concepts](concepts.html)
 - [Runs and approvals](runs-and-approvals.html)
 - [API basics](api-basics.html)
+
+## The demo data (`make seed`)
+
+`make seed` creates the demo workspace so you can try the whole flow without
+typing it by hand:
+
+- the org **Acme** (`acme`)
+- the owner **demo@acme.io** (the password comes from `AIP_SEED_PASSWORD`, the
+  local default is in this quickstart)
+- the project **Demo** with three ready tasks (T-1, T-2, T-3)
+
+Run it after `make migrate-up`:
+
+```bash
+make seed
+```
+
+The seed is idempotent: a second run returns the existing rows, it never
+duplicates them.
