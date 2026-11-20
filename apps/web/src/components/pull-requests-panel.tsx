@@ -133,12 +133,12 @@ export function PullRequestsPanel({ orgID, projectID }: { orgID: string; project
       <div className="mt-8">
         <h3 className="text-sm font-semibold">Merge queue</h3>
         {queue.isPending ? <p className="mt-2 text-xs text-text-muted">Loading…</p> : null}
-        {queue.isSuccess && queue.data.items.length === 0 ? (
+        {queue.isSuccess && (queue.data.items ?? []).length === 0 ? (
           <p className="mt-2 text-xs text-text-secondary">Queue is empty.</p>
         ) : null}
-        {queue.isSuccess && queue.data.items.length > 0 ? (
+        {queue.isSuccess && (queue.data.items ?? []).length > 0 ? (
           <ul className="mt-2 divide-y divide-border rounded-lg border border-border bg-bg-surface">
-            {queue.data.items.map((item) => (
+            {(queue.data.items ?? []).map((item) => (
               <li key={item.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-xs">
                 <span className="font-medium">#{item.number}</span>
                 <span className="rounded bg-bg-hover px-1.5 py-0.5">{item.status}</span>

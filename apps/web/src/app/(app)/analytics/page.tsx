@@ -114,11 +114,11 @@ export default function AnalyticsPage() {
             )}
           </section>
 
-          {query.data.regressions.length > 0 ? (
+          {(query.data.regressions ?? []).length > 0 ? (
             <section className="mt-6 rounded-lg border border-status-danger/40 bg-status-danger/5 p-4">
               <h2 className="text-sm font-semibold">Regressions</h2>
               <ul className="mt-2 space-y-1 text-xs">
-                {query.data.regressions.map((r) => (
+                {(query.data.regressions ?? []).map((r) => (
                   <li key={r.metric}>
                     <span className="font-mono">{r.metric}</span>: {r.current.toFixed(1)} vs baseline {r.baseline.toFixed(1)} (+{r.delta_percent.toFixed(0)}%)
                   </li>
@@ -127,15 +127,15 @@ export default function AnalyticsPage() {
             </section>
           ) : null}
 
-          {query.data.lead_time_trend.length > 0 ? (
+          {(query.data.lead_time_trend ?? []).length > 0 ? (
             <section className="mt-6 rounded-lg border border-border bg-bg-surface p-4">
               <h2 className="text-sm font-semibold">Lead time per day</h2>
               <ul className="mt-3 space-y-1.5">
-                {query.data.lead_time_trend.map((point) => (
+                {(query.data.lead_time_trend ?? []).map((point) => (
                   <li key={point.date} className="flex items-center gap-3 text-xs">
                     <span className="w-24 font-mono text-text-secondary">{point.date}</span>
                     <div className="h-2 flex-1 overflow-hidden rounded bg-bg-hover">
-                      <div className="h-full rounded bg-status-success" style={{ width: `${Math.min(100, Math.round((point.minutes / Math.max(...query.data.lead_time_trend.map((p) => p.minutes), 1)) * 100))}%` }} />
+                      <div className="h-full rounded bg-status-success" style={{ width: `${Math.min(100, Math.round((point.minutes / Math.max(...(query.data.lead_time_trend ?? []).map((p) => p.minutes), 1)) * 100))}%` }} />
                     </div>
                     <span className="w-16 text-right font-mono">{(point.minutes / 60).toFixed(1)}h</span>
                   </li>
@@ -144,12 +144,12 @@ export default function AnalyticsPage() {
             </section>
           ) : null}
 
-          {query.data.merged_trend.length > 0 ? (
+          {(query.data.merged_trend ?? []).length > 0 ? (
             <section className="mt-6 rounded-lg border border-border bg-bg-surface p-4">
               <h2 className="text-sm font-semibold">Merges per day</h2>
               <ul className="mt-3 space-y-1.5">
-                {query.data.merged_trend.map((point) => {
-                  const max = Math.max(...query.data.merged_trend.map((p) => p.total), 1);
+                {(query.data.merged_trend ?? []).map((point) => {
+                  const max = Math.max(...(query.data.merged_trend ?? []).map((p) => p.total), 1);
                   return (
                     <li key={point.date} className="flex items-center gap-3 text-xs">
                       <span className="w-24 font-mono text-text-secondary">{point.date}</span>
@@ -164,7 +164,7 @@ export default function AnalyticsPage() {
             </section>
           ) : null}
 
-          {query.data.projects.length > 0 ? (
+          {(query.data.projects ?? []).length > 0 ? (
             <section className="mt-6 overflow-hidden rounded-lg border border-border bg-bg-surface">
               <h2 className="border-b border-border p-4 text-sm font-semibold">Projects</h2>
               <table className="w-full text-left text-xs">
@@ -172,7 +172,7 @@ export default function AnalyticsPage() {
                   <tr><th className="px-4 py-2">Project</th><th className="px-4 py-2">Merged</th><th className="px-4 py-2">Incidents</th><th className="px-4 py-2">CFR</th><th className="px-4 py-2">MTTR</th><th className="px-4 py-2">First merge</th><th className="px-4 py-2">Steps</th></tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {query.data.projects.map((project) => (
+                  {(query.data.projects ?? []).map((project) => (
                     <Fragment key={project.project_id}>
                       <tr>
                         <td className="px-4 py-2 font-medium">{project.name}</td>

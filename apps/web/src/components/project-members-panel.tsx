@@ -39,12 +39,12 @@ export function ProjectMembersPanel({ orgID, projectID }: { orgID: string; proje
         <Button variant="secondary" loading={add.isPending} onClick={() => add.mutate()}>Add member</Button>
       </div>
       {error ? <p role="alert" className="mt-2 text-xs text-status-danger">{error}</p> : null}
-      {members.isSuccess && members.data.items.length === 0 ? (
+      {members.isSuccess && (members.data.items ?? []).length === 0 ? (
         <p className="mt-3 text-xs text-text-muted">No explicit members: the project is open to the organisation.</p>
       ) : null}
-      {members.isSuccess && members.data.items.length > 0 ? (
+      {members.isSuccess && (members.data.items ?? []).length > 0 ? (
         <ul className="mt-3 divide-y divide-border rounded-md border border-border">
-          {members.data.items.map((member) => (
+          {(members.data.items ?? []).map((member) => (
             <li key={member.user_id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-xs">
               <span className="flex-1 font-mono text-text-muted">{member.user_id}</span>
               <span className="rounded bg-bg-hover px-1.5 py-0.5">{member.role}</span>
