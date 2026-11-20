@@ -292,12 +292,14 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
       </header>
 
       {nextActions.length > 0 ? (
-        <NextAction title={nextTitle} description={nextDescription} actions={nextActions} />
+        <div className="sticky top-2 z-20 mb-4">
+          <NextAction title={nextTitle} description={nextDescription} actions={nextActions} />
+        </div>
       ) : null}
 
       {run ? (
         <>
-          <section className="run-summary-grid" aria-label="Execution summary">
+          <section className="run-summary-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" aria-label="Execution summary">
             <div className="run-summary-card"><span>Execution status</span><strong className="capitalize">{run.status.replaceAll("_", " ")}</strong><small>{events.length} live events received</small></div>
             <div className="run-summary-card"><span>Agent</span><strong>{run.agent_type || "Development"}</strong><small>{run.model || "Default model"}</small></div>
             <div className="run-summary-card"><span>Estimated / recorded cost</span><strong>${(usage.data?.totals.cost_usd ?? 0).toFixed(4)}</strong><small>{usage.data?.totals.input_tokens ?? 0} input tokens</small></div>
@@ -531,7 +533,9 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
             </div>
           </header>
           <ul className="divide-y divide-border">
-            {run.review.findings.map((finding, index) => (
+            {[...run.review.findings]
+              .sort((a, b) => (b.severity === "blocker" ? 1 : 0) - (a.severity === "blocker" ? 1 : 0))
+              .map((finding, index) => (
               <li key={`${finding.file ?? "general"}-${index}`} className="flex gap-3 px-4 py-2.5 text-sm">
                 <span
                   className={`h-fit rounded px-1.5 py-0.5 text-[11px] font-medium uppercase ${
@@ -743,10 +747,11 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
             <p className="text-text-muted">Waiting for the agent…</p>
           ) : (
             events.map((event) => (
-              <div key={event.id} className="flex gap-3">
+              <div key={event.id} className="relative flex gap-3 border-l border-border pb-2 pl-4">
+                <span aria-hidden className="absolute -left-[3px] top-1.5 h-1.5 w-1.5 rounded-full bg-brand" />
                 <span className="w-10 shrink-0 text-text-muted">{event.id}</span>
-                <span className="w-36 shrink-0 text-brand">{event.type}</span>
-                <span className="text-text-primary">
+                <span className="w-28 shrink-0 text-brand sm:w-36">{event.type}</span>
+                <span className="min-w-0 text-text-primary">
                   {String(event.data.payload?.text ?? event.data.payload?.status ?? "")}
                 </span>
               </div>
