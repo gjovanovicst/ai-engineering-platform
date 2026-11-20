@@ -59,7 +59,7 @@ export function CommandForm({
       <p className="mt-1 text-xs text-text-secondary">{description}</p>
       <form onSubmit={submit} className="mt-2">
         <Field label={title} htmlFor={id} error={errors.command?.message}>
-          <div className="flex flex-wrap items-end gap-2">
+          <div className="flex flex-wrap items-start gap-2">
             <Input
               id={id}
               aria-invalid={Boolean(errors.command)}
@@ -67,7 +67,7 @@ export function CommandForm({
               {...register("command")}
               placeholder={placeholder}
             />
-            <Button type="submit" variant="secondary" loading={busy}>
+            <Button type="submit" variant="secondary" loading={busy} className="mt-[22px]">
               Save
             </Button>
           </div>

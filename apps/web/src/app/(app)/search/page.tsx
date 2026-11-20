@@ -58,7 +58,7 @@ export default function SearchPage() {
             className="h-9 w-[340px] max-w-full"
           />
         </Field>
-        <Button type="submit" className="mt-0.5">
+        <Button type="submit" className="mt-[22px]">
           Search
         </Button>
       </form>

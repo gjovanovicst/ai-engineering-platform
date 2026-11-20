@@ -6,6 +6,12 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **UI contracts**: `make web-check` runs `scripts/check-ui-contracts.mjs` —
+  the window dialogs, the SidePanel footers and the null-unsafe list renders
+  fail the gate; the form-dirty and the remaining null-list warnings are a
+  progressive cleanup; the TaskDrawer's component tests cover the Close and the
+  transitions.
+
 - **Patch-release mechanism**: the `backport/vX.Y` labels and the backport
   workflow (a cherry-pick PR against `release/vX.Y`), the nightly workflow (the
   migrations up/down, the seed, the gates and the audit), the bug template's
@@ -45,6 +51,16 @@ All notable changes to this project. Dates are 2026.
   summary, and an actionable empty state for the agent runs.
 
 ### Fixed
+
+- **Drawer footers**: every SidePanel has a footer — "Close" when there is no
+  submit, and the form's own actions otherwise; the task drawer always shows
+  "Close" next to the transitions; a form with unsaved changes asks before the
+  panel closes (Escape, the overlay and the ×).
+
+- **Task drawer**: it renders through a portal (it reaches the viewport's top
+  instead of anchoring to a transformed parent), only its body scrolls, and it
+  offers the status transitions (Move to ready, Start, Move to review,
+  Unblock) with the human actor.
 
 - **Web lists crash on empty data**: the analytics, the previews, the members,
   the pull-request queue and the preflight checks render `null` lists as empty

@@ -9,7 +9,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
 import { ApiError, createTask, startRun, transitionTask, updateTask, uploadTaskAttachment, type Task } from "@/lib/api";
-import { useUnsavedChanges, useZodForm } from "@/lib/form";
+import { useZodForm } from "@/lib/form";
 import { taskComposerSchema, type TaskComposerValues } from "@/lib/schemas";
 import { completeAcceptance, dependencyRefs, dorIssues, linesList, linesText, tagList, taskInput, type TaskComposerAction } from "@/components/task-composer-model";
 import { HelpTip } from "@/components/ui/help-tip";
@@ -72,12 +72,6 @@ export function TaskComposer({ orgID, projectID, tasks, task, onClose, onSaved }
   const dependencyOptions = tasks.filter((t) => t.id !== task?.id);
   const completeCount = completeAcceptance(acceptance).length;
 
-  useUnsavedChanges(isDirty && busy === null);
-
-  function close() {
-    if (isDirty && !window.confirm("Discard the unsaved changes?")) return;
-    onClose();
-  }
 
   function toggleDependency(ref: string) {
     setValue("dependsOn", dependsOn.includes(ref) ? dependsOn.filter((r) => r !== ref) : [...dependsOn, ref], {
@@ -148,6 +142,7 @@ export function TaskComposer({ orgID, projectID, tasks, task, onClose, onSaved }
 
   return (
     <SidePanel
+      dirty={isDirty}
       size="xl"
       title={editing ? `Edit ${task?.ref}` : "New task"}
       description={
@@ -155,10 +150,10 @@ export function TaskComposer({ orgID, projectID, tasks, task, onClose, onSaved }
           ? "Update the task; the agent sees the same acceptance criteria and scope."
           : "A well-defined task gives the agent the context and the proof it needs. Create it as a draft, ready, or start planning immediately."
       }
-      onClose={close}
+      onClose={onClose}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={close}>
+          <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           {editing ? (

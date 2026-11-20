@@ -76,7 +76,7 @@ export function WorkspacePanel({ orgID }: { orgID: string }) {
         <p className="mt-1 text-xs text-text-secondary">
           Slug <span className="font-mono">{org.data.slug}</span> is permanent.
         </p>
-        <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={save}>
+        <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={save}>
           <Field label="Name" htmlFor="org-name" error={nameForm.formState.errors.name?.message}>
             <Input
               id="org-name"

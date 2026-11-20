@@ -129,6 +129,7 @@ export function RulesPanel({ orgID }: { orgID: string }) {
 
         {showForm ? (
         <SidePanel
+          dirty
           title="New rule"
           description="Rules are injected into agent prompts; publishing needs approval."
           onClose={() => setShowForm(false)}
@@ -192,7 +193,7 @@ export function RulesPanel({ orgID }: { orgID: string }) {
         {active ? (
           <>
             {versions.isSuccess && versions.data.data.length >= 2 ? (
-              <div className="flex flex-wrap items-end gap-2 border-b border-border p-3">
+              <div className="flex flex-wrap items-start gap-2 border-b border-border p-3">
                 <label className="text-xs text-text-secondary" htmlFor="diff-left">
                   Compare
                 </label>

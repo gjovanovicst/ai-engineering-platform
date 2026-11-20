@@ -581,7 +581,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
           <p className="mt-1 text-xs text-text-secondary">
             Published standards this project inherits; agents will receive its tokens and component rules.
           </p>
-          <div className="mt-2 flex flex-wrap items-end gap-2">
+          <div className="mt-2 flex flex-wrap items-start gap-2">
             <select
               aria-label="Design standard"
               value={standardID}
@@ -804,7 +804,7 @@ export function ProjectView({ projectId }: { projectId: string }) {
           <div className="mt-4 border-t border-border pt-3">
             <h3 className="text-xs font-semibold">Required approvals</h3>
             <p className="mt-1 text-xs text-text-secondary">Distinct approvers needed before a PR merge (1–3).</p>
-            <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={approvalsForm.handleSubmit((values) => saveApprovals.mutate(values))}>
+            <form className="mt-2 flex flex-wrap items-start gap-2" onSubmit={approvalsForm.handleSubmit((values) => saveApprovals.mutate(values))}>
               <Field label="Required approvals" htmlFor="required-approvals">
                 <select id="required-approvals" {...approvalsForm.register("approvals")} className="h-9 rounded-md border border-border bg-bg-surface px-2 text-xs">
                   <option value="1">1</option><option value="2">2</option><option value="3">3</option>

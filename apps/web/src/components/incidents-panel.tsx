@@ -36,7 +36,7 @@ export function IncidentsPanel({ orgID }: { orgID: string }) {
     <section className="mt-6 rounded-lg border border-border bg-bg-surface p-4">
       <h2 className="text-sm font-semibold">Incidents</h2>
       <p className="mt-1 text-xs text-text-secondary">Production incidents drive the change-failure rate and MTTR.</p>
-      <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={handleSubmit((values) => create.mutate(values))}>
+      <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={handleSubmit((values) => create.mutate(values))}>
         <Field label="Incident title" htmlFor="incident-title" error={errors.title?.message}>
           <Input id="incident-title" aria-invalid={Boolean(errors.title)} {...register("title")} placeholder="Checkout latency spike" className="h-9 min-w-[240px] text-xs" />
         </Field>

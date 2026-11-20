@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
@@ -27,7 +28,7 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useZodForm<AiProviderValues>(aiProviderSchema, {
     defaultValues: { name: "", base_url: "https://api.openai.com/v1", model: "", api_key: "" },
   });
@@ -36,6 +37,7 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
   const prices = useQuery({ queryKey: ["prices", orgID], queryFn: () => listModelPrices(orgID) });
   const [priceForm, setPriceForm] = useState({ provider: "openai-compatible", model: "", input: "", output: "" });
   const [rotating, setRotating] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null);
   const [newKey, setNewKey] = useState("");
   const [showProviderForm, setShowProviderForm] = useState(false);
   const [showPriceForm, setShowPriceForm] = useState(false);
@@ -152,11 +154,7 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
                       variant="danger"
                       className="h-7 px-2 text-xs"
                       loading={remove.isPending && remove.variables === provider.id}
-                      onClick={() => {
-                        if (window.confirm(`Remove provider ${provider.name}? Its key is deleted.`)) {
-                          remove.mutate(provider.id);
-                        }
-                      }}
+                      onClick={() => setConfirmRemove({ id: provider.id, name: provider.name })}
                     >
                       Remove
                     </Button>
@@ -188,6 +186,7 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
 
       {showProviderForm ? (
       <SidePanel
+        dirty={isDirty}
         title="Add AI provider"
         description="The API key is encrypted at rest and never returned."
         onClose={() => setShowProviderForm(false)}
@@ -233,6 +232,18 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
       ) : null}
 
       <section className="rounded-lg border border-border bg-bg-surface">
+        <ConfirmDialog
+          open={confirmRemove !== null}
+          title={`Remove ${confirmRemove?.name ?? "the provider"}?`}
+          message="The stored key is deleted and the agents lose the model."
+          confirmLabel="Remove"
+          cancelLabel="Keep"
+          onConfirm={() => {
+            if (confirmRemove) remove.mutate(confirmRemove.id);
+            setConfirmRemove(null);
+          }}
+          onCancel={() => setConfirmRemove(null)}
+        />
         <header className="flex items-start justify-between gap-3 border-b border-border p-4">
           <div>
             <h2 className="text-sm font-semibold">Model prices</h2>
@@ -291,7 +302,7 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
           <Field label="Input / 1K" htmlFor="price-in">
             <Input id="price-in" type="number" step="0.0001" min="0" value={priceForm.input} onChange={(e) => setPriceForm({ ...priceForm, input: e.target.value })} />
           </Field>
-          <div className="flex items-end gap-2">
+          <div className="flex items-start gap-2">
             <Field label="Output / 1K" htmlFor="price-out">
               <Input id="price-out" type="number" step="0.0001" min="0" value={priceForm.output} onChange={(e) => setPriceForm({ ...priceForm, output: e.target.value })} />
             </Field>

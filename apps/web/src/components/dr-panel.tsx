@@ -81,7 +81,7 @@ export function DRPanel({ orgID }: { orgID: string }) {
           </div>
         </div>
       ) : null}
-      <form className="mt-4 flex flex-wrap items-end gap-2" onSubmit={requestRestore}>
+      <form className="mt-4 flex flex-wrap items-start gap-2" onSubmit={requestRestore}>
         <Field label="Target time" htmlFor="restore-target" error={errors.target?.message}>
           <Input id="restore-target" type="datetime-local" aria-invalid={Boolean(errors.target)} {...register("target")} className="h-9" />
         </Field>

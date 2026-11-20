@@ -140,6 +140,7 @@ export function TokenRegistry({ orgID }: { orgID: string }) {
 
       {showForm ? (
         <SidePanel
+          dirty
           title="Add token"
           description="Tokens are captured into the next design standard version."
           onClose={() => setShowForm(false)}

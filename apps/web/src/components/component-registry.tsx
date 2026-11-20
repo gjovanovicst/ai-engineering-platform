@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { PromptDialog } from "@/components/ui/prompt-dialog";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
@@ -29,6 +30,7 @@ export function ComponentRegistry({ orgID }: { orgID: string }) {
   const [drafts, setDrafts] = useState<Record<string, ComponentEntryValues>>({});
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [figmaPrompt, setFigmaPrompt] = useState(false);
   const {
     register,
     handleSubmit,
@@ -66,6 +68,7 @@ export function ComponentRegistry({ orgID }: { orgID: string }) {
   });
 
   return (
+    <>
     <section className="rounded-lg border border-border bg-bg-surface">
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border p-4">
         <div>
@@ -75,7 +78,7 @@ export function ComponentRegistry({ orgID }: { orgID: string }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" onClick={() => importFigma(orgID, setError)}>Import Figma</Button>
+          <Button variant="secondary" onClick={() => setFigmaPrompt(true)}>Import Figma</Button>
           <label className="cursor-pointer rounded-md border border-border px-3 py-2 text-xs text-text-secondary hover:bg-bg-hover">
             Import Storybook JSON
             <input type="file" accept="application/json,.json" className="hidden" onChange={(e) => importFile(e.target.files?.[0] ?? null, orgID, setError)} />
@@ -263,6 +266,21 @@ export function ComponentRegistry({ orgID }: { orgID: string }) {
       </SidePanel>
       ) : null}
     </section>
+    <PromptDialog
+      open={figmaPrompt}
+      title="Import from Figma"
+      message="The file key is in the Figma URL: figma.com/file/<key>/..."
+      label="Figma file key"
+      placeholder="abc123…"
+      confirmLabel="Import"
+      required
+      onConfirm={(key) => {
+        setFigmaPrompt(false);
+        void importFigma(orgID, key, setError);
+      }}
+      onCancel={() => setFigmaPrompt(false)}
+    />
+    </>
   );
 }
 
@@ -280,8 +298,7 @@ async function importFile(file: File | null, orgID: string, setError: (v: string
   }
 }
 
-async function importFigma(orgID: string, setError: (v: string | null) => void) {
-  const key = window.prompt("Figma file key");
+async function importFigma(orgID: string, key: string, setError: (v: string | null) => void) {
   if (!key) return;
   try {
     const result = await importFigmaComponents(orgID, key.trim());

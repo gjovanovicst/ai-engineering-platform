@@ -59,7 +59,7 @@ export function PreviewsPanel({ orgID, projectID }: { orgID: string; projectID: 
         <Field label="TTL minutes" htmlFor="preview-ttl" error={errors.ttl?.message}>
           <Input id="preview-ttl" aria-invalid={Boolean(errors.ttl)} {...register("ttl")} placeholder="120" className="h-9 w-20 text-xs" />
         </Field>
-        <Button type="submit" variant="secondary" loading={create.isPending} className="mt-5">Create preview</Button>
+        <Button type="submit" variant="secondary" loading={create.isPending} className="mt-[22px]">Create preview</Button>
       </form>
       {error ? <p role="alert" className="mt-2 text-xs text-status-danger">{error}</p> : null}
       {previews.isSuccess && (previews.data.items ?? []).length === 0 ? <p className="mt-3 text-xs text-text-secondary">No previews yet.</p> : null}
