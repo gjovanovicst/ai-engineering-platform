@@ -230,6 +230,7 @@ export default function BlueprintsPage() {
           onClose={() => setCreating(false)}
           footer={
             <>
+              <Button variant="secondary" onClick={() => setCreating(false)}>Cancel</Button>
               <Button variant="secondary" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>Back</Button>
               {step < steps.length - 1 ? (
                 <Button disabled={!canContinue} onClick={() => setStep((s) => s + 1)}>Continue</Button>
