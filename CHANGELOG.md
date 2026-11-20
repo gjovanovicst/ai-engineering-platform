@@ -6,6 +6,13 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **The assistant knows the screen**: the panel sends the route and the open
+  drawer (its title and the dirty state) with each message; the system prompt
+  carries it, so the assistant answers about what is on screen.
+- **The assistant opens on the left**: it no longer covers the drawer it was
+  opened from (`SidePanel` gains a `side` prop); on a narrow screen it still
+  covers the full width.
+
 - **Assistant from a drawer**: `⌘/` (or `Ctrl+/`) opens the assistant above any
   drawer (`SidePanel` gains a `z` prop; the assistant opens at 130); every
   drawer's header carries a "✦" button next to the close that opens the

@@ -33,6 +33,7 @@ type assistantMessageInput struct {
 	ConversationID string `json:"conversation_id"`
 	Prompt         string `json:"prompt"`
 	Confirm        bool   `json:"confirm"`
+	Context        string `json:"context"`
 }
 
 // send answers one message. With the SSE Accept header it streams the text and
@@ -57,7 +58,7 @@ func (h *assistantHandlers) send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	out, err := h.svc.Send(r.Context(), assistant.SendInput{
-		OrgID: claims.OrgID, UserID: claims.Subject, ConversationID: input.ConversationID, Prompt: input.Prompt, Confirm: input.Confirm,
+		OrgID: claims.OrgID, UserID: claims.Subject, ConversationID: input.ConversationID, Prompt: input.Prompt, Confirm: input.Confirm, Context: input.Context,
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrValidation) || errors.Is(err, domain.ErrNotFound) {

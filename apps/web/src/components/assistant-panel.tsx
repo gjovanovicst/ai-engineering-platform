@@ -33,6 +33,22 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
   const [confirmClear, setConfirmClear] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
   const context = typeof window === "undefined" ? "" : window.location.pathname;
+
+  // What the user is looking at: the route and the open drawer, so the model
+  // can answer about the current screen instead of guessing.
+  function uiContext(): string {
+    if (typeof window === "undefined") return "";
+    const drawer = document.querySelector("[data-drawer]");
+    return JSON.stringify({
+      route: window.location.pathname,
+      drawer: drawer
+        ? {
+            title: drawer.getAttribute("data-drawer-title") ?? "",
+            dirty: drawer.getAttribute("data-drawer-dirty") === "true",
+          }
+        : null,
+    });
+  }
   const matchingCommands = prompt.startsWith("/") && !prompt.includes(" ")
     ? assistantCommands.filter((command) => command.name.startsWith(prompt.trim()))
     : [];
@@ -155,6 +171,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
       size="lg"
       z={130}
       assistant={false}
+      side="left"
       title="Assistant"
       description={`Ask about this workspace. Context: ${context || "/"}`}
       onClose={onClose}

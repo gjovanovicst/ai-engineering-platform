@@ -79,6 +79,9 @@ type SendInput struct {
 	ConversationID string
 	Prompt         string
 	Confirm        bool
+	// Context is the user's current UI (route, screen, the open drawer, the
+	// dirty state): the model uses it to answer about what is on screen.
+	Context string
 }
 
 // SendOutput is the assistant's answer (or the pending confirmation).
@@ -165,7 +168,11 @@ func (s *Service) Send(ctx context.Context, in SendInput) (SendOutput, error) {
 	}
 
 	for step := 0; step < s.maxSteps; step++ {
-		reply, err := s.llm.Chat(ctx, systemPrompt, messages, s.toolSpecs())
+		system := systemPrompt
+		if trimmed := strings.TrimSpace(in.Context); trimmed != "" {
+			system += "\n\nThe user is looking at: " + trimmed
+		}
+		reply, err := s.llm.Chat(ctx, system, messages, s.toolSpecs())
 		if err != nil {
 			return SendOutput{}, err
 		}
