@@ -5,7 +5,7 @@ go 1.27.4
 require (
 	github.com/crewjam/saml v0.6.3
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/jackc/pgx/v5 v5.11.0
+	github.com/jackc/pgx/v5 v5.13.0
 	github.com/minio/minio-go/v7 v7.4.1
 	github.com/oapi-codegen/runtime v1.7.0
 	github.com/pressly/goose/v3 v3.29.0
@@ -95,10 +95,10 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/net v0.61.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/term v0.47.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261005182115-fad411399dd8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8 // indirect
