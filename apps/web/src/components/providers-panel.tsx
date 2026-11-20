@@ -27,7 +27,7 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useZodForm<AiProviderValues>(aiProviderSchema, {
     defaultValues: { name: "", base_url: "https://api.openai.com/v1", model: "", api_key: "" },
   });
@@ -188,7 +188,7 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
 
       {showProviderForm ? (
       <SidePanel
-        dirty
+        dirty={isDirty}
         title="Add AI provider"
         description="The API key is encrypted at rest and never returned."
         onClose={() => setShowProviderForm(false)}

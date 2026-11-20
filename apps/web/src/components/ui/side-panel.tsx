@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const panelWidths = {
   md: "max-w-[640px]",
@@ -30,13 +31,15 @@ export function SidePanel({
   dirty?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   const close = () => {
-    if (dirty && typeof window !== "undefined" && !window.confirm("You have unsaved changes. Close anyway?")) {
+    if (dirty) {
+      setConfirmOpen(true);
       return;
     }
     onClose();
@@ -58,6 +61,19 @@ export function SidePanel({
   if (!mounted) return null;
 
   return createPortal(
+    <>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Discard the changes?"
+        message="You have unsaved changes. Closing now loses them."
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        onConfirm={() => {
+          setConfirmOpen(false);
+          onClose();
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
     <div className="fixed inset-0 z-[100] flex justify-end" role="presentation">
       <button
         type="button"
@@ -95,7 +111,8 @@ export function SidePanel({
           )}
         </footer>
       </aside>
-    </div>,
+    </div>
+    </>,
     document.body,
   );
 }
