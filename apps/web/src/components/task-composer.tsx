@@ -9,7 +9,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
 import { ApiError, createTask, startRun, transitionTask, updateTask, uploadTaskAttachment, type Task } from "@/lib/api";
-import { useUnsavedChanges, useZodForm } from "@/lib/form";
+import { useZodForm } from "@/lib/form";
 import { taskComposerSchema, type TaskComposerValues } from "@/lib/schemas";
 import { completeAcceptance, dependencyRefs, dorIssues, linesList, linesText, tagList, taskInput, type TaskComposerAction } from "@/components/task-composer-model";
 import { HelpTip } from "@/components/ui/help-tip";
@@ -72,7 +72,6 @@ export function TaskComposer({ orgID, projectID, tasks, task, onClose, onSaved }
   const dependencyOptions = tasks.filter((t) => t.id !== task?.id);
   const completeCount = completeAcceptance(acceptance).length;
 
-  useUnsavedChanges(isDirty && busy === null);
 
   function close() {
     if (isDirty && !window.confirm("Discard the unsaved changes?")) return;
