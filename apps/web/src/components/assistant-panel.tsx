@@ -133,7 +133,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
     try {
       await assistantStream(
         orgID,
-        { conversation_id: conversationID || undefined, prompt: question, confirm },
+        { conversation_id: conversationID || undefined, prompt: question, confirm, context: uiContext() },
         (event: AssistantEvent) => {
           if (event.conversation_id) setConversationID(event.conversation_id);
           if (event.type === "text") setMessages((current) => [...current, { role: "assistant", text: event.text ?? "" }]);
