@@ -483,3 +483,13 @@ textarea[aria-invalid="true"]:focus {
   border-color: rgb(var(--status-danger));
   --tw-ring-color: rgb(var(--status-danger) / 0.2);
 }
+
+/* An invalid field keeps the error border and ring, whatever the primitive
+ * (input, textarea, select): the form components set aria-invalid. */
+[aria-invalid="true"] {
+  border-color: rgb(var(--status-danger) / 0.7) !important;
+}
+[aria-invalid="true"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--status-danger) / 0.3);
+}
