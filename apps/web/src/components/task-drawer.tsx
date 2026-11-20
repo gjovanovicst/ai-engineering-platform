@@ -174,17 +174,6 @@ export function TaskDrawer({
             <span className="rounded-md bg-bg-hover px-2 py-0.5 uppercase text-text-muted">
               {task.priority}
             </span>
-            {taskTransitions(task.status).map((next) => (
-              <Button
-                key={next.to}
-                variant={next.to === "in_progress" ? "primary" : "secondary"}
-                loading={transition.isPending}
-                onClick={() => transition.mutate(next.to)}
-                className="h-7 px-2 text-xs"
-              >
-                {next.label}
-              </Button>
-            ))}
           </div>
 
           {task.description ? (
@@ -355,6 +344,20 @@ export function TaskDrawer({
             ) : null}
           </section>
         </div>
+        {taskTransitions(task.status).length > 0 ? (
+          <footer className="flex items-center justify-end gap-2 border-t border-border bg-bg-subtle px-4 py-3">
+            {taskTransitions(task.status).map((next) => (
+              <Button
+                key={next.to}
+                variant={next.to === "in_progress" ? "primary" : "secondary"}
+                loading={transition.isPending}
+                onClick={() => transition.mutate(next.to)}
+              >
+                {next.label}
+              </Button>
+            ))}
+          </footer>
+        ) : null}
       </aside>
     </div>,
     document.body,
