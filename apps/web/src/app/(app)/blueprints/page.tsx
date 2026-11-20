@@ -180,6 +180,14 @@ export default function BlueprintsPage() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  // Closing the wizard drops the draft: the next open starts clean.
+  function closeWizard() {
+    setCreating(false);
+    setStep(0);
+    setForm(emptyForm);
+    setError(null);
+  }
+
   return (
     <div>
       <header className="mb-6 flex items-end justify-between">
@@ -227,10 +235,11 @@ export default function BlueprintsPage() {
         <SidePanel
           title="New blueprint"
           description="Define the stack, repository rules and starter tasks for a new project."
-          onClose={() => setCreating(false)}
+          dirty={JSON.stringify(form) !== JSON.stringify(emptyForm)}
+          onClose={closeWizard}
           footer={
             <>
-              <Button variant="secondary" onClick={() => setCreating(false)}>Cancel</Button>
+              <Button variant="secondary" onClick={closeWizard}>Cancel</Button>
               <Button variant="secondary" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>Back</Button>
               {step < steps.length - 1 ? (
                 <Button disabled={!canContinue} onClick={() => setStep((s) => s + 1)}>Continue</Button>
