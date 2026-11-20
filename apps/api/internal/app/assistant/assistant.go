@@ -89,6 +89,8 @@ type SendOutput struct {
 	ConversationID string
 	Text           string
 	PendingTool    string
+	// PendingInput is the tool input the client applies on confirm (fill_form).
+	PendingInput json.RawMessage
 }
 
 // Service runs the assistant loop.
@@ -194,7 +196,7 @@ func (s *Service) Send(ctx context.Context, in SendInput) (SendOutput, error) {
 				if _, err := s.store.AppendMessage(ctx, domain.AssistantMessage{ConversationID: conversationID, OrgID: in.OrgID, Role: domain.AssistantRoleAssistant, Content: preview, ToolName: call.Name, ToolInput: call.Input}); err != nil {
 					return SendOutput{}, err
 				}
-				return SendOutput{ConversationID: conversationID, Text: preview, PendingTool: call.Name}, nil
+				return SendOutput{ConversationID: conversationID, Text: preview, PendingTool: call.Name, PendingInput: call.Input}, nil
 			}
 			result, err := tool.run(ctx, in.OrgID, call.Input)
 			if err != nil {

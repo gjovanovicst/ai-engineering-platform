@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SidePanel } from "@/components/ui/side-panel";
 import { assistantStream, clearAssistantConversations, deleteAssistantConversation, listAssistantConversations, listAssistantMessages, type AssistantConversation, type AssistantEvent } from "@/lib/api";
 import { assistantCommands, expandCommand } from "@/lib/assistant-commands";
+import { applyAssistantForm, assistantFormContext } from "@/lib/assistant-form";
 
 type ChatMessage = { role: "user" | "assistant" | "note"; text: string };
 
@@ -25,6 +26,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
   const [prompt, setPrompt] = useState("");
   const [conversationID, setConversationID] = useState("");
   const [pendingTool, setPendingTool] = useState<string | null>(null);
+  const [pendingInput, setPendingInput] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -52,6 +54,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
             dirty: drawer.getAttribute("data-drawer-dirty") === "true",
           }
         : null,
+      form: assistantFormContext(),
     });
   }
   const matchingCommands = prompt.startsWith("/") && !prompt.includes(" ")
@@ -140,6 +143,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
           if (event.type === "pending") {
             setMessages((current) => [...current, { role: "assistant", text: event.text ?? "" }]);
             setPendingTool(event.pending_tool ?? event.tool ?? "");
+            setPendingInput(event.pending_input ?? null);
           }
         },
       );
@@ -157,6 +161,18 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
 
   function confirmPending() {
     if (!pendingTool) return;
+    if (pendingTool === "fill_form") {
+      // The client applies the values; the server never writes for this tool.
+      const values = (pendingInput as { values?: Record<string, unknown> } | null)?.values ?? {};
+      const result = applyAssistantForm(values);
+      setMessages((current) => [
+        ...current,
+        { role: "note", text: `Filled the form (${result.applied.length} field(s)). Review and submit.` },
+      ]);
+      setPendingTool("");
+      setPendingInput(null);
+      return;
+    }
     setMessages((current) => [...current, { role: "note", text: "You confirmed the action." }]);
     void ask(`Yes, run ${pendingTool} now.`, true);
   }

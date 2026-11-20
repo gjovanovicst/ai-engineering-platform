@@ -73,7 +73,7 @@ func (h *assistantHandlers) send(w http.ResponseWriter, r *http.Request) {
 		h.stream(w, out)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"conversation_id": out.ConversationID, "text": out.Text, "pending_tool": out.PendingTool})
+	writeJSON(w, http.StatusOK, map[string]any{"conversation_id": out.ConversationID, "text": out.Text, "pending_tool": out.PendingTool, "pending_input": out.PendingInput})
 }
 
 // stream pushes the answer as Server-Sent Events so the panel can render it
@@ -94,7 +94,7 @@ func (h *assistantHandlers) stream(w http.ResponseWriter, out assistant.SendOutp
 		_, _ = w.Write([]byte("event: " + event + "\ndata: " + string(data) + "\n\n"))
 	}
 	if out.PendingTool != "" {
-		emit("pending", map[string]any{"pending_tool": out.PendingTool, "text": out.Text, "conversation_id": out.ConversationID})
+		emit("pending", map[string]any{"pending_tool": out.PendingTool, "text": out.Text, "pending_input": out.PendingInput, "conversation_id": out.ConversationID})
 	} else {
 		emit("text", map[string]any{"text": out.Text, "conversation_id": out.ConversationID})
 	}
