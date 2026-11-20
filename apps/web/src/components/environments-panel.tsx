@@ -103,6 +103,7 @@ export function EnvironmentsPanel({ orgID, projectID }: { orgID: string; project
 
       {showForm ? (
         <SidePanel
+          dirty
           title="Add environment"
           description="Environments hold deployments; prod needs a second admin approval."
           onClose={() => setShowForm(false)}

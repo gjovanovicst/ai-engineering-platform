@@ -344,20 +344,21 @@ export function TaskDrawer({
             ) : null}
           </section>
         </div>
-        {taskTransitions(task.status).length > 0 ? (
-          <footer className="flex items-center justify-end gap-2 border-t border-border bg-bg-subtle px-4 py-3">
-            {taskTransitions(task.status).map((next) => (
+        <footer className="flex items-center justify-end gap-2 border-t border-border bg-bg-subtle px-4 py-3">
+          {taskTransitions(task.status).map((next) => (
               <Button
                 key={next.to}
                 variant={next.to === "in_progress" ? "primary" : "secondary"}
                 loading={transition.isPending}
                 onClick={() => transition.mutate(next.to)}
               >
-                {next.label}
-              </Button>
-            ))}
-          </footer>
-        ) : null}
+              {next.label}
+            </Button>
+          ))}
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
+        </footer>
       </aside>
     </div>,
     document.body,

@@ -72,6 +72,7 @@ export function RepoPanel({
 
       {open ? (
         <SidePanel
+          dirty
           title="Connect repository"
           description="The agent pushes branches and opens pull requests here."
           onClose={() => setOpen(false)}

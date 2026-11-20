@@ -188,6 +188,7 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
 
       {showProviderForm ? (
       <SidePanel
+        dirty
         title="Add AI provider"
         description="The API key is encrypted at rest and never returned."
         onClose={() => setShowProviderForm(false)}

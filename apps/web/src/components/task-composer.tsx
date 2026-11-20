@@ -148,6 +148,7 @@ export function TaskComposer({ orgID, projectID, tasks, task, onClose, onSaved }
 
   return (
     <SidePanel
+      dirty={isDirty}
       size="xl"
       title={editing ? `Edit ${task?.ref}` : "New task"}
       description={

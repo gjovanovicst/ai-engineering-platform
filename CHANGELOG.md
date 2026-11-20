@@ -46,6 +46,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **Drawer footers**: every SidePanel has a footer — "Close" when there is no
+  submit, and the form's own actions otherwise; the task drawer always shows
+  "Close" next to the transitions; a form with unsaved changes asks before the
+  panel closes (Escape, the overlay and the ×).
+
 - **Task drawer**: it renders through a portal (it reaches the viewport's top
   instead of anchoring to a transformed parent), only its body scrolls, and it
   offers the status transitions (Move to ready, Start, Move to review,

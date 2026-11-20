@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { Button } from "@/components/ui/button";
+
 const panelWidths = {
   md: "max-w-[640px]",
   lg: "max-w-[960px]",
@@ -16,6 +18,7 @@ export function SidePanel({
   children,
   footer,
   size = "md",
+  dirty = false,
 }: {
   title: string;
   description?: string;
@@ -23,6 +26,8 @@ export function SidePanel({
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: keyof typeof panelWidths;
+  /** A changed form: ask before the panel is closed and the input is lost. */
+  dirty?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
 
@@ -30,9 +35,16 @@ export function SidePanel({
     setMounted(true);
   }, []);
 
+  const close = () => {
+    if (dirty && typeof window !== "undefined" && !window.confirm("You have unsaved changes. Close anyway?")) {
+      return;
+    }
+    onClose();
+  };
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") close();
     };
     document.addEventListener("keydown", onKey);
     const previous = document.body.style.overflow;
@@ -41,7 +53,7 @@ export function SidePanel({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previous;
     };
-  }, [onClose]);
+  });
 
   if (!mounted) return null;
 
@@ -52,7 +64,7 @@ export function SidePanel({
         aria-label="Close panel"
         className="absolute inset-0"
         style={{ backgroundColor: "rgb(var(--overlay))" }}
-        onClick={onClose}
+        onClick={close}
       />
       <aside
         role="dialog"
@@ -68,18 +80,20 @@ export function SidePanel({
           <button
             type="button"
             aria-label="Close panel"
-            onClick={onClose}
+            onClick={close}
             className="-mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-md text-text-muted transition-colors hover:bg-bg-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
           >
             <span aria-hidden="true" className="text-lg leading-none">×</span>
           </button>
         </header>
         <div className="flex-1 overflow-y-auto overscroll-contain">{children}</div>
-        {footer ? (
-          <footer className="flex items-center justify-end gap-2 border-t border-border bg-bg-subtle px-5 py-3">
-            {footer}
-          </footer>
-        ) : null}
+        <footer className="flex items-center justify-end gap-2 border-t border-border bg-bg-subtle px-5 py-3">
+          {footer ?? (
+            <Button variant="secondary" onClick={close}>
+              Close
+            </Button>
+          )}
+        </footer>
       </aside>
     </div>,
     document.body,

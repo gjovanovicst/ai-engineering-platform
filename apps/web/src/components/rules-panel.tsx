@@ -129,6 +129,7 @@ export function RulesPanel({ orgID }: { orgID: string }) {
 
         {showForm ? (
         <SidePanel
+          dirty
           title="New rule"
           description="Rules are injected into agent prompts; publishing needs approval."
           onClose={() => setShowForm(false)}
