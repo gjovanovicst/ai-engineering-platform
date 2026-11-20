@@ -30,6 +30,11 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
   const queryClient = useQueryClient();
   const [conversations, setConversations] = useState<AssistantConversation[]>([]);
   const [commandIndex, setCommandIndex] = useState(0);
+  // A drawer is open: dock the assistant to the free side, no overlay, and
+  // leave the drawer's width untouched.
+  const [drawerOpen] = useState(
+    () => typeof document !== "undefined" && Boolean(document.querySelector("[data-drawer]")),
+  );
   const [confirmClear, setConfirmClear] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
   const context = typeof window === "undefined" ? "" : window.location.pathname;
@@ -168,11 +173,11 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
       onCancel={() => setConfirmClear(false)}
     />
     <SidePanel
-      size="md"
+      size={drawerOpen ? "md" : "lg"}
       z={130}
       assistant={false}
-      side="left"
-      overlay={false}
+      side={drawerOpen ? "left" : "right"}
+      overlay={!drawerOpen}
       title="Assistant"
       description={`Ask about this workspace. Context: ${context || "/"}`}
       onClose={onClose}
