@@ -153,7 +153,7 @@ export function TaskComposer({ orgID, projectID, tasks, task, onClose, onSaved }
       onClose={onClose}
       footer={
         <>
-          <Button type="button" variant="secondary" onClick={close}>
+          <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           {editing ? (
