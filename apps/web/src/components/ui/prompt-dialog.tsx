@@ -78,6 +78,7 @@ export function PromptDialog({
         <input
           id="prompt-dialog-input"
           aria-label={label}
+          aria-invalid={Boolean(error)}
           autoFocus
           value={value}
           placeholder={placeholder}
