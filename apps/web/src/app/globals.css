@@ -163,7 +163,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .account-popover > a,.account-popover > button { display: block; width: 100%; padding: 9px 10px; border: 0; border-radius: 7px; color: rgb(var(--text-secondary)); background: transparent; font-size: 12px; text-align: left; text-decoration: none; cursor: pointer; }
 .account-popover > a:hover,.account-popover > button:hover { color: rgb(var(--text-primary)); background: rgb(var(--bg-hover)); }
 .account-popover > button:last-child { color: rgb(var(--status-danger)); }
-.app-content { width: 100%; max-width: 1640px; min-height: calc(100vh - 66px); margin: 0 auto; padding: 30px 34px 48px; }
+.app-content { width: 100%; max-width: 1640px; height: calc(100vh - 66px); margin: 0 auto; padding: 30px 34px 48px; overflow-y: auto; }
 .mobile-menu-button { display: none; }
 .sidebar-backdrop { display: none; }
 .skip-link { position: fixed; top: 8px; left: 8px; z-index: 100; padding: 10px 14px; border-radius: 8px; color: white; background: rgb(var(--brand)); transform: translateY(-150%); }

@@ -170,7 +170,8 @@ func (s *Service) Send(ctx context.Context, in SendInput) (SendOutput, error) {
 	for step := 0; step < s.maxSteps; step++ {
 		system := systemPrompt
 		if trimmed := strings.TrimSpace(in.Context); trimmed != "" {
-			system += "\n\nThe user is looking at: " + trimmed
+			system += "\n\nYou CAN see the user's current UI. The user is looking at: " + trimmed +
+				"\nWhen the user asks about the current screen, drawer or form, answer from this context. Never claim you cannot see the UI."
 		}
 		reply, err := s.llm.Chat(ctx, system, messages, s.toolSpecs())
 		if err != nil {
