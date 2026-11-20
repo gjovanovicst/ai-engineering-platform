@@ -67,7 +67,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "j") {
+      if ((event.metaKey || event.ctrlKey) && event.key === "/") {
         event.preventDefault();
         setAssistantOpen(true);
         return;
@@ -200,7 +200,7 @@ export function AppShell({ orgName, children }: { orgName: string; children: Rea
                 </ul>
               </div>}
             </div>
-            <button type="button" onClick={() => setAssistantOpen(true)} aria-label="Assistant (⌘J)" title="Assistant (⌘J)" className="icon-button"><span aria-hidden="true">✦</span></button>
+            <button type="button" onClick={() => setAssistantOpen(true)} aria-label="Assistant (⌘/)" title="Assistant (⌘/)" className="icon-button"><span aria-hidden="true">✦</span></button>
             <button type="button" onClick={() => setHelpOpen(true)} aria-label="Help" className="icon-button"><span aria-hidden="true">?</span></button>
             <button type="button" onClick={toggleTheme} aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} title={theme === "dark" ? "Light theme" : "Dark theme"} className="icon-button"><Icon name={theme === "dark" ? "sun" : "moon"} size={18} /></button>
             <span className="topbar-divider" />
