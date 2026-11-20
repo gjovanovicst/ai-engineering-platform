@@ -12,16 +12,16 @@ export function Field({
   children: React.ReactNode;
 }) {
   return (
-    // The error is absolute: it must not change the field's height, or an
-    // items-end action row would move its button down when the error appears.
-    <div className="relative pb-4">
+    // The error is absolute and occupies no layout height: an action row is
+    // items-start, so the button never moves when the error appears.
+    <div className="relative mb-4">
       <label htmlFor={htmlFor} className="mb-1.5 block text-xs font-medium text-text-secondary">
         {label}
       </label>
       {help ? <p className="mb-1.5 text-xs text-text-muted">{help}</p> : null}
       {children}
       {error ? (
-        <p role="alert" className="absolute left-0 top-full -mt-3.5 text-xs text-status-danger">
+        <p role="alert" className="absolute left-0 top-full text-xs text-status-danger">
           {error}
         </p>
       ) : null}

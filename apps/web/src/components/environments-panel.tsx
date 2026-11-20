@@ -166,7 +166,7 @@ export function EnvironmentsPanel({ orgID, projectID }: { orgID: string; project
         </div>
 
         <div className="rounded-lg border border-border bg-bg-surface">
-          <div className="flex items-end gap-2 border-b border-border p-4">
+          <div className="flex items-start gap-2 border-b border-border p-4">
             <Field label="Release ref" htmlFor="release-ref">
               <Input
                 id="release-ref"

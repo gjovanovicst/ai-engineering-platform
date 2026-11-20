@@ -73,7 +73,7 @@ export function GitHubAppPanel({ orgID }: { orgID: string }) {
               Install on repositories →
             </a>
           ) : null}
-          <form className="flex flex-wrap items-end gap-2" onSubmit={handleSubmit((values) => install.mutate(values))}>
+          <form className="flex flex-wrap items-start gap-2" onSubmit={handleSubmit((values) => install.mutate(values))}>
             <Field label="Installation id" htmlFor="gh-installation" error={errors.installation?.message}>
               <Input
                 id="gh-installation"

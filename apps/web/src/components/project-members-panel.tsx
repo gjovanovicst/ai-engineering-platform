@@ -31,7 +31,7 @@ export function ProjectMembersPanel({ orgID, projectID }: { orgID: string; proje
       <p className="mt-1 text-xs text-text-secondary">
         Once a project has members, only they (and org admins) can open it. Viewers are read-only.
       </p>
-      <div className="mt-3 flex flex-wrap items-end gap-2">
+      <div className="mt-3 flex flex-wrap items-start gap-2">
         <input aria-label="User id" value={userID} onChange={(e) => setUserID(e.target.value)} placeholder="user uuid" className="h-9 min-w-[260px] flex-1 rounded-md border border-border bg-bg-surface px-3 font-mono text-xs" />
         <select aria-label="Role" value={role} onChange={(e) => setRole(e.target.value)} className="h-9 rounded-md border border-border bg-bg-surface px-2 text-xs">
           <option value="admin">admin</option><option value="designer">designer</option><option value="member">member</option><option value="viewer">viewer</option>

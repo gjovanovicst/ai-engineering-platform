@@ -49,7 +49,7 @@ export function PreviewsPanel({ orgID, projectID }: { orgID: string; projectID: 
     <section className="mt-8 rounded-lg border border-border bg-bg-surface p-4">
       <h2 className="text-sm font-semibold">Preview environments</h2>
       <p className="mt-1 text-xs text-text-secondary">Ephemeral container per PR; destroyed when the TTL expires.</p>
-      <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={handleSubmit((values) => create.mutate(values))}>
+      <form className="mt-3 flex flex-wrap items-start gap-2" onSubmit={handleSubmit((values) => create.mutate(values))}>
         <Field label="Image" htmlFor="preview-image" error={errors.image?.message}>
           <Input id="preview-image" aria-invalid={Boolean(errors.image)} {...register("image")} placeholder="ghcr.io/acme/app:sha" className="h-9 min-w-[220px] font-mono text-xs" />
         </Field>
@@ -59,7 +59,7 @@ export function PreviewsPanel({ orgID, projectID }: { orgID: string; projectID: 
         <Field label="TTL minutes" htmlFor="preview-ttl" error={errors.ttl?.message}>
           <Input id="preview-ttl" aria-invalid={Boolean(errors.ttl)} {...register("ttl")} placeholder="120" className="h-9 w-20 text-xs" />
         </Field>
-        <Button type="submit" variant="secondary" loading={create.isPending}>Create preview</Button>
+        <Button type="submit" variant="secondary" loading={create.isPending} className="mt-[22px]">Create preview</Button>
       </form>
       {error ? <p role="alert" className="mt-2 text-xs text-status-danger">{error}</p> : null}
       {previews.isSuccess && (previews.data.items ?? []).length === 0 ? <p className="mt-3 text-xs text-text-secondary">No previews yet.</p> : null}

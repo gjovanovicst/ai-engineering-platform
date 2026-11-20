@@ -44,6 +44,16 @@ for (const [file, text] of source) {
   }
 }
 
+// 3. a form action row with a Button must align on items-end: items-start
+// leaves the button behind when an error appears under the input.
+for (const [file, text] of source) {
+  for (const match of text.matchAll(/<form[^>]*items-start[^>]*>[\s\S]*?<\/form>/g)) {
+    if (/<Button\b/.test(match[0])) {
+      problems.push(`${rel(file)}: a form action row uses items-start with a Button — use items-end`);
+    }
+  }
+}
+
 // 3. a SidePanel form without the dirty guard (a warning during the cleanup)
 const warnings = [];
 for (const [file, text] of source) {

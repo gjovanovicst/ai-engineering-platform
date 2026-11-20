@@ -302,7 +302,7 @@ export function ProvidersPanel({ orgID }: { orgID: string }) {
           <Field label="Input / 1K" htmlFor="price-in">
             <Input id="price-in" type="number" step="0.0001" min="0" value={priceForm.input} onChange={(e) => setPriceForm({ ...priceForm, input: e.target.value })} />
           </Field>
-          <div className="flex items-end gap-2">
+          <div className="flex items-start gap-2">
             <Field label="Output / 1K" htmlFor="price-out">
               <Input id="price-out" type="number" step="0.0001" min="0" value={priceForm.output} onChange={(e) => setPriceForm({ ...priceForm, output: e.target.value })} />
             </Field>
