@@ -32,6 +32,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **Local dev postgres**: the compose postgres publishes on `15432` (the host's
+  5432 was occupied, so Docker silently dropped the binding and the Go clients
+  hit a different server and failed auth); `pgx` 5.11.0 → 5.13.0.
+
 - **Web dependency audit**: `next` 15.5.28 → 15.5.29 fixes three moderate
   advisories (the SVG rejection bypass in the image optimization, the HttpOnly
   cookie exposure on the Edge runtime, the cross-client response injection);
