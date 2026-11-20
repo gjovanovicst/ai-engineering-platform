@@ -2991,6 +2991,10 @@ components:
         conversation_id: { type: string, format: uuid }
         prompt: { type: string, minLength: 1, maxLength: 4000 }
         confirm: { type: boolean, default: false }
+        context:
+          type: string
+          maxLength: 2000
+          description: The user's current UI (the route and the open drawer).
     AssistantMessageOutput:
       type: object
       properties:

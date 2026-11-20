@@ -30,9 +30,30 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
   const queryClient = useQueryClient();
   const [conversations, setConversations] = useState<AssistantConversation[]>([]);
   const [commandIndex, setCommandIndex] = useState(0);
+  // A drawer is open: dock the assistant to the free side, no overlay, and
+  // leave the drawer's width untouched.
+  const [drawerOpen] = useState(
+    () => typeof document !== "undefined" && Boolean(document.querySelector("[data-drawer]")),
+  );
   const [confirmClear, setConfirmClear] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
   const context = typeof window === "undefined" ? "" : window.location.pathname;
+
+  // What the user is looking at: the route and the open drawer, so the model
+  // can answer about the current screen instead of guessing.
+  function uiContext(): string {
+    if (typeof window === "undefined") return "";
+    const drawer = document.querySelector("[data-drawer]");
+    return JSON.stringify({
+      route: window.location.pathname,
+      drawer: drawer
+        ? {
+            title: drawer.getAttribute("data-drawer-title") ?? "",
+            dirty: drawer.getAttribute("data-drawer-dirty") === "true",
+          }
+        : null,
+    });
+  }
   const matchingCommands = prompt.startsWith("/") && !prompt.includes(" ")
     ? assistantCommands.filter((command) => command.name.startsWith(prompt.trim()))
     : [];
@@ -112,7 +133,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
     try {
       await assistantStream(
         orgID,
-        { conversation_id: conversationID || undefined, prompt: question, confirm },
+        { conversation_id: conversationID || undefined, prompt: question, confirm, context: uiContext() },
         (event: AssistantEvent) => {
           if (event.conversation_id) setConversationID(event.conversation_id);
           if (event.type === "text") setMessages((current) => [...current, { role: "assistant", text: event.text ?? "" }]);
@@ -152,9 +173,11 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
       onCancel={() => setConfirmClear(false)}
     />
     <SidePanel
-      size="lg"
+      size={drawerOpen ? "md" : "lg"}
       z={130}
       assistant={false}
+      side={drawerOpen ? "left" : "right"}
+      overlay={!drawerOpen}
       title="Assistant"
       description={`Ask about this workspace. Context: ${context || "/"}`}
       onClose={onClose}

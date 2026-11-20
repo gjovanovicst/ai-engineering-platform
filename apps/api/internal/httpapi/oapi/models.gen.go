@@ -1131,7 +1131,10 @@ type AssistantMessageRole string
 
 // AssistantMessageInput defines model for AssistantMessageInput.
 type AssistantMessageInput struct {
-	Confirm        *bool               `json:"confirm,omitempty"`
+	Confirm *bool `json:"confirm,omitempty"`
+
+	// Context The user's current UI (the route and the open drawer).
+	Context        *string             `json:"context,omitempty"`
 	ConversationId *openapi_types.UUID `json:"conversation_id,omitempty"`
 	Prompt         string              `json:"prompt"`
 }
