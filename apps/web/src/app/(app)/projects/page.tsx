@@ -10,6 +10,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SidePanel } from "@/components/ui/side-panel";
 import { ApiError, createProject, ensureSession, listProjects } from "@/lib/api";
+import { useAssistantForm } from "@/lib/assistant-form";
 import { useZodForm } from "@/lib/form";
 import { projectSchema, type ProjectValues } from "@/lib/schemas";
 import type { Claims } from "@/lib/auth";
@@ -26,6 +27,7 @@ export default function ProjectsPage() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useZodForm<ProjectValues>(projectSchema, { defaultValues: { name: "", description: "" } });
 
@@ -64,6 +66,19 @@ export default function ProjectsPage() {
     return matchesSearch && matchesStatus;
   });
   const activeCount = allProjects.filter((project) => ["active", "ready", "in_progress"].includes(project.status.toLowerCase())).length;
+
+  useAssistantForm({
+    id: "project-form",
+    title: "New project",
+    fields: [
+      { name: "name", label: "Name", type: "text" },
+      { name: "description", label: "Description", type: "textarea" },
+    ],
+    apply: (values) => {
+      if (typeof values.name === "string") setValue("name", values.name as never, { shouldDirty: true });
+      if (typeof values.description === "string") setValue("description", values.description as never, { shouldDirty: true });
+    },
+  });
 
   return (
     <div className="page-stack">

@@ -9,6 +9,8 @@ All notable changes to this project. Dates are 2026.
 - **The assistant grounds "this run" / "this task"**: `ui_context.selection`
   carries the ids from the route; the system prompt tells the model to resolve
   "this run" with the read tools instead of asking for an id.
+- **More forms registered**: the project create, the AI provider and the
+  blueprint wizard expose their fields to the assistant (fill_form).
 
 - **The assistant fills the open form**: a drawer registers its fields
   (`useAssistantForm`), `ui_context` carries them, and the new `fill_form` tool
