@@ -15,7 +15,14 @@ func fakePnpm(t *testing.T, body string) string {
 	t.Helper()
 	dir := t.TempDir()
 	path := filepath.Join(dir, "pnpm")
-	if err := os.WriteFile(path, []byte("#!/bin/sh\n"+body), 0o700); err != nil {
+	// Write to a sibling and rename into place: exec'ing a file that is still
+	// open for writing fails with ETXTBSY ("text file busy") on Linux, which
+	// made this test flaky under -race.
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, []byte("#!/bin/sh\n"+body), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(tmp, path); err != nil {
 		t.Fatal(err)
 	}
 	return path
