@@ -90,6 +90,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **The backport workflow without a label**: a merged PR that carries no
+  `backport/vX.Y` label no longer fails the job (the `[ -n "$branch" ] && echo`
+  test exits 1 under the runner's `bash -e`); it reports "nothing to do".
+
 - **The setup friction from the first pilot** (#90): the unknown-field 400 names
   the field; `PUT /test-command` accepts `command` and `test_command`; `PATCH
   /projects` updates the name/description; `AIP_AUTH_LOGIN_RATE` makes the
