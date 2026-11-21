@@ -73,6 +73,11 @@ func (b *ToolLoopBackend) Run(ctx context.Context, spec Spec, emit func(Event) e
 	handle, err := b.Sandbox.Create(ctx, sandbox.Spec{
 		Image: b.Image, Workdir: "/workspace", NetworkDisabled: true, Timeout: spec.Timeout,
 		Env: map[string]string{
+			// PATH: `docker exec` inherits the container's PATH only when the
+			// image's shell started with it; an explicit PATH makes `go` and
+			// `node` resolvable in every tool call.
+			"PATH":       "/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin",
+			"HOME":       "/home/agent",
 			"GOMODCACHE": moduleCacheDir,
 			"GOPROXY":    "off",
 			"GOSUMDB":    "off",

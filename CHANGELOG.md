@@ -88,6 +88,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **The sandbox finds `go` and `node`**: the tool loop passes an explicit
+  `PATH` (and `HOME`) to the container, so `go test ./...` no longer dies with
+  `sh: go: not found` — the first pilot run failed on exactly that.
+
 - **The bare window globals**: the ESLint `no-restricted-globals` rule rejects
   a bare `close`/`origin`/`self`/`parent`, so a dead handler like
   `onClick={close}` fails the lint instead of silently calling `window.close`.
