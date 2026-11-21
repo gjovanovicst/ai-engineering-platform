@@ -29,6 +29,8 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
   const [pendingTool, setPendingTool] = useState<string | null>(null);
   const [pendingInput, setPendingInput] = useState<unknown>(null);
   const [images, setImages] = useState<string[]>([]);
+  // The user message being edited: the send truncates the history back to it.
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -135,7 +137,11 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
     setBusy(true);
     setError(null);
     setPendingTool(null);
-    if (!confirm) setMessages((current) => [...current, { role: "user", text: original }]);
+    if (!confirm) {
+      const cut = editingIndex;
+      setMessages((current) => [...(cut !== null ? current.slice(0, cut) : current), { role: "user", text: original }]);
+      if (cut !== null) setEditingIndex(null);
+    }
     try {
       await assistantStream(
         orgID,
@@ -354,7 +360,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
         {messages.map((message, index) => (
           <div
             key={`${message.role}-${index}`}
-            className={`rounded-lg px-3 py-2 ${
+            className={`group relative rounded-lg px-3 py-2 ${
               message.role === "user"
                 ? "ml-8 bg-brand/10 text-text-primary"
                 : message.role === "note"
@@ -363,6 +369,45 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
             }`}
           >
             {message.role === "assistant" ? <AssistantMarkdown text={message.text} /> : message.text}
+            <div className={`absolute -top-2 right-1 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 ${message.role === "note" ? "hidden" : ""}`}>
+              <button
+                type="button"
+                aria-label="Copy the message"
+                title="Copy"
+                onClick={() => void navigator.clipboard?.writeText(message.text)}
+                className="grid h-6 w-6 place-items-center rounded border border-border bg-bg-surface text-[11px] text-text-muted hover:bg-bg-hover hover:text-text-primary"
+              >
+                ⧉
+              </button>
+              {message.role === "user" ? (
+                <button
+                  type="button"
+                  aria-label="Edit the message"
+                  title="Edit"
+                  onClick={() => {
+                    setPrompt(message.text);
+                    setEditingIndex(index);
+                  }}
+                  className="grid h-6 w-6 place-items-center rounded border border-border bg-bg-surface text-[11px] text-text-muted hover:bg-bg-hover hover:text-text-primary"
+                >
+                  ✎
+                </button>
+              ) : null}
+              {message.role === "assistant" ? (
+                <button
+                  type="button"
+                  aria-label="Retry the answer"
+                  title="Retry"
+                  onClick={() => {
+                    const previous = messages.slice(0, index).reverse().find((entry) => entry.role === "user");
+                    if (previous) void ask(previous.text);
+                  }}
+                  className="grid h-6 w-6 place-items-center rounded border border-border bg-bg-surface text-[11px] text-text-muted hover:bg-bg-hover hover:text-text-primary"
+                >
+                  ↻
+                </button>
+              ) : null}
+            </div>
           </div>
         ))}
         {busy ? <p className="text-xs text-text-muted">The assistant is thinking…</p> : null}
