@@ -91,6 +91,8 @@ All notable changes to this project. Dates are 2026.
 - **The sandbox finds `go` and `node`**: the tool loop passes an explicit
   `PATH` (and `HOME`) to the container, so `go test ./...` no longer dies with
   `sh: go: not found` — the first pilot run failed on exactly that.
+- **The PR body carries the five required sections**: `## What`, `## Why`,
+  `## How tested`, `## Screenshot`, `## Risk and rollback`; a test asserts it.
 
 - **The bare window globals**: the ESLint `no-restricted-globals` rule rejects
   a bare `close`/`origin`/`self`/`parent`, so a dead handler like

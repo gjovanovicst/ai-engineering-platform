@@ -205,6 +205,8 @@ func prBody(task domain.Task, run domain.Run, webURL string) string {
 	out.WriteString("- The agent ran the repository test command in an isolated sandbox before pushing.\n")
 	out.WriteString("- Diff: ")
 	fmt.Fprintf(&out, "%d file(s), %d bytes.\n", strings.Count(string(run.Diff), "diff --git"), len(run.Diff))
+	out.WriteString("\n## Screenshot\n")
+	out.WriteString("N/A for a non-visual change; a visual change attaches one.\n")
 	out.WriteString("\n## Risk and rollback\n")
 	if len(plan.Risks) == 0 {
 		out.WriteString("Risk: low — see the plan. ")

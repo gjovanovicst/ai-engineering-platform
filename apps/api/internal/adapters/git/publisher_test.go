@@ -223,3 +223,13 @@ func TestPublisherTokenPrecedence(t *testing.T) {
 		})
 	}
 }
+
+func TestPRBodyHasTheRequiredSections(t *testing.T) {
+	t.Parallel()
+	body := prBody(domain.Task{Ref: "T-1", Title: "Add a health endpoint", Description: "the description"}, domain.Run{}, "https://app.test")
+	for _, section := range []string{"## What", "## Why", "## How tested", "## Risk and rollback", "## Screenshot"} {
+		if !strings.Contains(body, section) {
+			t.Errorf("the PR body misses the section %q", section)
+		}
+	}
+}
