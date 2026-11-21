@@ -1136,7 +1136,10 @@ type AssistantMessageInput struct {
 	// Context The user's current UI (the route and the open drawer).
 	Context        *string             `json:"context,omitempty"`
 	ConversationId *openapi_types.UUID `json:"conversation_id,omitempty"`
-	Prompt         string              `json:"prompt"`
+
+	// Images The attached images as data URLs (the model reads them).
+	Images *[]string `json:"images,omitempty"`
+	Prompt string    `json:"prompt"`
 }
 
 // AssistantMessageOutput defines model for AssistantMessageOutput.

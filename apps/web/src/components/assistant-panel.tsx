@@ -28,6 +28,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
   const [conversationID, setConversationID] = useState("");
   const [pendingTool, setPendingTool] = useState<string | null>(null);
   const [pendingInput, setPendingInput] = useState<unknown>(null);
+  const [images, setImages] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -138,7 +139,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
     try {
       await assistantStream(
         orgID,
-        { conversation_id: conversationID || undefined, prompt: question, confirm, context: uiContext() },
+        { conversation_id: conversationID || undefined, prompt: question, confirm, context: uiContext(), images: images.length ? images : undefined },
         (event: AssistantEvent) => {
           if (event.conversation_id) setConversationID(event.conversation_id);
           if (event.type === "text") setMessages((current) => [...current, { role: "assistant", text: event.text ?? "" }]);
@@ -159,6 +160,15 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
         await queryClient.invalidateQueries();
       }
     }
+  }
+
+  function addImage(file: File | null) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") setImages((current) => [...current, reader.result as string].slice(0, 5));
+    };
+    reader.readAsDataURL(file);
   }
 
   function confirmPending() {
@@ -201,7 +211,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
       onClose={onClose}
       footer={
         <form
-          className="flex w-full items-center gap-2"
+          className="flex w-full flex-col gap-2"
           onSubmit={(event) => {
             event.preventDefault();
             const text = prompt;
@@ -209,6 +219,35 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
             void ask(text);
           }}
         >
+          {images.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {images.map((image, index) => (
+                <span key={index} className="relative inline-block">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={image} alt={`Attached image ${index + 1}`} className="h-12 w-12 rounded border border-border object-cover" />
+                  <button
+                    type="button"
+                    aria-label="Remove the image"
+                    onClick={() => setImages((current) => current.filter((_, i) => i !== index))}
+                    className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-status-danger text-[10px] text-white"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <div className="flex w-full items-center gap-2">
+            <label className="grid h-9 w-9 cursor-pointer place-items-center rounded-md border border-border text-text-muted hover:bg-bg-hover" title="Attach an image">
+              <span aria-hidden="true">+</span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={(event) => addImage(event.target.files?.[0] ?? null)}
+              />
+            </label>
+            <span className="sr-only">Attach an image</span>
           <div className="relative flex-1">
             <input
               aria-label="Ask the assistant"
@@ -256,6 +295,7 @@ export function AssistantPanel({ orgID, onClose }: { orgID: string; onClose: () 
             ) : null}
           </div>
           <Button type="submit" loading={busy}>Send</Button>
+          </div>
         </form>
       }
     >

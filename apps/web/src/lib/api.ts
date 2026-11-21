@@ -79,7 +79,7 @@ export type AssistantEvent = { type: "text" | "pending" | "done" | "error"; text
 /** Streams one assistant message (SSE). Events: text, pending, done. */
 export async function assistantStream(
   orgID: string,
-  input: { conversation_id?: string; prompt: string; confirm?: boolean; context?: string },
+  input: { conversation_id?: string; prompt: string; confirm?: boolean; context?: string; images?: string[] },
   onEvent: (event: AssistantEvent) => void,
 ): Promise<void> {
   const response = await send(`/api/v1/orgs/${orgID}/assistant/messages`, {

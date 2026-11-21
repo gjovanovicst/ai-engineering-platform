@@ -2995,6 +2995,12 @@ components:
           type: string
           maxLength: 2000
           description: The user's current UI (the route and the open drawer).
+        images:
+          type: array
+          maxItems: 5
+          description: The attached images as data URLs (the model reads them).
+          items:
+            type: string
     AssistantMessageOutput:
       type: object
       properties:
