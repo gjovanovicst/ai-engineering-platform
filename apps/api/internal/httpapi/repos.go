@@ -177,5 +177,8 @@ func repoJSON(repo domain.Repo) map[string]any {
 	return map[string]any{
 		"id": repo.ID, "provider": repo.Provider, "name": repo.Name,
 		"default_branch": repo.DefaultBranch, "created_at": repo.CreatedAt.UTC().Format(time.RFC3339),
+		// The URL the human pastes into GitHub's webhook form (the platform
+		// stores the secret but cannot install the hook).
+		"webhook_url": "/webhooks/" + string(repo.Provider),
 	}
 }

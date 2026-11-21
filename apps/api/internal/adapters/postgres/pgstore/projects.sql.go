@@ -812,6 +812,69 @@ func (q *Queries) SetProjectVisualPolicy(ctx context.Context, arg SetProjectVisu
 	return i, err
 }
 
+const updateProject = `-- name: UpdateProject :one
+UPDATE projects
+SET name        = COALESCE($3::text, name),
+    description = COALESCE($4::text, description),
+    updated_at  = now()
+WHERE org_id = $1 AND id = $2
+RETURNING id, org_id, name, slug, description, blueprint_id, blueprint_version, tech_stack, status, archived_at, module_map, test_gates, tool_policy, design_system_id, blueprint_sha256, created_at, updated_at, required_checks, task_seq, design_standard_version, e2e_command, visual_command, mcp_servers, visual_threshold, visual_masks, policy_max_diff_bytes, policy_forbidden_paths, policy_change_window, policy_allowed_models, policy_allowed_tools, policy_required_approvals, plugin_checks, agent_plugin_id, test_command
+`
+
+type UpdateProjectParams struct {
+	OrgID       pgtype.UUID
+	ID          pgtype.UUID
+	Name        *string
+	Description *string
+}
+
+func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error) {
+	row := q.db.QueryRow(ctx, updateProject,
+		arg.OrgID,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+	)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.OrgID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.BlueprintID,
+		&i.BlueprintVersion,
+		&i.TechStack,
+		&i.Status,
+		&i.ArchivedAt,
+		&i.ModuleMap,
+		&i.TestGates,
+		&i.ToolPolicy,
+		&i.DesignSystemID,
+		&i.BlueprintSha256,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.RequiredChecks,
+		&i.TaskSeq,
+		&i.DesignStandardVersion,
+		&i.E2eCommand,
+		&i.VisualCommand,
+		&i.McpServers,
+		&i.VisualThreshold,
+		&i.VisualMasks,
+		&i.PolicyMaxDiffBytes,
+		&i.PolicyForbiddenPaths,
+		&i.PolicyChangeWindow,
+		&i.PolicyAllowedModels,
+		&i.PolicyAllowedTools,
+		&i.PolicyRequiredApprovals,
+		&i.PluginChecks,
+		&i.AgentPluginID,
+		&i.TestCommand,
+	)
+	return i, err
+}
+
 const updateProjectRequiredChecks = `-- name: UpdateProjectRequiredChecks :one
 UPDATE projects SET required_checks = $3, updated_at = now()
 WHERE id = $1 AND org_id = $2

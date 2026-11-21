@@ -88,6 +88,12 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **The setup friction from the first pilot** (#90): the unknown-field 400 names
+  the field; `PUT /test-command` accepts `command` and `test_command`; `PATCH
+  /projects` updates the name/description; `AIP_AUTH_LOGIN_RATE` makes the
+  sign-in limit configurable; the repo payload exposes `webhook_url` and the
+  playbook documents the one manual webhook step.
+
 - **The sandbox finds `go` and `node`**: the tool loop passes an explicit
   `PATH` (and `HOME`) to the container, so `go test ./...` no longer dies with
   `sh: go: not found` — the first pilot run failed on exactly that.

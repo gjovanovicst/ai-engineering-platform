@@ -413,7 +413,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	loginLimiter := ratelimit.Allower(ratelimit.New(5, time.Minute))
+	loginLimiter := ratelimit.Allower(ratelimit.New(cfg.LoginRatePerMin, time.Minute))
 	registerLimiter := ratelimit.Allower(ratelimit.New(3, time.Hour))
 	resetLimiter := ratelimit.Allower(ratelimit.New(3, time.Hour))
 	var redisClient *redis.Client

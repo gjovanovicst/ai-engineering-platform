@@ -165,3 +165,7 @@ func TestListClampsLimit(t *testing.T) {
 		t.Fatalf("limit = %d, want 50", store.limit)
 	}
 }
+
+func (f *fakeStore) Update(_ context.Context, _, _ string, _, _ *string) (domain.Project, error) {
+	return domain.Project{}, f.err
+}

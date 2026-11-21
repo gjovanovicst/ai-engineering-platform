@@ -27,6 +27,23 @@ A pilot is ready when all four are true in its workspace:
 
 The `/setup` wizard walks exactly these four steps.
 
+## The webhook (one manual step)
+
+The platform stores the repo's `webhook_secret` when you connect it, but it
+**cannot install the hook** — GitHub needs a human with admin rights on the
+repo. Do it once per pilot:
+
+1. In the platform, open the project → the repo payload → copy `webhook_url`
+   (`/webhooks/github`).
+2. GitHub → the repo → **Settings → Webhooks → Add webhook**.
+3. Payload URL: `<the platform's public URL>/webhooks/github`.
+4. Content type: `application/json`.
+5. Secret: the `webhook_secret` you set when connecting the repo.
+6. Events: `push`, `pull_request`, `pull_request_review`, `check_run`.
+
+Without the webhook the run still opens the PR; only the automatic check status
+is missing (the human refreshes it).
+
 ## The weekly cadence
 
 | Day | What |

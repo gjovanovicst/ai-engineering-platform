@@ -279,6 +279,25 @@ func (s *ProjectStore) SetTestCommand(ctx context.Context, orgID, id, command st
 	return out, err
 }
 
+// Update changes the project's name and description (nil keeps a field).
+func (s *ProjectStore) Update(ctx context.Context, orgID, id string, name, description *string) (domain.Project, error) {
+	var out domain.Project
+	err := db.WithOrg(ctx, s.pool, orgID, func(ctx context.Context, tx pgx.Tx) error {
+		row, err := s.q.WithTx(tx).UpdateProject(ctx, pgstore.UpdateProjectParams{
+			ID: toUUID(id), OrgID: toUUID(orgID), Name: name, Description: description,
+		})
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return domain.ErrNotFound
+			}
+			return err
+		}
+		out = projectFromRow(row)
+		return nil
+	})
+	return out, err
+}
+
 // TestCommand returns the project's test command (empty means the global one).
 func (s *ProjectStore) TestCommand(ctx context.Context, orgID, projectID string) (string, error) {
 	project, err := s.Get(ctx, orgID, projectID)
