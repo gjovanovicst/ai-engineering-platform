@@ -4,6 +4,8 @@ All notable changes to this project. Dates are 2026.
 
 ## Unreleased
 
+## [0.2.0] — 2026-11-22
+
 ### Added
 
 - **The assistant reads images**: the panel attaches an image (up to 5, a
