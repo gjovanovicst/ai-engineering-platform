@@ -35,6 +35,7 @@ type ProjectService interface {
 	ReplaceComponents(ctx context.Context, orgID, projectID, actorID string, selections []projects.ComponentSelection) (int, error)
 	SetE2ECommand(ctx context.Context, orgID, id, command string) (domain.Project, error)
 	SetTestCommand(ctx context.Context, orgID, id, command string) (domain.Project, error)
+	Update(ctx context.Context, orgID, id string, in projects.UpdateInput) (domain.Project, error)
 	SetVisualCommand(ctx context.Context, orgID, id, command string) (domain.Project, error)
 	SetMCPConfig(ctx context.Context, orgID, id, config string) (domain.Project, error)
 	SetVisualPolicy(ctx context.Context, orgID, id string, threshold float64, masks string) (domain.Project, error)
@@ -126,6 +127,7 @@ func (h *projectHandlers) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /api/v1/orgs/{org}/projects/{project}/test-command", h.setTestCommand)
 	mux.HandleFunc("PUT /api/v1/orgs/{org}/projects/{project}/visual", h.setVisualCommand)
 	mux.HandleFunc("PUT /api/v1/orgs/{org}/projects/{project}/mcp", h.setMCPConfig)
+	mux.HandleFunc("PATCH /api/v1/orgs/{org}/projects/{project}", h.update)
 	mux.HandleFunc("POST /api/v1/orgs/{org}/projects/{project}/protection", h.protectBranch)
 	mux.HandleFunc("GET /api/v1/orgs/{org}/projects/{project}/merge-queue", h.mergeQueueList)
 	mux.HandleFunc("POST /api/v1/orgs/{org}/projects/{project}/visual-diff", h.visualDiff)
@@ -177,6 +179,38 @@ func (h *projectHandlers) projectVisible(ctx context.Context, claims *auth.Claim
 		return false
 	}
 	return result.Members == 0 || result.Role != ""
+}
+
+// update changes the project's name and description (the settings keep their
+// own routes).
+func (h *projectHandlers) update(w http.ResponseWriter, r *http.Request) {
+	claims, ok := h.authorize(w, r, "admin")
+	if !ok {
+		return
+	}
+	var req struct {
+		Name        *string `json:"name"`
+		Description *string `json:"description"`
+	}
+	if !decode(w, r, 1<<20, &req) {
+		return
+	}
+	p, err := h.svc.Update(r.Context(), claims.OrgID, r.PathValue("project"), projects.UpdateInput{
+		Name: req.Name, Description: req.Description,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrNotFound):
+			writeProblem(w, http.StatusNotFound, "not_found", "project not found")
+		case errors.Is(err, domain.ErrValidation):
+			writeProblem(w, http.StatusBadRequest, "validation_failed", err.Error())
+		default:
+			h.log.Error("projects.update", slog.Any("err", err))
+			writeProblem(w, http.StatusInternalServerError, "internal", "could not update the project")
+		}
+		return
+	}
+	writeJSON(w, http.StatusOK, projectJSON(p))
 }
 
 func (h *projectHandlers) create(w http.ResponseWriter, r *http.Request) {
@@ -293,10 +327,15 @@ func (h *projectHandlers) setTestCommand(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	var req struct {
-		Command string `json:"command"`
+		Command     string `json:"command"`
+		TestCommand string `json:"test_command"`
 	}
 	if !decode(w, r, 1<<20, &req) {
 		return
+	}
+	// The round trip is symmetric: accept the field name the response returns.
+	if req.Command == "" {
+		req.Command = req.TestCommand
 	}
 	req.Command = strings.TrimSpace(req.Command)
 	if len(req.Command) > 500 || strings.ContainsAny(req.Command, "\n\r") {

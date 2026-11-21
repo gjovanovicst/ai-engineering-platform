@@ -118,20 +118,23 @@ type Config struct {
 	DepsGoBin               string
 	DepsGoproxy             string
 	RateLimitPerMin         int
-	S3Endpoint              string
-	S3Bucket                string
-	S3AccessKey             string
-	S3SecretKey             string
-	S3Region                string
-	S3UseSSL                bool
-	AdminDSN                string
-	GitHubAppID             int64
-	GitHubAppKeyPath        string
-	GitHubAppInstall        int64
-	GitHubAppWebhookSecret  string
-	RetentionDays           int
-	RetentionHours          int
-	OTELEndpoint            string
+	// LoginRatePerMin is the sign-in attempts allowed per address (the pilot
+	// setup needs a wider window than the default 5).
+	LoginRatePerMin        int
+	S3Endpoint             string
+	S3Bucket               string
+	S3AccessKey            string
+	S3SecretKey            string
+	S3Region               string
+	S3UseSSL               bool
+	AdminDSN               string
+	GitHubAppID            int64
+	GitHubAppKeyPath       string
+	GitHubAppInstall       int64
+	GitHubAppWebhookSecret string
+	RetentionDays          int
+	RetentionHours         int
+	OTELEndpoint           string
 
 	// OIDC providers; empty client credentials disable the provider.
 	APIURL                 string
@@ -273,6 +276,7 @@ func Load() (*Config, error) {
 		DepsGoBin:               get("AIP_DEPS_GO_BIN", "go"),
 		DepsGoproxy:             get("AIP_DEPS_GOPROXY", "https://proxy.golang.org,direct"),
 		RateLimitPerMin:         600,
+		LoginRatePerMin:         5,
 		S3Endpoint:              get("AIP_S3_ENDPOINT", ""),
 		S3Bucket:                get("AIP_S3_BUCKET", "aip-artifacts"),
 		S3AccessKey:             get("AIP_S3_ACCESS_KEY", "minio"),
@@ -312,6 +316,11 @@ func Load() (*Config, error) {
 	if raw := strings.TrimSpace(os.Getenv("AIP_RATE_LIMIT_PER_MINUTE")); raw != "" {
 		if n, err := strconv.Atoi(raw); err == nil && n > 0 && n <= 100000 {
 			cfg.RateLimitPerMin = n
+		}
+	}
+	if raw := strings.TrimSpace(os.Getenv("AIP_AUTH_LOGIN_RATE")); raw != "" {
+		if n, err := strconv.Atoi(raw); err == nil && n > 0 && n <= 100000 {
+			cfg.LoginRatePerMin = n
 		}
 	}
 	if raw := strings.TrimSpace(os.Getenv("AIP_GITHUB_APP_ID")); raw != "" {

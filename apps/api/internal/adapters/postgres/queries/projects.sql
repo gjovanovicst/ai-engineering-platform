@@ -13,6 +13,14 @@ WHERE org_id = $1 AND archived_at IS NULL
 ORDER BY created_at DESC, id DESC
 LIMIT $2;
 
+-- name: UpdateProject :one
+UPDATE projects
+SET name        = COALESCE(sqlc.narg('name')::text, name),
+    description = COALESCE(sqlc.narg('description')::text, description),
+    updated_at  = now()
+WHERE org_id = $1 AND id = $2
+RETURNING *;
+
 -- name: UpdateProjectRequiredChecks :one
 UPDATE projects SET required_checks = $3, updated_at = now()
 WHERE id = $1 AND org_id = $2

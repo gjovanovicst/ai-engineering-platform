@@ -279,7 +279,13 @@ func decode(w http.ResponseWriter, r *http.Request, max int64, v any) bool {
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(v); err != nil {
-		writeProblem(w, http.StatusBadRequest, "validation_failed", "invalid JSON body")
+		// Name the unknown field: "invalid JSON body" for {"slug": ...} made the
+		// pilot setup guess for an hour.
+		detail := "invalid JSON body"
+		if strings.Contains(err.Error(), "unknown field") {
+			detail = err.Error()
+		}
+		writeProblem(w, http.StatusBadRequest, "validation_failed", detail)
 		return false
 	}
 	return true

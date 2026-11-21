@@ -25,6 +25,7 @@ type Store interface {
 	ReplaceComponents(ctx context.Context, orgID, projectID, actorID string, selections []ComponentSelection) (int, error)
 	SetE2ECommand(ctx context.Context, orgID, id, command string) (domain.Project, error)
 	SetTestCommand(ctx context.Context, orgID, id, command string) (domain.Project, error)
+	Update(ctx context.Context, orgID, id string, name, description *string) (domain.Project, error)
 	SetVisualCommand(ctx context.Context, orgID, id, command string) (domain.Project, error)
 	SetMCPConfig(ctx context.Context, orgID, id, config string) (domain.Project, error)
 	SetVisualPolicy(ctx context.Context, orgID, id string, threshold float64, masks string) (domain.Project, error)
@@ -202,6 +203,24 @@ func (s *Service) SetE2ECommand(ctx context.Context, orgID, id, command string) 
 		return domain.Project{}, fmt.Errorf("%w: the e2e command is too long", domain.ErrValidation)
 	}
 	return s.store.SetE2ECommand(ctx, orgID, id, command)
+}
+
+// UpdateInput changes the project's name and description; nil keeps a field.
+type UpdateInput struct {
+	Name        *string
+	Description *string
+}
+
+// Update changes the project's name and description.
+func (s *Service) Update(ctx context.Context, orgID, id string, in UpdateInput) (domain.Project, error) {
+	if in.Name != nil {
+		name := strings.TrimSpace(*in.Name)
+		if name == "" {
+			return domain.Project{}, fmt.Errorf("%w: the name must not be empty", domain.ErrValidation)
+		}
+		in.Name = &name
+	}
+	return s.store.Update(ctx, orgID, id, in.Name, in.Description)
 }
 
 // SetTestCommand stores the project test command (empty means the global one).

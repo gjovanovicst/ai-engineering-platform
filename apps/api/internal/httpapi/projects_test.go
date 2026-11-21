@@ -16,6 +16,7 @@ import (
 type fakeProjectService struct {
 	items   []domain.Project
 	created projects.CreateInput
+	updated projects.UpdateInput
 	err     error
 }
 
@@ -194,4 +195,9 @@ func TestProjectsList(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), `"slug":"portal"`) {
 		t.Fatalf("body = %s", rec.Body.String())
 	}
+}
+
+func (f *fakeProjectService) Update(_ context.Context, _, _ string, in projects.UpdateInput) (domain.Project, error) {
+	f.updated = in
+	return domain.Project{}, f.err
 }
