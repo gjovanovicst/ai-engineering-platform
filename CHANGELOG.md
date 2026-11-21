@@ -6,6 +6,14 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **The assistant reads images**: the panel attaches an image (up to 5, a
+  thumbnail with a remove), sends the data URL, and the model reads it with the
+  text (deepseek-flash's vision); the OpenAI adapter builds the content blocks
+  and the images persist with the message.
+- **The message actions**: hover a message for copy; the user's message also
+  offers edit (the history truncates to it and the text returns to the input)
+  and the assistant's answer offers retry.
+
 - **The assistant grounds "this run" / "this task"**: `ui_context.selection`
   carries the ids from the route; the system prompt tells the model to resolve
   "this run" with the read tools instead of asking for an id.

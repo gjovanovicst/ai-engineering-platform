@@ -33,5 +33,7 @@ type AssistantMessage struct {
 	ToolName       string
 	ToolInput      []byte
 	ToolOutput     []byte
-	CreatedAt      time.Time
+	// Images are the data URLs of a user message (the vision input).
+	Images    []string
+	CreatedAt time.Time
 }

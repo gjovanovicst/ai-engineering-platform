@@ -40,8 +40,9 @@ type oaToolCall struct {
 }
 
 type oaMessage struct {
+	// Content is a string or, with images, the OpenAI content blocks.
 	Role       string       `json:"role"`
-	Content    string       `json:"content"`
+	Content    any          `json:"content"`
 	ToolCalls  []oaToolCall `json:"tool_calls,omitempty"`
 	ToolCallID string       `json:"tool_call_id,omitempty"`
 }
@@ -85,7 +86,15 @@ func (c *OpenAI) Chat(ctx context.Context, system string, messages []assistant.M
 			// assistant message does not carry the tool_calls ids), so it is
 			// replayed as a user turn: the OpenAI API rejects a tool role
 			// without the matching tool_calls.
-			converted = append(converted, oaMessage{Role: "user", Content: m.Content})
+			if len(m.Images) == 0 {
+				converted = append(converted, oaMessage{Role: "user", Content: m.Content})
+			} else {
+				parts := []map[string]any{{"type": "text", "text": m.Content}}
+				for _, image := range m.Images {
+					parts = append(parts, map[string]any{"type": "image_url", "image_url": map[string]string{"url": image}})
+				}
+				converted = append(converted, oaMessage{Role: "user", Content: parts})
+			}
 		case "assistant":
 			converted = append(converted, oaMessage{Role: "assistant", Content: m.Content})
 		default:
