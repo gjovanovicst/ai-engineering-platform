@@ -14,6 +14,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **The sticky "Next" card**: it is opaque (a translucent fill let the page
+  scroll visibly through it) and it sticks flush under the top bar — the offset
+  now follows the content's top padding instead of stopping inside it.
+
 - **The design check's false positives**: the compliance scan no longer flags
   the token definitions themselves (`--color-brand: #4f5eea;`) or a test that
   asserts them; the pilot's first design-standard run was punished 12/12 for

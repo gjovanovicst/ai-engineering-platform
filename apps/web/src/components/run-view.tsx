@@ -291,8 +291,10 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
         </span>
       </header>
 
+      {/* The scroll container has a top padding; a sticky card at top-0 stops
+          inside it, leaving a visible band. Offset by exactly that padding. */}
       {nextActions.length > 0 ? (
-        <div className="sticky top-2 z-20 mb-4">
+        <div className="sticky top-[calc(var(--content-pad-top)*-1)] z-20 mb-9">
           <NextAction title={nextTitle} description={nextDescription} actions={nextActions} />
         </div>
       ) : null}

@@ -23,7 +23,9 @@ export function NextAction({
   return (
     <section
       aria-label="Next action"
-      className="mb-5 rounded-lg border border-brand/40 bg-brand/5 p-4"
+      // Opaque on purpose: the card is sticky, so a translucent fill let the
+      // content scroll visibly behind it.
+      className="rounded-lg border border-brand/40 bg-bg-surface p-4 shadow-sm"
     >
       <p className="text-xs font-semibold uppercase tracking-wider text-brand">Next</p>
       <h2 className="mt-1 text-sm font-semibold">{title}</h2>
