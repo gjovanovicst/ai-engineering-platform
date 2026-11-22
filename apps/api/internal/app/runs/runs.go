@@ -610,7 +610,9 @@ func (s *Service) Retry(ctx context.Context, in RetryInput) (domain.Run, error) 
 		OrgID: run.OrgID, ProjectID: run.ProjectID, TaskID: run.TaskID,
 		AgentType: string(domain.AgentDevelopment), Status: domain.RunQueued,
 		Model: run.Model, Budget: run.Budget,
-		FrozenContextHash: run.FrozenContextHash, FrozenContextSources: run.FrozenContextSources,
+		// A human retry re-runs the approved plan against the current state; the
+		// old hash would fail immediately when the repository moved.
+		FrozenContextSources: run.FrozenContextSources,
 	})
 	if err != nil {
 		return domain.Run{}, err
@@ -757,8 +759,8 @@ func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run,
 		OrgID: review.OrgID, ProjectID: review.ProjectID, TaskID: review.TaskID,
 		AgentType: string(domain.AgentDevelopment), Status: domain.RunQueued,
 		Model: dev.Model, Budget: dev.Budget, FixOfRunID: dev.ID,
-		FrozenContextHash: dev.FrozenContextHash, FrozenContextSources: dev.FrozenContextSources,
-		FixKind: fixKind(selected), FixContext: fixContext(selected),
+		FrozenContextSources: dev.FrozenContextSources,
+		FixKind:              fixKind(selected), FixContext: fixContext(selected),
 	})
 	if err != nil {
 		return domain.Run{}, err

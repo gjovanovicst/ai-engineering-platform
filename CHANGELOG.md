@@ -22,6 +22,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **Retry and fix freeze the context at start**: neither inherits the old frozen
+  hash any more, so a retry after the repository moved no longer fails with
+  `context_changed`; only a fresh start can be approved.
+
 - **A canceled run can be restarted**: `POST /runs/{run}/retry` accepts a canceled
   run (the approved plan is still valid) and the run page offers **Retry** on it,
   so a stopped fix is one click from continuing.
