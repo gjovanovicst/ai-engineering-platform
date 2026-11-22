@@ -30,6 +30,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **A fix or troubleshoot continues the root branch**: the chain is walked to the
+  original development run whose branch was published, so a fix of a fix no
+  longer targets a branch (`aip/<failed-fix>`) that never existed.
+
 - **A retry or fix inherits the acceptance proof**: only the original run proves
   the criteria; re-proving them on a one-line fix failed with
   `acceptance_unproven` when the agent cited a sentence instead of a test name.
