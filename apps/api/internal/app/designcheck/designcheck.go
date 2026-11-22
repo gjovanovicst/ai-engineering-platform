@@ -17,7 +17,16 @@ type Violation struct {
 var (
 	hexColor = regexp.MustCompile(`#[0-9a-fA-F]{3,8}\b`)
 	fileLine = regexp.MustCompile(`^\+\+\+ b/(.+)$`)
+	// tokenDefinition is the one place a raw value belongs: the tokens file
+	// declares --color-brand: #4f5eea; it is not a violation.
+	tokenDefinition = regexp.MustCompile(`^\s*--[a-zA-Z0-9-]+\s*:`)
 )
+
+// isTestPath reports a test file: a test that asserts the token values is not
+// a design violation either.
+func isTestPath(path string) bool {
+	return strings.Contains(path, "_test.") || strings.Contains(path, ".test.") || strings.Contains(path, ".spec.")
+}
 
 // Scan checks added lines for raw colour values. Lines that use a design token
 // (var(--…) / rgb(var(…))) are allowed; everything else is a violation.
@@ -33,6 +42,14 @@ func Scan(diff string, forbidden []string) []Violation {
 			continue
 		}
 		line := strings.TrimPrefix(raw, "+")
+		if isTestPath(path) {
+			continue
+		}
+		// The token definitions and the line that sets a custom property are the
+		// contract's source, not a violation; only a raw value used in a screen is.
+		if tokenDefinition.MatchString(line) {
+			continue
+		}
 		for _, imp := range forbidden {
 			if imp != "" && strings.Contains(line, imp) {
 				out = append(out, Violation{Path: path, Line: strings.TrimSpace(line), Message: "forbidden or deprecated component import: " + imp})
