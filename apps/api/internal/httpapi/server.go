@@ -55,6 +55,7 @@ type Deps struct {
 	Rules                  RulesService
 	Deployments            DeploymentService
 	Checks                 CheckService
+	ReviewFindings         ReviewFindingService
 	RateLimitPerMin        int
 	Artifacts              ArtifactLister
 	Notifications          NotificationService
@@ -164,7 +165,11 @@ func NewRouter(d Deps) http.Handler {
 		newTaskHandlers(d.Tasks, d.Projects, d.Issuer, d.Log).registerRoutes(mux)
 	}
 	if d.Runs != nil {
-		newRunHandlers(d.Runs, d.Projects, d.Tasks, d.Issuer, d.Log, d.Events, d.ProjectAccess, time.Duration(d.ApprovalReauthMinutes)*time.Minute).registerRoutes(mux)
+		runs := newRunHandlers(d.Runs, d.Projects, d.Tasks, d.Issuer, d.Log, d.Events, d.ProjectAccess, time.Duration(d.ApprovalReauthMinutes)*time.Minute)
+		runs.registerRoutes(mux)
+		if d.ReviewFindings != nil {
+			newReviewFindingHandlers(d.ReviewFindings, runs).registerRoutes(mux)
+		}
 	}
 	if d.Repos != nil {
 		repos := newRepoHandlers(d.Repos, d.RepoCredentials, d.Projects, d.Issuer, d.Log)

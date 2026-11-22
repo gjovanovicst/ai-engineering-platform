@@ -332,3 +332,102 @@ func TestDecideCopiesTheApprovedPlanToTheDevelopmentRun(t *testing.T) {
 		t.Fatalf("enqueued = %v, want the development run", enqueuer.enqueued)
 	}
 }
+
+type fakeReviewBlockers struct{ n int }
+
+func (f fakeReviewBlockers) OpenBlockers(context.Context, string, string) (int, error) {
+	return f.n, nil
+}
+
+func (f fakeReviewBlockers) List(context.Context, string, string) ([]domain.ReviewFinding, error) {
+	return nil, nil
+}
+
+func TestDecideBlocksOnAnOpenReviewFinding(t *testing.T) {
+	t.Parallel()
+	store := newFakeStore()
+	store.runs["run-1"] = domain.Run{ID: "run-1", OrgID: "o", ProjectID: "p", TaskID: "t1", Status: domain.RunSucceeded}
+	store.approval = &Approval{ID: "a1", Type: "pr", Status: "pending", RunID: "run-1", OrgID: "o", PullRequestID: "pr1", Number: 7}
+	svc, err := New(store, fakeTasks{task: readyTask()}, &fakeExecutor{}, nil, nil, slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc.WithReviewBlockers(fakeReviewBlockers{n: 1})
+	_, _, err = svc.Decide(context.Background(), "o", "a1", "approved", "", "u1")
+	if err == nil || !strings.Contains(err.Error(), "open review blocker") {
+		t.Fatalf("err = %v, want the open review blocker gate", err)
+	}
+	if store.decided != 0 {
+		t.Fatal("the approval must stay pending while a blocker is open")
+	}
+}
+
+func TestDecideProceedsWithoutOpenBlockers(t *testing.T) {
+	t.Parallel()
+	store := newFakeStore()
+	store.runs["run-1"] = domain.Run{ID: "run-1", OrgID: "o", ProjectID: "p", TaskID: "t1", Status: domain.RunSucceeded}
+	store.approval = &Approval{ID: "a1", Type: "pr", Status: "pending", RunID: "run-1", OrgID: "o", PullRequestID: "pr1", Number: 7}
+	svc, err := New(store, fakeTasks{task: readyTask()}, &fakeExecutor{}, nil, nil, slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc.WithReviewBlockers(fakeReviewBlockers{n: 0})
+	if _, _, err := svc.Decide(context.Background(), "o", "a1", "approved", "", "u1"); err != nil {
+		t.Fatalf("Decide = %v, want the approval to proceed", err)
+	}
+}
+
+func TestFixContextCarriesTheSelectedFindings(t *testing.T) {
+	t.Parallel()
+	got := string(fixContext([]domain.ReviewFinding{
+		{File: "src/main.ts", Line: 3, Message: "the first"},
+		{Message: "the second"},
+	}))
+	want := "- src/main.ts:3: the first\n- the second\n"
+	if got != want {
+		t.Fatalf("fixContext = %q, want %q", got, want)
+	}
+	if kind := fixKind(nil); kind != "" {
+		t.Fatalf("fixKind(nil) = %q, want the bulk path", kind)
+	}
+	if kind := fixKind([]domain.ReviewFinding{{Message: "x"}}); kind != "review" {
+		t.Fatalf("fixKind(selected) = %q, want review", kind)
+	}
+}
+
+func TestTroubleshootStartsAnIncidentRun(t *testing.T) {
+	t.Parallel()
+	store := newFakeStore()
+	store.runs["failed-1"] = domain.Run{
+		ID: "failed-1", OrgID: "o", ProjectID: "p", TaskID: "t1",
+		AgentType: "development", Status: domain.RunFailed,
+		FailureCode: "test_gate_failed", FailureDetail: "go: not found", Plan: []byte(`{"steps":["x"]}`),
+	}
+	svc, err := New(store, fakeTasks{task: readyTask()}, &fakeExecutor{}, nil, nil, slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+	created, err := svc.Troubleshoot(context.Background(), TroubleshootInput{OrgID: "o", RunID: "failed-1", Actor: "u1"})
+	if err != nil {
+		t.Fatalf("Troubleshoot = %v", err)
+	}
+	if created.FixKind != "troubleshoot" {
+		t.Fatalf("fix kind = %q, want troubleshoot", created.FixKind)
+	}
+	if !strings.Contains(string(created.FixContext), "go: not found") {
+		t.Fatalf("context misses the failure detail: %s", created.FixContext)
+	}
+}
+
+func TestTroubleshootRejectsASucceededRun(t *testing.T) {
+	t.Parallel()
+	store := newFakeStore()
+	store.runs["ok-1"] = domain.Run{ID: "ok-1", OrgID: "o", ProjectID: "p", TaskID: "t1", AgentType: "development", Status: domain.RunSucceeded}
+	svc, err := New(store, fakeTasks{task: readyTask()}, &fakeExecutor{}, nil, nil, slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Troubleshoot(context.Background(), TroubleshootInput{OrgID: "o", RunID: "ok-1"}); err == nil {
+		t.Fatal("expected an error for a succeeded run")
+	}
+}

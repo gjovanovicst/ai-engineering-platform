@@ -3,6 +3,8 @@ package runs
 import (
 	"strings"
 	"testing"
+
+	"github.com/gjovanovicst/ai-engineering-platform/internal/domain"
 )
 
 func TestReviewPromptIncludesTheDevelopmentDiff(t *testing.T) {
@@ -54,5 +56,27 @@ func TestReviewPromptListsChangedFiles(t *testing.T) {
 		!strings.Contains(prompt, "- apps/api/internal/auth/password.go") ||
 		!strings.Contains(prompt, "- apps/api/internal/httpapi/changes.go") {
 		t.Fatalf("prompt does not index the changed files: %s", prompt)
+	}
+}
+
+func TestParseReviewFindingsAcceptsBothFields(t *testing.T) {
+	t.Parallel()
+	raw := []byte(`{"findings":[
+		{"severity":"blocker","file":"a.go","line":3,"message":"the message"},
+		{"severity":"nit","file":"b.go","body":"the body"},
+		{"severity":"major","body":"an unknown severity is a nit"}
+	]}`)
+	got := parseReviewFindings(raw)
+	if len(got) != 3 {
+		t.Fatalf("parseReviewFindings = %d findings, want 3", len(got))
+	}
+	if got[0].Message != "the message" || got[0].Severity != domain.ReviewFindingBlocker {
+		t.Errorf("finding 0 = %+v, want the message and a blocker", got[0])
+	}
+	if got[1].Message != "the body" || got[1].Severity != domain.ReviewFindingNit {
+		t.Errorf("finding 1 = %+v, want the body and a nit", got[1])
+	}
+	if got[2].Severity != domain.ReviewFindingNit {
+		t.Errorf("finding 2 severity = %q, want nit: only blocker gates the merge", got[2].Severity)
 	}
 }

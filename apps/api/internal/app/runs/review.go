@@ -51,6 +51,42 @@ func reviewPrompt(diff string) string {
 	return b.String()
 }
 
+// parseReviewFindings maps the review payload's findings to the lifecycle
+// records. Only "blocker" gates the merge; any other severity is a nit.
+func parseReviewFindings(raw []byte) []domain.ReviewFinding {
+	var payload struct {
+		Findings []struct {
+			Severity string `json:"severity"`
+			File     string `json:"file"`
+			Line     int    `json:"line"`
+			Message  string `json:"message"`
+			// Body is the model's usual field name; accept both.
+			Body string `json:"body"`
+		} `json:"findings"`
+	}
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return nil
+	}
+	out := make([]domain.ReviewFinding, 0, len(payload.Findings))
+	for _, f := range payload.Findings {
+		message := strings.TrimSpace(f.Message)
+		if message == "" {
+			message = strings.TrimSpace(f.Body)
+		}
+		if message == "" {
+			continue
+		}
+		severity := domain.ReviewFindingNit
+		if strings.EqualFold(strings.TrimSpace(f.Severity), string(domain.ReviewFindingBlocker)) {
+			severity = domain.ReviewFindingBlocker
+		}
+		out = append(out, domain.ReviewFinding{
+			Severity: severity, File: strings.TrimSpace(f.File), Line: f.Line, Message: message,
+		})
+	}
+	return out
+}
+
 // reviewBlockers counts the findings a human marked as blockers: only they
 // make a pull request require a fix before the merge.
 func reviewBlockers(raw []byte) int {

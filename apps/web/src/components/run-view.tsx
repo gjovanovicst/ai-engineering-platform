@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DiffViewer } from "@/components/diff-viewer";
 import { NextAction, type NextActionItem } from "@/components/next-action";
 import { HelpTip } from "@/components/ui/help-tip";
+import { PromptDialog } from "@/components/ui/prompt-dialog";
 import { Button } from "@/components/ui/button";
 import {
   ApiError,
@@ -23,11 +24,18 @@ import {
   startRun,
   retryRun,
   fixReview,
+  troubleshootRun,
+  listReviewFindings,
+  decideReviewFinding,
+  getTask,
+  createTask,
   streamRunEvents,
   transitionTask,
   type Approval,
   type Run,
   type RunArtifact,
+  type ReviewFindingRecord,
+  type Task,
   type RunEvent,
 } from "@/lib/api";
 import type { Claims } from "@/lib/auth";
@@ -47,8 +55,8 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
   const [run, setRun] = useState<Run | null>(null);
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [retrying, setRetrying] = useState(false);
   const [retryingDev, setRetryingDev] = useState(false);
+  const [troubleshooting, setTroubleshooting] = useState(false);
   const [fixing, setFixing] = useState(false);
   const [approval, setApproval] = useState<Approval | null>(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -65,6 +73,23 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     enabled: Boolean(claims?.org),
     queryFn: () => getRunUsage(claims!.org, runId),
   });
+  // The findings' lifecycle: a blocker stays open until a human dismisses it
+  // or a later review stops reporting it.
+  const findingsQuery = useQuery({
+    queryKey: ["review-findings", claims?.org, projectId, run?.task_id],
+    enabled: Boolean(claims?.org && run?.task_id),
+    queryFn: () => listReviewFindings(claims!.org, projectId, run!.task_id!),
+  });
+  // A closed task cannot take a fix: its branch is gone with the pull request,
+  // so a finding becomes a follow-up task instead.
+  const taskQuery = useQuery({
+    queryKey: ["task", claims?.org, projectId, run?.task_id],
+    enabled: Boolean(claims?.org && run?.task_id),
+    queryFn: () => getTask(claims!.org, projectId, run!.task_id!),
+  });
+  const taskClosed = taskQuery.data?.status === "done" || taskQuery.data?.status === "canceled";
+  const findingRecords = findingsQuery.data?.data ?? [];
+  const openBlockers = findingRecords.filter((f) => f.status === "open" && f.severity === "blocker").length;
   const retries = events.filter((event) => event.type === "run.retry" || event.type === "test.flaky_recovered");
   const manifestEvent = events.find((event) => event.type === "context.manifest");
   const manifestSources = (manifestEvent?.data.payload?.sources ?? []) as Array<{
@@ -81,6 +106,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     rule_id?: string;
     version?: number;
   }>;
+  const [dismissing, setDismissing] = useState<ReviewFindingRecord | null>(null);
   const [decisionNote, setDecisionNote] = useState<string | null>(null);
   const [developmentRunID, setDevelopmentRunID] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
@@ -202,6 +228,62 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     }
   }
 
+  async function createFollowUp(finding: ReviewFindingRecord) {
+    if (!claims?.org) return;
+    try {
+      const title = finding.message.split("\n")[0].slice(0, 90);
+      const created = await createTask(claims.org, projectId, {
+        title,
+        description: finding.message + "\n\nFollow-up from the review of " + (taskQuery.data?.ref ?? "the task") + ".",
+        acceptance: [],
+        priority: "low",
+      });
+      setDecisionNote(`Follow-up ${created.ref} created — it carries the finding.`);
+      await router.push(`/projects/${projectId}`);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not create the follow-up task");
+    }
+  }
+
+  async function fixFinding(finding: ReviewFindingRecord) {
+    if (!claims?.org) return;
+    try {
+      // The finding belongs to the review that reported it, not to the run page
+      // the human happens to be on.
+      const next = await fixReview(claims.org, finding.run_id, [finding.id]);
+      setDevelopmentRunID(next.id);
+      // Open the new run so the stream and the status are visible immediately.
+      router.push(`/projects/${projectId}/runs/${next.id}`);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Could not start the fix run";
+      setError(message.includes("already active") ? "A run is already active for this task — wait for it to finish, then fix the next finding." : message);
+    }
+  }
+
+  async function resolveFinding(finding: ReviewFindingRecord, decision: "dismiss" | "reopen", reason = "") {
+    if (!claims?.org) return;
+    try {
+      await decideReviewFinding(claims.org, projectId, finding.task_id, finding.id, decision, reason);
+      await findingsQuery.refetch();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not update the finding");
+    }
+  }
+
+  async function troubleshoot() {
+    if (!claims || !run) return;
+    setTroubleshooting(true);
+    setError(null);
+    try {
+      const next = await troubleshootRun(claims.org, run.id);
+      router.push(`/projects/${run.project_id}/runs/${next.id}`);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not start the troubleshoot run");
+    } finally {
+      setTroubleshooting(false);
+    }
+  }
+
   async function fixReviewFindings() {
     if (!claims || !run) return;
     setFixing(true);
@@ -213,27 +295,6 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
       setError(err instanceof ApiError ? err.message : "Could not start the fix run");
     } finally {
       setFixing(false);
-    }
-  }
-
-  async function retry() {
-    if (!claims || !run) return;
-    setRetrying(true);
-    setError(null);
-    try {
-      // A failed run parks the task in blocked; older runs may still be in progress.
-      try {
-        await transitionTask(claims.org, run.project_id, run.task_id, "ready", "retry after a failed run");
-      } catch {
-        await transitionTask(claims.org, run.project_id, run.task_id, "blocked", "retry after a failed run");
-        await transitionTask(claims.org, run.project_id, run.task_id, "ready", "retry after a failed run");
-      }
-      const next = await startRun(claims.org, run.project_id, run.task_id);
-      router.push(`/projects/${run.project_id}/runs/${next.id}`);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not retry the task");
-    } finally {
-      setRetrying(false);
     }
   }
 
@@ -253,8 +314,13 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     } else {
       nextTitle = "Retry the development run";
       nextDescription = "The run failed. Retrying re-queues it and puts the task back in progress.";
-      nextActions.push({ label: "Retry development", onClick: () => void retryDevelopment() });
+      nextActions.push({ label: "Retry development", loading: retryingDev, onClick: () => void retryDevelopment() });
+      nextActions.push({ label: "Troubleshoot", variant: "secondary", loading: troubleshooting, onClick: () => void troubleshoot() });
     }
+  } else if (run?.status === "canceled") {
+    nextTitle = run.fix_of_run_id ? "Restart the canceled fix" : "Restart the canceled run";
+    nextDescription = "The run was canceled. Restarting re-queues the same approved plan; nothing is lost.";
+    nextActions.push({ label: "Retry", loading: retryingDev, onClick: () => void retryDevelopment() });
   } else if (run?.status === "succeeded") {
     nextTitle = "The gates passed — review and merge";
     nextDescription = "Open the project's pull requests to review the diff. A human merges; the platform never merges for you.";
@@ -293,6 +359,12 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
 
       {/* The scroll container has a top padding; a sticky card at top-0 stops
           inside it, leaving a visible band. Offset by exactly that padding. */}
+      {run?.status === "queued" ? (
+        <p role="status" className="mb-4 rounded-md border border-brand/40 bg-brand-subtle/40 px-3 py-2 text-xs text-text-secondary">
+          Queued — the worker picks it up in a moment. The log fills as it runs.
+        </p>
+      ) : null}
+
       {nextActions.length > 0 ? (
         <div className="sticky top-[calc(var(--content-pad-top)*-1)] z-20 mb-9">
           <NextAction title={nextTitle} description={nextDescription} actions={nextActions} />
@@ -345,16 +417,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
               <p className="text-xs text-text-secondary">{run.failure_code || "unknown failure"}</p>
             </div>
             {claims ? (
-              <div className="flex flex-wrap items-center gap-2">
-                {run.agent_type === "development" && run.plan ? (
-                  <Button loading={retryingDev} onClick={retryDevelopment}>
-                    Retry development
-                  </Button>
-                ) : null}
-                <Button variant="secondary" loading={retrying} onClick={retry}>
-                  Retry task
-                </Button>
-              </div>
+              <p className="text-xs text-text-muted">The next action is below.</p>
             ) : null}
           </header>
           {run.failure_detail ? (
@@ -390,9 +453,14 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
               <p className="text-xs text-text-secondary">
                 Merge is blocked until a human approves this pull/merge request.
               </p>
+              {openBlockers > 0 ? (
+                <p className="mt-1 text-xs text-status-warning">
+                  {openBlockers} open review blocker{openBlockers === 1 ? "" : "s"} — fix or dismiss them before the merge.
+                </p>
+              ) : null}
             </div>
             <div className="flex gap-2">
-              <Button loading={deciding} onClick={() => decide("approved")}>
+              <Button loading={deciding} disabled={openBlockers > 0} onClick={() => decide("approved")}>
                 Approve merge
               </Button>
               <Button variant="secondary" disabled={deciding} onClick={() => setShowReject((v) => !v)}>
@@ -521,13 +589,18 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
         </section>
       ) : null}
 
-      {run?.review?.findings?.length ? (
+      {findingRecords.length > 0 ? (
         <section className="mb-6 rounded-lg border border-border bg-bg-surface">
           <header className="flex items-center justify-between border-b border-border px-4 py-3">
             <h2 className="text-sm font-semibold">Review findings</h2>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-text-muted">{run.review.findings.length}</span>
-              {claims && run.review.findings.some((finding) => finding.severity === "blocker") ? (
+              {openBlockers > 0 ? (
+                <span className="rounded px-1.5 py-0.5 text-[11px] font-medium text-status-danger">
+                  {openBlockers} open blocker{openBlockers === 1 ? "" : "s"}
+                </span>
+              ) : null}
+              <span className="text-xs text-text-muted">{findingRecords.length}</span>
+              {claims && openBlockers > 0 && run?.agent_type === "review" ? (
                 <Button variant="secondary" loading={fixing} onClick={fixReviewFindings}>
                   Fix review findings
                 </Button>
@@ -535,31 +608,122 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
             </div>
           </header>
           <ul className="divide-y divide-border">
+            {[...findingRecords]
+              .sort((a, b) => (b.status === "open" ? 1 : 0) - (a.status === "open" ? 1 : 0) || (b.severity === "blocker" ? 1 : 0) - (a.severity === "blocker" ? 1 : 0))
+              .map((finding) => (
+                <li key={finding.id} className="flex gap-3 px-4 py-2.5 text-sm">
+                  <span
+                    className={`h-fit rounded px-1.5 py-0.5 text-[11px] font-medium uppercase ${
+                      finding.severity === "blocker"
+                        ? "bg-status-danger/10 text-status-danger"
+                        : "bg-bg-hover text-text-muted"
+                    }`}
+                  >
+                    {finding.severity}
+                  </span>
+                  <span className="min-w-0 flex-1 text-text-secondary">
+                    {finding.file ? (
+                      <span className="mr-2 font-mono text-xs text-text-muted">
+                        {finding.file}
+                        {finding.line > 0 ? `:${finding.line}` : ""}
+                      </span>
+                    ) : null}
+                    {finding.message}
+                    {finding.status !== "open" ? (
+                      <span className="ml-2 text-[11px] uppercase tracking-wide text-text-muted">
+                        {finding.status}
+                        {finding.reason ? ` — ${finding.reason}` : ""}
+                      </span>
+                    ) : null}
+                  </span>
+                  {claims ? (
+                    finding.status === "open" ? (
+                      <span className="flex shrink-0 gap-1">
+                        {taskClosed ? (
+                          <Button
+                            variant="secondary"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => void createFollowUp(finding)}
+                          >
+                            Follow-up task
+                          </Button>
+                        ) : (
+                        <Button
+                          variant="secondary"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => void fixFinding(finding)}
+                        >
+                          Fix
+                        </Button>
+                        )}
+                        {taskClosed ? null : (
+                        <Button
+                          variant="ghost"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => setDismissing(finding)}
+                        >
+                          Dismiss
+                        </Button>
+                        )}
+                      </span>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        className="h-7 shrink-0 px-2 text-xs"
+                        onClick={() => void resolveFinding(finding, "reopen")}
+                      >
+                        Reopen
+                      </Button>
+                    )
+                  ) : null}
+                </li>
+              ))}
+          </ul>
+        </section>
+      ) : run?.review?.findings?.length ? (
+        <section className="mb-6 rounded-lg border border-border bg-bg-surface">
+          <header className="flex items-center justify-between border-b border-border px-4 py-3">
+            <h2 className="text-sm font-semibold">Review findings</h2>
+            <span className="text-xs text-text-muted">{run.review.findings.length}</span>
+          </header>
+          <ul className="divide-y divide-border">
             {[...run.review.findings]
               .sort((a, b) => (b.severity === "blocker" ? 1 : 0) - (a.severity === "blocker" ? 1 : 0))
               .map((finding, index) => (
-              <li key={`${finding.file ?? "general"}-${index}`} className="flex gap-3 px-4 py-2.5 text-sm">
-                <span
-                  className={`h-fit rounded px-1.5 py-0.5 text-[11px] font-medium uppercase ${
-                    finding.severity === "blocker"
-                      ? "bg-status-danger/10 text-status-danger"
-                      : finding.severity === "major"
-                        ? "bg-status-warning/10 text-status-warning"
+                <li key={`${finding.file ?? "general"}-${index}`} className="flex gap-3 px-4 py-2.5 text-sm">
+                  <span
+                    className={`h-fit rounded px-1.5 py-0.5 text-[11px] font-medium uppercase ${
+                      finding.severity === "blocker"
+                        ? "bg-status-danger/10 text-status-danger"
                         : "bg-bg-hover text-text-muted"
-                  }`}
-                >
-                  {finding.severity}
-                </span>
-                <span className="text-text-secondary">
-                  {finding.file ? <span className="mr-2 font-mono text-xs text-text-muted">{finding.file}</span> : null}
-                  {finding.body}
-                </span>
-              </li>
-            ))}
+                    }`}
+                  >
+                    {finding.severity}
+                  </span>
+                  <span className="text-text-secondary">
+                    {finding.file ? <span className="mr-2 font-mono text-xs text-text-muted">{finding.file}</span> : null}
+                    {finding.body}
+                  </span>
+                </li>
+              ))}
           </ul>
         </section>
       ) : null}
 
+      <PromptDialog
+        open={dismissing !== null}
+        title="Dismiss the finding"
+        message="A dismissal needs a reason; it stays in the record."
+        label="Reason"
+        placeholder="e.g. not applicable: the file is generated"
+        required
+        confirmLabel="Dismiss"
+        onConfirm={(reason) => {
+          if (dismissing) void resolveFinding(dismissing, "dismiss", reason);
+          setDismissing(null);
+        }}
+        onCancel={() => setDismissing(null)}
+      />
       {retries.length > 0 ? (
         <section className="mb-6 rounded-lg border border-border bg-bg-surface p-4">
           <h2 className="text-sm font-semibold">Retries</h2>

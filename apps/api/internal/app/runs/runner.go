@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -58,12 +59,15 @@ type Runner struct {
 	store             Store
 	enqueuer          Enqueuer
 	publisher         Publisher
-	proofVerifier     ProofVerifier
-	headRunner        HeadRunner
-	testCommand       string
-	visuals           VisualBaselineReader
-	embedder          Embedder
-	log               *slog.Logger
+	// findings records the review findings' lifecycle (optional: a deployment
+	// without it keeps the JSON-only behaviour).
+	findings      ReviewFindings
+	proofVerifier ProofVerifier
+	headRunner    HeadRunner
+	testCommand   string
+	visuals       VisualBaselineReader
+	embedder      Embedder
+	log           *slog.Logger
 }
 
 // WorkspaceProvider clones the project repository into an archive that the
@@ -80,6 +84,11 @@ type TestRecorder interface {
 // UsageRecorder records token usage (implemented in app/usage).
 type UsageRecorder interface {
 	Record(ctx context.Context, run domain.Run, result agent.Result) error
+}
+
+// ReviewFindings records the review findings and their lifecycle.
+type ReviewFindings interface {
+	Reconcile(ctx context.Context, orgID, projectID, taskID, runID string, findings []domain.ReviewFinding) error
 }
 
 // Publisher pushes the branch and opens a PR/MR (implemented in adapters/git).
@@ -106,6 +115,12 @@ type PullRequest struct {
 }
 
 // NewRunner wires the executor.
+// WithReviewFindings wires the findings store; it is optional.
+func (r *Runner) WithReviewFindings(findings ReviewFindings) *Runner {
+	r.findings = findings
+	return r
+}
+
 func NewRunner(backend agent.Backend, store Store, enqueuer Enqueuer, publisher Publisher, testCommand string, log *slog.Logger) *Runner {
 	if log == nil {
 		log = slog.New(slog.DiscardHandler)
@@ -307,7 +322,11 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 		}
 		if werr != nil {
 			r.log.Error("runs: clone workspace", slog.Any("err", werr))
-			failed, ferr := r.fail(runCtx, run, "workspace_clone_failed", "could not clone the project repository")
+			detail := "could not clone the project repository"
+			if run.FixOfRunID != "" {
+				detail += " at " + fixBranch(run) + " (the pull request may be merged; open a follow-up task instead)"
+			}
+			failed, ferr := r.fail(runCtx, run, "workspace_clone_failed", detail)
 			if ferr != nil {
 				return run, ferr
 			}
@@ -330,7 +349,14 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 			_ = r.store.AppendEvent(runCtx, run.OrgID, run.ID, "context.changed", "system",
 				map[string]any{"frozen": run.FrozenContextHash, "current": manifest.hash, "files": len(files),
 					"changed_sources": sourceDelta(frozenSources, allSources)})
-			return r.fail(runCtx, run, "context_changed", "the context changed after plan approval; request a new approval")
+			// A review fix is a targeted change on an already approved plan: the
+			// repository moving on (the pull request merged, a dependency bump)
+			// must not require a new plan. Every other run still fails.
+			if run.FixKind != "review" {
+				return r.fail(runCtx, run, "context_changed", "the context changed after plan approval; request a new approval")
+			}
+			_ = r.store.AppendEvent(runCtx, run.OrgID, run.ID, "context.changed.allowed", "system",
+				map[string]any{"reason": "a review fix keeps the approved plan"})
 		}
 		_ = r.store.SetContextHash(runCtx, run.OrgID, run.ID, manifest.hash)
 		if aerr := r.artifacts.Upload(runCtx, run.OrgID, run.ID, "context_manifest", manifest.json); aerr != nil {
@@ -458,6 +484,23 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 
 	if run.AgentType == string(domain.AgentDevelopment) {
 		if strings.TrimSpace(result.Diff) == "" {
+			// A fix run that finds nothing to change is not an anomaly: the agent
+			// verified the finding is already satisfied. Record it and succeed so
+			// the human can dismiss the finding instead of fighting a failure.
+			if run.FixKind == "review" || run.FixOfRunID != "" {
+				_ = r.store.AppendEvent(context.WithoutCancel(ctx), run.OrgID, run.ID, "run.noop", "agent",
+					map[string]any{"detail": "the agent found nothing to change; the finding may already be addressed"})
+				run.FailureCode, run.FailureDetail = "", ""
+				finished := time.Now().UTC()
+				if terr := run.Transition(domain.RunSucceeded, finished); terr != nil {
+					return r.fail(ctx, run, "no_changes", "the development agent produced no changes")
+				}
+				if updated, uerr := r.store.UpdateStatus(context.WithoutCancel(ctx), run); uerr != nil {
+					return run, uerr
+				} else {
+					return updated, nil
+				}
+			}
 			return r.fail(ctx, run, "no_changes", "the development agent produced no changes")
 		}
 		sum := sha256.Sum256([]byte(result.Diff))
@@ -607,7 +650,7 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 			if perr != nil {
 				detail = perr.Error()
 			} else {
-				checked := acceptance.ValidateProof(proof, criteria, result.Diff)
+				checked := acceptance.ValidateProof(proof, criteria, result.Diff, tarText(result.Workspace))
 				detail = checked.Detail
 				if checked.Passed {
 					status = "passed"
@@ -693,6 +736,11 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 		}
 		if err := r.store.SetReview(context.WithoutCancel(ctx), run.OrgID, run.ID, review); err != nil {
 			return r.fail(ctx, run, "artifact_failed", err.Error())
+		}
+		if r.findings != nil {
+			if ferr := r.findings.Reconcile(context.WithoutCancel(ctx), run.OrgID, run.ProjectID, run.TaskID, run.ID, parseReviewFindings(review)); ferr != nil {
+				r.log.Warn("runs: reconcile review findings", slog.Any("err", ferr))
+			}
 		}
 		_ = r.store.AppendEvent(context.WithoutCancel(ctx), run.OrgID, run.ID, "review.completed", "agent",
 			map[string]any{"findings": countFindings(review)})
@@ -912,6 +960,34 @@ func buildContextManifest(run domain.Run, files, rules []string, designRef strin
 	m.json = raw
 	m.hash = hex.EncodeToString(sum[:])
 	return m
+}
+
+// tarText concatenates the text files of a workspace (bounded) so the
+// acceptance verifier can find a test outside the diff.
+func tarText(archive []byte) string {
+	var b strings.Builder
+	reader := tar.NewReader(bytes.NewReader(archive))
+	for {
+		header, err := reader.Next()
+		if err != nil {
+			break
+		}
+		if header.Typeflag != tar.TypeReg || header.Size > 512<<10 {
+			continue
+		}
+		if !textExt[strings.ToLower(filepath.Ext(header.Name))] {
+			continue
+		}
+		if b.Len() > 4<<20 {
+			break
+		}
+		// The path is part of the text so the acceptance verifier can match a
+		// cited file as well as a test name.
+		b.WriteString("// " + header.Name + "\n")
+		_, _ = io.Copy(&b, io.LimitReader(reader, 512<<10))
+		b.WriteString("\n")
+	}
+	return b.String()
 }
 
 // tarFiles lists regular file paths in an uncompressed tar workspace.

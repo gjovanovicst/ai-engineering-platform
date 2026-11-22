@@ -48,9 +48,23 @@ func ParseProof(lines []string) (*Proof, error) {
 	return nil, fmt.Errorf("the development agent did not emit an AIP_PROOF line")
 }
 
-// ValidateProof checks that every criterion has acceptable evidence and that
-// automated tests are present in the diff.
-func ValidateProof(proof *Proof, criteria []string, diff string) Result {
+// inWorkspace reports whether every cited file appears in the workspace text.
+func inWorkspace(files []string, workspace string) bool {
+	if workspace == "" {
+		return false
+	}
+	for _, file := range files {
+		if !strings.Contains(workspace, file) {
+			return false
+		}
+	}
+	return true
+}
+
+// ValidateProof checks that every criterion has acceptable evidence. An
+// automated test must appear in the diff or in the workspace: a fix run changes
+// a small part and legitimately cites a test that already exists.
+func ValidateProof(proof *Proof, criteria []string, diff, workspace string) Result {
 	byCriterion := map[string][]Evidence{}
 	for _, item := range proof.Evidence {
 		byCriterion[item.Criterion] = append(byCriterion[item.Criterion], item)
@@ -76,10 +90,10 @@ func ValidateProof(proof *Proof, criteria []string, diff string) Result {
 				if item.Test == "" {
 					continue
 				}
-				if !testPresent(item.Test, added) {
+				if !testPresent(item.Test, added) && (workspace == "" || !strings.Contains(workspace, item.Test)) {
 					continue
 				}
-				if len(item.Files) > 0 && !anyChanged(item.Files, files) {
+				if len(item.Files) > 0 && !anyChanged(item.Files, files) && !inWorkspace(item.Files, workspace) {
 					continue
 				}
 				automated++

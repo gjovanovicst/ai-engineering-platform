@@ -194,7 +194,7 @@ func (b *ToolLoopBackend) Run(ctx context.Context, spec Spec, emit func(Event) e
 	// (the model may or may not have called run_tests).
 	if strings.TrimSpace(spec.TestCommand) != "" {
 		testCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-		res, terr := b.Sandbox.Exec(testCtx, handle, []string{"sh", "-lc", spec.TestCommand}, nil)
+		res, terr := b.Sandbox.Exec(testCtx, handle, toolchainShell(spec.TestCommand), nil)
 		cancel()
 		if terr == nil {
 			usage.TestExitCode = res.ExitCode

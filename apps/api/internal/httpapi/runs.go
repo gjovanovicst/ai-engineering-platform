@@ -26,6 +26,7 @@ type RunService interface {
 	Cancel(ctx context.Context, orgID, id string) (domain.Run, error)
 	Retry(ctx context.Context, in runs.RetryInput) (domain.Run, error)
 	FixReview(ctx context.Context, in runs.FixReviewInput) (domain.Run, error)
+	Troubleshoot(ctx context.Context, in runs.TroubleshootInput) (domain.Run, error)
 	FixCI(ctx context.Context, orgID, prID, checkID, actor string) (domain.Run, error)
 	PendingApprovals(ctx context.Context, orgID string, limit int) ([]runs.Approval, error)
 	Decide(ctx context.Context, orgID, approvalID, decision, reason, userID string) (domain.Run, string, error)
@@ -64,6 +65,7 @@ func (h *runHandlers) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/orgs/{org}/runs/{run}/cancel", h.cancel)
 	mux.HandleFunc("POST /api/v1/orgs/{org}/runs/{run}/retry", h.retry)
 	mux.HandleFunc("POST /api/v1/orgs/{org}/runs/{run}/fix-review", h.fixReview)
+	mux.HandleFunc("POST /api/v1/orgs/{org}/runs/{run}/troubleshoot", h.troubleshoot)
 	mux.HandleFunc("POST /api/v1/orgs/{org}/pull-requests/{pr}/checks/{check}/fix", h.fixCI)
 	mux.HandleFunc("GET /api/v1/orgs/{org}/projects/{project}/mcp-tools", h.mcpTools)
 	mux.HandleFunc("GET /api/v1/orgs/{org}/approvals", h.approvals)
@@ -493,8 +495,16 @@ func (h *runHandlers) fixReview(w http.ResponseWriter, r *http.Request) {
 		writeProblem(w, http.StatusForbidden, "forbidden", "you are not a member of this project")
 		return
 	}
+	var body struct {
+		FindingIDs []string `json:"finding_ids"`
+	}
+	if r.ContentLength > 0 {
+		if !decode(w, r, 1<<20, &body) {
+			return
+		}
+	}
 	run, err := h.svc.FixReview(r.Context(), runs.FixReviewInput{
-		OrgID: claims.OrgID, RunID: r.PathValue("run"), Actor: claims.Subject,
+		OrgID: claims.OrgID, RunID: r.PathValue("run"), Actor: claims.Subject, FindingIDs: body.FindingIDs,
 	})
 	if err != nil {
 		switch {
@@ -656,4 +666,47 @@ func staleApprovalSession(claims *auth.Claims, window time.Duration, now time.Ti
 		return false
 	}
 	return now.Sub(claims.IssuedAt.Time) > window
+}
+
+// troubleshoot starts an incident run that diagnoses a failed run.
+func (h *runHandlers) troubleshoot(w http.ResponseWriter, r *http.Request) {
+	claims, ok := h.authorize(w, r, "member")
+	if !ok {
+		return
+	}
+	current, cerr := h.svc.Get(r.Context(), claims.OrgID, r.PathValue("run"))
+	if cerr != nil {
+		writeProblem(w, http.StatusNotFound, "not_found", "run not found")
+		return
+	}
+	if !h.canAccessRun(r.Context(), claims, current.ProjectID, true) {
+		writeProblem(w, http.StatusForbidden, "forbidden", "you are not a member of this project")
+		return
+	}
+	var body struct {
+		Reason string `json:"reason"`
+	}
+	if r.ContentLength > 0 {
+		if !decode(w, r, 1<<20, &body) {
+			return
+		}
+	}
+	run, err := h.svc.Troubleshoot(r.Context(), runs.TroubleshootInput{
+		OrgID: claims.OrgID, RunID: r.PathValue("run"), Actor: claims.Subject, Reason: body.Reason,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrNotFound):
+			writeProblem(w, http.StatusNotFound, "not_found", "run not found")
+		case errors.Is(err, domain.ErrValidation):
+			writeProblem(w, http.StatusBadRequest, "validation_failed", err.Error())
+		case errors.Is(err, domain.ErrConflict), errors.Is(err, domain.ErrInvalidTransition):
+			writeProblem(w, http.StatusConflict, "conflict", err.Error())
+		default:
+			h.log.Error("runs.troubleshoot", slog.Any("err", err))
+			writeProblem(w, http.StatusInternalServerError, "internal", "could not start the troubleshoot run")
+		}
+		return
+	}
+	writeJSON(w, http.StatusAccepted, runJSON(run))
 }

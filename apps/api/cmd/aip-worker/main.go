@@ -136,6 +136,7 @@ func main() {
 		bus = nil
 	}
 	runStore := postgres.NewRunStore(pool).WithPublisher(bus)
+	findingStore := postgres.NewReviewFindingStore(pool)
 	taskService, err := tasks.New(postgres.NewTaskStore(pool))
 	if err != nil {
 		logger.Error("task service", slog.Any("err", err))
@@ -282,6 +283,7 @@ func main() {
 	pluginStore := postgres.NewAgentPluginStore(pool)
 	proofVerifier := &sandboxProofVerifier{sandbox: driver, image: cfg.SandboxImage}
 	runner := runs.NewRunner(backend, runStore, queue.Enqueuer{Client: client}, publisherAdapter{publisher}, cfg.TestCommand, logger).
+		WithReviewFindings(findingStore).
 		WithProofVerifier(proofVerifier).
 		WithHeadRunner(proofVerifier).
 		WithUsageRecorder(usageService).
@@ -378,7 +380,8 @@ func main() {
 		WithDesignStandard(projectStore, designStandardStore).
 		WithComponents(projectStore, designStore).
 		WithAttachments(attachmentStore).
-		WithOrgGate(postgres.NewOrgGate(pool), cfg.OrgMaxConcurrentRuns))
+		WithOrgGate(postgres.NewOrgGate(pool), cfg.OrgMaxConcurrentRuns).
+		WithEnqueuer(queue.Enqueuer{Client: client}))
 	if err := client.Start(ctx); err != nil {
 		logger.Error("queue start", slog.Any("err", err))
 		os.Exit(1)

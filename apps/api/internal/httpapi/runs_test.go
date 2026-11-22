@@ -136,3 +136,7 @@ func TestRunJSONIncludesPlan(t *testing.T) {
 		t.Fatalf("plan = %s", plan)
 	}
 }
+
+func (f *fakeRunService) Troubleshoot(context.Context, runs.TroubleshootInput) (domain.Run, error) {
+	return domain.Run{}, nil
+}

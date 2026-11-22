@@ -6,6 +6,22 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Auto-remediation**: a run that fails on an environment anomaly
+  (`context_changed`, `dependency_missing`) is retried **once** automatically
+  with the approved plan, recorded as `run.auto_remediated`; a second failure is
+  the human's call (the retried run carries `fix_kind=auto`).
+- **Troubleshoot**: a failed run gains **Troubleshoot** — an incident run that
+  receives the failure code, its detail and the last events, and fixes the root
+  cause on the same branch (`POST /runs/{run}/troubleshoot`).
+
+- **The review findings' lifecycle**: a finding is a row (`review_findings`,
+  migration 0086) with `open` / `fixed` / `dismissed`; a human dismisses a
+  blocker with a reason (or reopens it), a later review closes a finding it no
+  longer reports, and the merge approval refuses while a blocker is open.
+  Every open finding — nit or blocker — can also be **fixed**: the button starts
+  a development run on the same pull request with that finding in the prompt
+  (`POST .../fix-review {"finding_ids": [...]}`).
+
 - **The component playground and the contract 2.0**: `design/contracts.json`
   records every primitive's props, states and a11y notes; the new
   `/design-system/playground` page renders a live example per component, and
@@ -13,6 +29,32 @@ All notable changes to this project. Dates are 2026.
   renamed prop fails).
 
 ### Fixed
+
+- **A no-op fix succeeds**: when a fix run finds nothing to change (the finding
+  is already addressed) it records `run.noop` and succeeds instead of failing
+  with `no_changes`; the run page no longer offers three retry buttons, only the
+  "Next" action.
+
+- **A closed task cannot take a fix**: when the pull request is merged the fix
+  branch is gone, so `fix-review` says "open a follow-up task" instead of a
+  clone failure; the panel turns each open finding into a **Follow-up task**
+  prefilled with the finding, and the clone error names the branch.
+
+- **Retry and fix freeze the context at start**: neither inherits the old frozen
+  hash any more, so a retry after the repository moved no longer fails with
+  `context_changed`; only a fresh start can be approved.
+
+- **A canceled run can be restarted**: `POST /runs/{run}/retry` accepts a canceled
+  run (the approved plan is still valid) and the run page offers **Retry** on it,
+  so a stopped fix is one click from continuing.
+
+- **The approved plan's context**: the implementation run no longer inherits the
+  planning run's frozen context hash — it freezes at start, so a plan approved
+  after the repository moved does not fail with `context_changed`.
+
+- **A fix run's acceptance proof**: an automated test that already exists in the
+  repository (the fix changes one line) now proves the criterion; the verifier
+  accepts the test and its file from the workspace, not only from the diff.
 
 - **The sticky "Next" card**: it is opaque (a translucent fill let the page
   scroll visibly through it) and it sticks flush under the top bar — the offset

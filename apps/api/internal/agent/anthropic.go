@@ -176,7 +176,7 @@ func (b *AnthropicBackend) Run(ctx context.Context, spec Spec, emit func(Event) 
 
 	if strings.TrimSpace(spec.TestCommand) != "" {
 		testCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-		res, terr := b.Sandbox.Exec(testCtx, handle, []string{"sh", "-lc", spec.TestCommand}, nil)
+		res, terr := b.Sandbox.Exec(testCtx, handle, toolchainShell(spec.TestCommand), nil)
 		cancel()
 		if terr == nil {
 			usage.TestExitCode = res.ExitCode

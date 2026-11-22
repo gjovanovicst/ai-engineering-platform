@@ -41,6 +41,13 @@ type JobWorker struct {
 	attachments     AttachmentReader
 	orgGate         OrgGate
 	orgSlots        int
+	enqueuer        Enqueuer
+}
+
+// WithEnqueuer lets the worker re-queue a run after a deterministic remediation.
+func (w *JobWorker) WithEnqueuer(enqueuer Enqueuer) *JobWorker {
+	w.enqueuer = enqueuer
+	return w
 }
 
 // OrgGate serializes/limits concurrent work per organisation.
@@ -209,9 +216,14 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 	// failed CI check log) on the existing pull request; the runner clones its
 	// branch.
 	if run.FixOfRunID != "" {
-		if run.FixKind == "ci" && len(run.FixContext) > 0 {
+		if run.FixKind == "troubleshoot" && len(run.FixContext) > 0 {
+			prompt += "\nThe run failed. Diagnose the root cause and fix it on the existing branch; do not re-plan and do not rewrite unrelated code. The failure:\n" + string(run.FixContext) + "\n"
+		} else if run.FixKind == "ci" && len(run.FixContext) > 0 {
 			prompt += "\nThe CI check failed on the existing pull request. Fix the build; " +
 				"do not re-plan and do not rewrite unrelated code. The check log:\n" + string(run.FixContext) + "\n"
+		} else if run.FixKind == "review" && len(run.FixContext) > 0 {
+			prompt += "\nThe human selected these review findings to fix on the existing pull request; " +
+				"do not re-plan and do not rewrite unrelated code:\n" + string(run.FixContext) + "\n"
 		} else if findings, ferr := w.store.LatestReviewForTask(ctx, run.OrgID, run.TaskID); ferr == nil && len(findings) > 0 {
 			prompt += "\nThe review found these issues. Fix every blocker on the existing pull request; " +
 				"do not re-plan and do not rewrite unrelated code:\n" + string(findings) + "\n"
@@ -315,6 +327,7 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 	// the board is truthful and a retry is one click away.
 	if final.Status == domain.RunFailed {
 		w.blockTaskAfterFailure(ctx, final)
+		w.maybeRemediate(ctx, final)
 	}
 
 	// ASDLC §2: a successful development run moves the task to review.
@@ -354,4 +367,49 @@ func (w *JobWorker) blockTaskAfterFailure(ctx context.Context, run domain.Run) {
 		return
 	}
 	_ = w.store.AppendEvent(ctx, run.OrgID, run.ID, "task.blocked", "system", map[string]any{"reason": reason})
+}
+
+// maybeRemediate retries a failed run once when the failure is an environment
+// anomaly with a mechanical fix. A second failure is the human's call: the run
+// carries FixKind "auto", so it is never remediated again.
+func (w *JobWorker) maybeRemediate(ctx context.Context, failed domain.Run) {
+	if w.enqueuer == nil || w.store == nil || w.tasks == nil {
+		return
+	}
+	if failed.FixKind == "auto" || len(failed.Plan) == 0 {
+		return
+	}
+	action, ok := Remediable(failed.FailureCode)
+	if !ok {
+		return
+	}
+	task, err := w.tasks.Get(ctx, failed.OrgID, failed.ProjectID, failed.TaskID)
+	if err != nil {
+		return
+	}
+	if task.Status.Terminal() {
+		return
+	}
+	if err := retryTask(ctx, &task); err != nil {
+		return
+	}
+	created, err := w.store.Create(ctx, domain.Run{
+		OrgID: failed.OrgID, ProjectID: failed.ProjectID, TaskID: failed.TaskID,
+		AgentType: string(domain.AgentDevelopment), Status: domain.RunQueued,
+		Model: failed.Model, Budget: failed.Budget, FixOfRunID: failed.ID, FixKind: "auto",
+	})
+	if err != nil {
+		return // e.g. a run is already active
+	}
+	if _, serr := w.tasks.UpdateStatus(ctx, task); serr != nil {
+		w.log.Warn("runs: remediation task status", slog.Any("err", serr))
+	}
+	if err := w.store.SetPlan(ctx, failed.OrgID, created.ID, failed.Plan, ""); err != nil {
+		w.log.Warn("runs: remediation plan", slog.Any("err", err))
+	}
+	_ = w.store.AppendEvent(ctx, created.OrgID, created.ID, "run.auto_remediated", "system",
+		map[string]any{"from_run": failed.ID, "action": action, "failure": failed.FailureCode})
+	if err := w.enqueuer.Enqueue(ctx, created.ID, created.OrgID); err != nil {
+		w.log.Warn("runs: remediation enqueue", slog.Any("err", err))
+	}
 }

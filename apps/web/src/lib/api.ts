@@ -362,8 +362,11 @@ export function startRun(orgID: string, projectID: string, taskRef: string) {
 }
 
 /** Fix the blocker findings of a review on the existing pull request. */
-export function fixReview(orgID: string, runID: string) {
-  return request<Run>(`/api/v1/orgs/${orgID}/runs/${runID}/fix-review`, { method: "POST" });
+export function fixReview(orgID: string, runID: string, findingIDs: string[] = []) {
+  return request<Run>(`/api/v1/orgs/${orgID}/runs/${runID}/fix-review`, {
+    method: "POST",
+    body: findingIDs.length > 0 ? JSON.stringify({ finding_ids: findingIDs }) : undefined,
+  });
 }
 
 /** Retry a failed development run with its approved plan (no new planning run). */
@@ -1592,5 +1595,52 @@ export function createRestoreRequest(orgID: string, targetTime: string) {
   return request<{ id: string; status: string }>(`/api/v1/orgs/${orgID}/restores`, {
     method: "POST",
     body: JSON.stringify({ target_time: targetTime }),
+  });
+}
+
+export type ReviewFindingRecord = {
+  id: string;
+  task_id: string;
+  run_id: string;
+  severity: "blocker" | "nit";
+  file: string;
+  line: number;
+  message: string;
+  status: "open" | "fixed" | "dismissed";
+  decided_by?: string;
+  reason?: string;
+  fixed_by_run?: string;
+  created_at: string;
+};
+
+export function listReviewFindings(orgID: string, projectID: string, taskID: string) {
+  return request<{ data: ReviewFindingRecord[] }>(
+    `/api/v1/orgs/${orgID}/projects/${projectID}/tasks/${taskID}/review-findings`,
+  );
+}
+
+export function decideReviewFinding(
+  orgID: string,
+  projectID: string,
+  taskID: string,
+  findingID: string,
+  decision: "dismiss" | "reopen",
+  reason = "",
+) {
+  return request<ReviewFindingRecord>(
+    `/api/v1/orgs/${orgID}/projects/${projectID}/tasks/${taskID}/review-findings/${findingID}/decide`,
+    { method: "POST", body: JSON.stringify({ decision, reason }) },
+  );
+}
+
+export function getTask(orgID: string, projectID: string, taskID: string) {
+  return request<Task>(`/api/v1/orgs/${orgID}/projects/${projectID}/tasks/${taskID}`);
+}
+
+/** Start an incident run that diagnoses a failed run. */
+export function troubleshootRun(orgID: string, runID: string, reason = "") {
+  return request<Run>(`/api/v1/orgs/${orgID}/runs/${runID}/troubleshoot`, {
+    method: "POST",
+    body: reason ? JSON.stringify({ reason }) : undefined,
   });
 }

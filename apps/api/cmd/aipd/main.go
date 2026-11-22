@@ -147,6 +147,7 @@ func main() {
 		bus = nil
 	}
 	runStore := postgres.NewRunStore(pool).WithPublisher(bus)
+	findingStore := postgres.NewReviewFindingStore(pool)
 	taskService, err := tasks.New(postgres.NewTaskStore(pool))
 	if err != nil {
 		logger.Error("task service", slog.Any("err", err))
@@ -250,6 +251,7 @@ func main() {
 	runService.WithMergeQueue(mergeQueueService)
 
 	runService.WithChecks(checkService)
+	runService.WithReviewBlockers(findingStore)
 	runService.WithMaxActiveRuns(cfg.MaxActiveRuns)
 
 	blueprintService, err := blueprints.New(postgres.NewBlueprintStore(pool),
@@ -464,6 +466,7 @@ func main() {
 			Assistant: assistantService,
 			Version:   version, StartedAt: time.Now(), Log: logger, DB: pool, Readiness: writablePool{pool: pool},
 			AllowedOrigins: []string{cfg.WebURL},
+			ReviewFindings: findingStore,
 			Auth:           accounts, Projects: projectService, Tasks: taskService, Runs: runService, Repos: repoStore, RepoCredentials: repoCredentialService, Analytics: analyticsService, Blueprints: blueprintService, Invites: inviteService, Search: searchService, Providers: providerService, Prices: usageService, Design: designService, Directory: directoryService, Rules: rulesService, Deployments: deploymentService, Checks: checkService, Artifacts: artifactStore, Notifications: notificationService, OIDC: oidcService, WebURL: cfg.WebURL,
 			Issuer: issuer, Limits: limits, RateLimitPerMin: cfg.RateLimitPerMin, Events: bus, Usage: usageService, Orgs: orgService, DesignStandards: designStandardService, Attachments: attachmentService, GitHubApps: githubAppService, TestCommand: cfg.TestCommand, AgentBackend: cfg.AgentBackend, GitHubToken: cfg.GitHubToken, AllowedIPs: allowedIPs, GitLabToken: cfg.GitLabToken, AuditSigningKey: cfg.AuditSigningKey, AuditEd25519: auditKey, Figma: figma.New(cfg.FigmaAPIURL, cfg.FigmaToken), ApprovalReauthMinutes: cfg.ApprovalReauthMinutes, Objects: baselineObjects, MergeQueue: mergeQueueService, Previews: previewService, ProjectAccess: projectAccessService, APIKeys: apiKeyService, AuditWitness: auditWitnessService, Incidents: incidents.New(postgres.NewIncidentStore(pool)), SCIM: scim.New(postgres.NewSCIMStore(pool), inviteService), SAML: samlService, SAMLAccounts: accounts, SAMLReplay: samlReplay, SAMLAdminGroups: splitList(cfg.SAMLAdminGroups), SAMLRoleMap: roleMap, SSO: sso.New(postgres.NewSSOStore(pool), cfg.SSOAllowPrivateMetadata), OrgCrypto: orgCryptoService, Region: cfg.Region, OrgRegion: postgres.NewOrgRegion(pool), WALStats: postgres.NewWALStats(pool), BackupStats: postgres.NewBackupStats(pool), AgentPlugins: agentplugins.New(postgres.NewAgentPluginStore(pool), cfg.PluginAllowedDigests, imageverify.New(cfg.CosignBin, cfg.CosignIdentity, cfg.CosignIssuer, cfg.CosignKey)), Restores: restores.New(postgres.NewRestoreStore(pool)), GitHubAppConfigured: cfg.GitHubAppID > 0, GitHubAppWebhookSecret: cfg.GitHubAppWebhookSecret,
 		}),

@@ -12,7 +12,7 @@ func TestParseAndValidateProof(t *testing.T) {
 		t.Fatal(err)
 	}
 	diff := "+++ b/pagination_test.go\n+func TestPager(t *testing.T) {}\n+func TestNext(t *testing.T) {}\n"
-	res := ValidateProof(proof, []string{"AC1"}, diff)
+	res := ValidateProof(proof, []string{"AC1"}, diff, "")
 	if !res.Passed || res.Automated != 1 {
 		t.Fatalf("result = %+v", res)
 	}
@@ -20,7 +20,7 @@ func TestParseAndValidateProof(t *testing.T) {
 
 func TestProofRequiresEvidenceForEveryCriterion(t *testing.T) {
 	proof := &Proof{Evidence: []Evidence{{Criterion: "AC1", Kind: "manual", Reason: "reviewed by QA"}}}
-	res := ValidateProof(proof, []string{"AC1", "AC2"}, "+++ b/main.go\n+x\n")
+	res := ValidateProof(proof, []string{"AC1", "AC2"}, "+++ b/main.go\n+x\n", "")
 	if res.Passed || !strings.Contains(res.Detail, "no evidence") {
 		t.Fatalf("result = %+v", res)
 	}
@@ -28,7 +28,7 @@ func TestProofRequiresEvidenceForEveryCriterion(t *testing.T) {
 
 func TestProofRejectsTestNotInDiff(t *testing.T) {
 	proof := &Proof{Evidence: []Evidence{{Criterion: "AC1", Kind: "automated", Test: "TestPager", Files: []string{"pagination_test.go"}}}}
-	res := ValidateProof(proof, []string{"AC1"}, "+++ b/main.go\n+changed\n")
+	res := ValidateProof(proof, []string{"AC1"}, "+++ b/main.go\n+changed\n", "")
 	if res.Passed {
 		t.Fatal("expected failure for a test that is not in the diff")
 	}
@@ -49,5 +49,13 @@ func TestTestFilesDeduplicates(t *testing.T) {
 	files := TestFiles(proof)
 	if len(files) != 2 {
 		t.Fatalf("files = %v", files)
+	}
+}
+
+func TestProofAcceptsATestThatExistsInTheWorkspace(t *testing.T) {
+	proof := &Proof{Evidence: []Evidence{{Criterion: "AC1", Kind: "automated", Test: "TestPager", Files: []string{"pagination_test.go"}}}}
+	res := ValidateProof(proof, []string{"AC1"}, "+++ b/main.go\n+changed\n", "// pagination_test.go\nfunc TestPager(t *testing.T) {}")
+	if !res.Passed {
+		t.Fatalf("result = %+v, want the workspace test to prove the criterion", res)
 	}
 }

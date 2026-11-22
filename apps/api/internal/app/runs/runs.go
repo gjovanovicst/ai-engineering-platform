@@ -84,6 +84,13 @@ type Enqueuer interface {
 }
 
 // CheckGate reports whether CI checks block a merge.
+// ReviewBlockerReader reads a task's findings: the merge gate counts the open
+// blockers, the per-finding fix reads the selected ones.
+type ReviewBlockerReader interface {
+	OpenBlockers(ctx context.Context, orgID, taskID string) (int, error)
+	List(ctx context.Context, orgID, taskID string) ([]domain.ReviewFinding, error)
+}
+
 type CheckGate interface {
 	Blocked(ctx context.Context, orgID, prID string) (bool, string, error)
 }
@@ -100,14 +107,16 @@ type Executor interface {
 
 // Service coordinates runs.
 type Service struct {
-	store         Store
-	tasks         TaskReader
-	executor      Executor
-	enqueuer      Enqueuer
-	merger        Merger
-	mergeQueue    *mergequeue.Service
-	windows       ChangeWindowReader
-	checks        CheckGate
+	store      Store
+	tasks      TaskReader
+	executor   Executor
+	enqueuer   Enqueuer
+	merger     Merger
+	mergeQueue *mergequeue.Service
+	windows    ChangeWindowReader
+	checks     CheckGate
+	// findings gates the merge on the review blockers (optional).
+	findings      ReviewBlockerReader
 	checkList     CheckReader
 	pullRequests  PullRequestReader
 	checkLogs     CheckLogFetcher
@@ -145,6 +154,12 @@ func (s *Service) WithMaxActiveRuns(n int) *Service {
 // WithChecks attaches the CI merge gate.
 func (s *Service) WithChecks(gate CheckGate) *Service {
 	s.checks = gate
+	return s
+}
+
+// WithReviewBlockers gates the merge on the open review blockers.
+func (s *Service) WithReviewBlockers(findings ReviewBlockerReader) *Service {
+	s.findings = findings
 	return s
 }
 
@@ -338,6 +353,13 @@ func (s *Service) Decide(ctx context.Context, orgID, approvalID, decision, reaso
 		if status == "approved" && len(manual) > 0 && strings.TrimSpace(reason) == "" {
 			return domain.Run{}, "", fmt.Errorf("%w: the acceptance proof contains manual evidence; a decision note is required", domain.ErrValidation)
 		}
+		if status == "approved" && s.findings != nil && run.TaskID != "" {
+			if n, ferr := s.findings.OpenBlockers(ctx, orgID, run.TaskID); ferr == nil && n > 0 {
+				detail := fmt.Sprintf("%d open review blocker(s); fix or dismiss them before the merge", n)
+				_ = s.store.AppendEvent(ctx, run.OrgID, run.ID, "merge.blocked", "system", map[string]any{"reason": detail})
+				return domain.Run{}, "", fmt.Errorf("%w: %s", domain.ErrValidation, detail)
+			}
+		}
 		if status == "approved" && approval.PullRequestID != "" {
 			if s.checks != nil {
 				blocked, why, ferr := s.checks.Blocked(ctx, orgID, approval.PullRequestID)
@@ -349,11 +371,16 @@ func (s *Service) Decide(ctx context.Context, orgID, approvalID, decision, reaso
 					return domain.Run{}, "", fmt.Errorf("%w: %s", domain.ErrValidation, why)
 				}
 			}
-			if review, rerr := s.store.LatestReviewForTask(ctx, orgID, run.TaskID); rerr == nil && len(review) > 0 {
-				if why := blockerReason(review); why != "" {
-					_ = s.store.AppendEvent(ctx, run.OrgID, run.ID, "merge.blocked", "system",
-						map[string]any{"reason": why})
-					return domain.Run{}, "", fmt.Errorf("%w: %s", domain.ErrValidation, why)
+			// The findings table supersedes the payload scan: a blocker the human
+			// dismissed must not block the merge. Without the table (an older
+			// deployment) the latest review's payload still gates.
+			if s.findings == nil {
+				if review, rerr := s.store.LatestReviewForTask(ctx, orgID, run.TaskID); rerr == nil && len(review) > 0 {
+					if why := blockerReason(review); why != "" {
+						_ = s.store.AppendEvent(ctx, run.OrgID, run.ID, "merge.blocked", "system",
+							map[string]any{"reason": why})
+						return domain.Run{}, "", fmt.Errorf("%w: %s", domain.ErrValidation, why)
+					}
 				}
 			}
 		}
@@ -489,8 +516,11 @@ func (s *Service) Decide(ctx context.Context, orgID, approvalID, decision, reaso
 			devRun, derr := s.store.Create(ctx, domain.Run{
 				OrgID: run.OrgID, ProjectID: run.ProjectID, TaskID: run.TaskID,
 				AgentType: string(domain.AgentDevelopment), Status: domain.RunQueued, Model: run.Model,
-				Budget:            run.Budget, // the approved plan's budget covers its implementation
-				FrozenContextHash: run.ContextHash, FrozenContextSources: frozenSources,
+				Budget: run.Budget, // the approved plan's budget covers its implementation
+				// Freeze at start, not at plan time: the human approves NOW, and the
+				// repository may have moved since the planning run captured its hash
+				// (that made every freshly approved plan fail with context_changed).
+				FrozenContextSources: frozenSources,
 			})
 			if derr == nil {
 				developmentRunID = devRun.ID
@@ -555,10 +585,12 @@ func (s *Service) Retry(ctx context.Context, in RetryInput) (domain.Run, error) 
 			Detail: "only development runs can be retried",
 		}
 	}
-	if run.Status != domain.RunFailed {
+	// A canceled run is as retryable as a failed one: the human stopped it, the
+	// approved plan is still valid.
+	if run.Status != domain.RunFailed && run.Status != domain.RunCanceled {
 		return domain.Run{}, &domain.TransitionError{
 			From: domain.TaskStatus(run.Status), To: domain.TaskStatus(domain.RunQueued),
-			Detail: "only a failed run can be retried",
+			Detail: "only a failed or canceled run can be retried",
 		}
 	}
 	if len(run.Plan) == 0 {
@@ -578,7 +610,9 @@ func (s *Service) Retry(ctx context.Context, in RetryInput) (domain.Run, error) 
 		OrgID: run.OrgID, ProjectID: run.ProjectID, TaskID: run.TaskID,
 		AgentType: string(domain.AgentDevelopment), Status: domain.RunQueued,
 		Model: run.Model, Budget: run.Budget,
-		FrozenContextHash: run.FrozenContextHash, FrozenContextSources: run.FrozenContextSources,
+		// A human retry re-runs the approved plan against the current state; the
+		// old hash would fail immediately when the repository moved.
+		FrozenContextSources: run.FrozenContextSources,
 	})
 	if err != nil {
 		return domain.Run{}, err
@@ -606,7 +640,11 @@ func (s *Service) Retry(ctx context.Context, in RetryInput) (domain.Run, error) 
 func retryTask(_ context.Context, task *domain.Task) error {
 	opt := domain.TransitionOptions{Actor: domain.ActorHuman, Reason: "retry with the approved plan"}
 	switch task.Status {
-	case domain.TaskInProgress, domain.TaskReview:
+	case domain.TaskInProgress, domain.TaskPlanning:
+		// Already running (a run is queued or executing): the fix run starts on
+		// the same branch, no transition needed.
+		return nil
+	case domain.TaskReview:
 		if err := task.Transition(domain.TaskBlocked, opt); err != nil {
 			return err
 		}
@@ -636,6 +674,9 @@ type FixReviewInput struct {
 	OrgID string
 	RunID string
 	Actor string
+	// FindingIDs selects the findings to fix. Empty means "every blocker" (the
+	// bulk path); with a selection the blocker requirement does not apply.
+	FindingIDs []string
 }
 
 // FixReview starts a development run that fixes the blockers of a review on
@@ -646,11 +687,17 @@ func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run,
 	if err != nil {
 		return domain.Run{}, err
 	}
+	// The caller may point at any run of the task (the development run's page
+	// shows the findings too); resolve the task's latest review in that case.
 	if review.AgentType != string(domain.AgentReview) {
-		return domain.Run{}, &domain.TransitionError{
-			From: domain.TaskStatus(review.AgentType), To: domain.TaskStatus(domain.RunQueued),
-			Detail: "only review runs can be fixed",
+		latest, lerr := s.store.LatestRun(ctx, in.OrgID, review.TaskID, string(domain.AgentReview))
+		if lerr != nil {
+			return domain.Run{}, &domain.TransitionError{
+				From: domain.TaskStatus(review.AgentType), To: domain.TaskStatus(domain.RunQueued),
+				Detail: "only review runs can be fixed",
+			}
 		}
+		review = latest
 	}
 	if review.Status != domain.RunSucceeded {
 		return domain.Run{}, &domain.TransitionError{
@@ -658,7 +705,28 @@ func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run,
 			Detail: "only a finished review can be fixed",
 		}
 	}
-	if reviewBlockers(review.Review) == 0 {
+	var selected []domain.ReviewFinding
+	if len(in.FindingIDs) > 0 {
+		if s.findings == nil {
+			return domain.Run{}, fmt.Errorf("%w: the findings store is not configured", domain.ErrValidation)
+		}
+		all, lerr := s.findings.List(ctx, in.OrgID, review.TaskID)
+		if lerr != nil {
+			return domain.Run{}, fmt.Errorf("read the review findings: %w", lerr)
+		}
+		wanted := map[string]bool{}
+		for _, id := range in.FindingIDs {
+			wanted[id] = true
+		}
+		for _, finding := range all {
+			if wanted[finding.ID] && finding.Status == domain.ReviewFindingOpen {
+				selected = append(selected, finding)
+			}
+		}
+		if len(selected) == 0 {
+			return domain.Run{}, fmt.Errorf("%w: no open finding matches the selection", domain.ErrValidation)
+		}
+	} else if reviewBlockers(review.Review) == 0 {
 		return domain.Run{}, fmt.Errorf("%w: the review has no blocker findings", domain.ErrValidation)
 	}
 	dev, err := s.store.LatestRun(ctx, in.OrgID, review.TaskID, string(domain.AgentDevelopment))
@@ -679,10 +747,7 @@ func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run,
 		return domain.Run{}, err
 	}
 	if task.Status.Terminal() {
-		return domain.Run{}, &domain.TransitionError{
-			From: task.Status, To: domain.TaskInProgress,
-			Detail: "the task is already closed (the pull request may be merged)",
-		}
+		return domain.Run{}, fmt.Errorf("%w: the task is already closed (the pull request is merged); open a follow-up task for this finding", domain.ErrValidation)
 	}
 	if err := retryTask(ctx, &task); err != nil {
 		return domain.Run{}, err
@@ -691,7 +756,8 @@ func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run,
 		OrgID: review.OrgID, ProjectID: review.ProjectID, TaskID: review.TaskID,
 		AgentType: string(domain.AgentDevelopment), Status: domain.RunQueued,
 		Model: dev.Model, Budget: dev.Budget, FixOfRunID: dev.ID,
-		FrozenContextHash: dev.FrozenContextHash, FrozenContextSources: dev.FrozenContextSources,
+		FrozenContextSources: dev.FrozenContextSources,
+		FixKind:              fixKind(selected), FixContext: fixContext(selected),
 	})
 	if err != nil {
 		return domain.Run{}, err
@@ -710,6 +776,36 @@ func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run,
 	_ = s.store.AppendEvent(ctx, in.OrgID, created.ID, "run.fix_requested", "user",
 		map[string]any{"from_run": dev.ID, "review_run": review.ID, "actor": in.Actor})
 	return created, nil
+}
+
+// fixKind is "review" only for a selected-findings fix; the bulk path keeps the
+// worker's default (it reads the latest review).
+func fixKind(selected []domain.ReviewFinding) string {
+	if len(selected) == 0 {
+		return ""
+	}
+	return "review"
+}
+
+// fixContext carries the selected findings' messages to the prompt.
+func fixContext(selected []domain.ReviewFinding) []byte {
+	if len(selected) == 0 {
+		return nil
+	}
+	var b strings.Builder
+	for _, finding := range selected {
+		b.WriteString("- ")
+		if finding.File != "" {
+			b.WriteString(finding.File)
+			if finding.Line > 0 {
+				fmt.Fprintf(&b, ":%d", finding.Line)
+			}
+			b.WriteString(": ")
+		}
+		b.WriteString(finding.Message)
+		b.WriteString("\n")
+	}
+	return []byte(b.String())
 }
 
 // fixBranch is the branch a run publishes to. A fix run updates the branch of
@@ -860,4 +956,86 @@ func manualEvidence(proof []byte) []string {
 		}
 	}
 	return out
+}
+
+// TroubleshootInput identifies the failed run an incident run should diagnose.
+type TroubleshootInput struct {
+	OrgID  string
+	RunID  string
+	Actor  string
+	Reason string
+}
+
+// Troubleshoot starts a development run that diagnoses a failed run: the failure
+// code and its detail (plus the last events) become the prompt, and the run
+// continues on the same branch so any fix lands in the existing pull request.
+func (s *Service) Troubleshoot(ctx context.Context, in TroubleshootInput) (domain.Run, error) {
+	failed, err := s.store.Get(ctx, in.OrgID, in.RunID)
+	if err != nil {
+		return domain.Run{}, err
+	}
+	if failed.Status != domain.RunFailed && failed.Status != domain.RunCanceled {
+		return domain.Run{}, fmt.Errorf("%w: only a failed or canceled run can be troubleshooted", domain.ErrValidation)
+	}
+	task, err := s.tasks.Get(ctx, in.OrgID, failed.ProjectID, failed.TaskID)
+	if err != nil {
+		return domain.Run{}, err
+	}
+	if task.Status.Terminal() {
+		return domain.Run{}, fmt.Errorf("%w: the task is already closed; open a follow-up task instead", domain.ErrValidation)
+	}
+	// The branch: a development run's own branch, or the latest succeeded one.
+	dev := failed
+	if failed.AgentType != string(domain.AgentDevelopment) {
+		latest, lerr := s.store.LatestRun(ctx, in.OrgID, failed.TaskID, string(domain.AgentDevelopment))
+		if lerr != nil {
+			return domain.Run{}, fmt.Errorf("%w: there is no development run to continue", domain.ErrValidation)
+		}
+		dev = latest
+	}
+	if err := retryTask(ctx, &task); err != nil {
+		return domain.Run{}, err
+	}
+	events, _ := s.store.EventsAfter(ctx, in.OrgID, failed.ID, 0)
+	var b strings.Builder
+	fmt.Fprintf(&b, "failure: %s\n", failed.FailureCode)
+	if strings.TrimSpace(failed.FailureDetail) != "" {
+		fmt.Fprintf(&b, "detail: %s\n", failed.FailureDetail)
+	}
+	if in.Reason != "" {
+		fmt.Fprintf(&b, "the human's note: %s\n", in.Reason)
+	}
+	b.WriteString("recent events:\n")
+	for _, event := range events {
+		if b.Len() > 6000 {
+			break
+		}
+		payload, _ := json.Marshal(event.Payload)
+		fmt.Fprintf(&b, "- %s: %s\n", event.Type, truncate(string(payload), 400))
+	}
+	created, err := s.store.Create(ctx, domain.Run{
+		OrgID: failed.OrgID, ProjectID: failed.ProjectID, TaskID: failed.TaskID,
+		AgentType: string(domain.AgentDevelopment), Status: domain.RunQueued,
+		Model: dev.Model, Budget: dev.Budget, FixOfRunID: dev.ID, FixKind: "troubleshoot",
+		FixContext: []byte(b.String()), FrozenContextSources: dev.FrozenContextSources,
+	})
+	if err != nil {
+		return domain.Run{}, err
+	}
+	if len(dev.Plan) > 0 {
+		if perr := s.store.SetPlan(ctx, in.OrgID, created.ID, dev.Plan, ""); perr != nil {
+			s.log.Warn("runs: troubleshoot plan", slog.Any("err", perr))
+		}
+	}
+	if _, serr := s.tasks.UpdateStatus(ctx, task); serr != nil {
+		return domain.Run{}, serr
+	}
+	if s.enqueuer != nil {
+		if err := s.enqueuer.Enqueue(ctx, created.ID, created.OrgID); err != nil {
+			return domain.Run{}, err
+		}
+	}
+	_ = s.store.AppendEvent(ctx, in.OrgID, created.ID, "run.troubleshoot_requested", "user",
+		map[string]any{"from_run": failed.ID, "failure": failed.FailureCode, "actor": in.Actor})
+	return created, nil
 }
