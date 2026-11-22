@@ -22,6 +22,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **A no-op fix succeeds**: when a fix run finds nothing to change (the finding
+  is already addressed) it records `run.noop` and succeeds instead of failing
+  with `no_changes`; the run page no longer offers three retry buttons, only the
+  "Next" action.
+
 - **A closed task cannot take a fix**: when the pull request is merged the fix
   branch is gone, so `fix-review` says "open a follow-up task" instead of a
   clone failure; the panel turns each open finding into a **Follow-up task**

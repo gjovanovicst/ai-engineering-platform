@@ -484,6 +484,23 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 
 	if run.AgentType == string(domain.AgentDevelopment) {
 		if strings.TrimSpace(result.Diff) == "" {
+			// A fix run that finds nothing to change is not an anomaly: the agent
+			// verified the finding is already satisfied. Record it and succeed so
+			// the human can dismiss the finding instead of fighting a failure.
+			if run.FixKind == "review" || run.FixOfRunID != "" {
+				_ = r.store.AppendEvent(context.WithoutCancel(ctx), run.OrgID, run.ID, "run.noop", "agent",
+					map[string]any{"detail": "the agent found nothing to change; the finding may already be addressed"})
+				run.FailureCode, run.FailureDetail = "", ""
+				finished := time.Now().UTC()
+				if terr := run.Transition(domain.RunSucceeded, finished); terr != nil {
+					return r.fail(ctx, run, "no_changes", "the development agent produced no changes")
+				}
+				if updated, uerr := r.store.UpdateStatus(context.WithoutCancel(ctx), run); uerr != nil {
+					return run, uerr
+				} else {
+					return updated, nil
+				}
+			}
 			return r.fail(ctx, run, "no_changes", "the development agent produced no changes")
 		}
 		sum := sha256.Sum256([]byte(result.Diff))

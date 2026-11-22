@@ -54,7 +54,6 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
   const [run, setRun] = useState<Run | null>(null);
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [retrying, setRetrying] = useState(false);
   const [retryingDev, setRetryingDev] = useState(false);
   const [fixing, setFixing] = useState(false);
   const [approval, setApproval] = useState<Approval | null>(null);
@@ -283,27 +282,6 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     }
   }
 
-  async function retry() {
-    if (!claims || !run) return;
-    setRetrying(true);
-    setError(null);
-    try {
-      // A failed run parks the task in blocked; older runs may still be in progress.
-      try {
-        await transitionTask(claims.org, run.project_id, run.task_id, "ready", "retry after a failed run");
-      } catch {
-        await transitionTask(claims.org, run.project_id, run.task_id, "blocked", "retry after a failed run");
-        await transitionTask(claims.org, run.project_id, run.task_id, "ready", "retry after a failed run");
-      }
-      const next = await startRun(claims.org, run.project_id, run.task_id);
-      router.push(`/projects/${run.project_id}/runs/${next.id}`);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not retry the task");
-    } finally {
-      setRetrying(false);
-    }
-  }
-
   const nextActions: NextActionItem[] = [];
   let nextTitle = "";
   let nextDescription = "";
@@ -320,12 +298,12 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     } else {
       nextTitle = "Retry the development run";
       nextDescription = "The run failed. Retrying re-queues it and puts the task back in progress.";
-      nextActions.push({ label: "Retry development", onClick: () => void retryDevelopment() });
+      nextActions.push({ label: "Retry development", loading: retryingDev, onClick: () => void retryDevelopment() });
     }
   } else if (run?.status === "canceled") {
     nextTitle = run.fix_of_run_id ? "Restart the canceled fix" : "Restart the canceled run";
     nextDescription = "The run was canceled. Restarting re-queues the same approved plan; nothing is lost.";
-    nextActions.push({ label: "Retry", onClick: () => void retryDevelopment() });
+    nextActions.push({ label: "Retry", loading: retryingDev, onClick: () => void retryDevelopment() });
   } else if (run?.status === "succeeded") {
     nextTitle = "The gates passed — review and merge";
     nextDescription = "Open the project's pull requests to review the diff. A human merges; the platform never merges for you.";
@@ -422,16 +400,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
               <p className="text-xs text-text-secondary">{run.failure_code || "unknown failure"}</p>
             </div>
             {claims ? (
-              <div className="flex flex-wrap items-center gap-2">
-                {run.agent_type === "development" && run.plan ? (
-                  <Button loading={retryingDev} onClick={retryDevelopment}>
-                    Retry development
-                  </Button>
-                ) : null}
-                <Button variant="secondary" loading={retrying} onClick={retry}>
-                  Retry task
-                </Button>
-              </div>
+              <p className="text-xs text-text-muted">The next action is below.</p>
             ) : null}
           </header>
           {run.failure_detail ? (
