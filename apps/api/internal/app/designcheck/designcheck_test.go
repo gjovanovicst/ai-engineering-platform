@@ -35,3 +35,20 @@ func TestScanFlagsForbiddenImports(t *testing.T) {
 		t.Fatalf("violations = %+v", v)
 	}
 }
+
+func TestScanAllowsTheTokenDefinitions(t *testing.T) {
+	t.Parallel()
+	diff := "+++ b/src/styles/tokens.css\n+  --color-brand: #4f5eea;\n+++ b/src/pages/SignIn.css\n+  color: #ff0000;\n"
+	got := Scan(diff, nil)
+	if len(got) != 1 || got[0].Path != "src/pages/SignIn.css" {
+		t.Fatalf("Scan = %+v, want exactly the SignIn.css raw colour", got)
+	}
+}
+
+func TestScanSkipsTheTests(t *testing.T) {
+	t.Parallel()
+	diff := "+++ b/src/styles/tokens.test.ts\n+  '--color-brand': '#4f5eea',\n"
+	if got := Scan(diff, nil); len(got) != 0 {
+		t.Fatalf("Scan = %+v, want none: a test asserting the token values is not a violation", got)
+	}
+}

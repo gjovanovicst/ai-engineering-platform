@@ -14,6 +14,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **The design check's false positives**: the compliance scan no longer flags
+  the token definitions themselves (`--color-brand: #4f5eea;`) or a test that
+  asserts them; the pilot's first design-standard run was punished 12/12 for
+  doing exactly what the standard asked.
+
 - **The backport workflow without a label**: a merged PR that carries no
   `backport/vX.Y` label no longer fails the job (the `[ -n "$branch" ] && echo`
   test exits 1 under the runner's `bash -e`); it reports "nothing to do".
