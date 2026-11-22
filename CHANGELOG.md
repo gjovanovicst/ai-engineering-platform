@@ -8,6 +8,12 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **The component playground and the contract 2.0**: `design/contracts.json`
+  records every primitive's props, states and a11y notes; the new
+  `/design-system/playground` page renders a live example per component, and
+  `make web-check` diffs the contract against the last release (a removed or
+  renamed prop fails).
+
 - **The assistant reads images**: the panel attaches an image (up to 5, a
   thumbnail with a remove), sends the data URL, and the model reads it with the
   text (deepseek-flash's vision); the OpenAI adapter builds the content blocks

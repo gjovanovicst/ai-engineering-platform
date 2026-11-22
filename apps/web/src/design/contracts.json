@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "components": [
+    {
+      "name": "Button",
+      "file": "components/ui/button.tsx",
+      "summary": "The primary action. One primary per view; secondary and ghost for the rest.",
+      "props": [
+        { "name": "variant", "type": "\"primary\" | \"secondary\" | \"ghost\" | \"danger\"", "required": false, "values": ["primary", "secondary", "ghost", "danger"], "description": "The visual weight." },
+        { "name": "loading", "type": "boolean", "required": false, "description": "Shows the ellipsis and disables the button." },
+        { "name": "disabled", "type": "boolean", "required": false, "description": "Blocks the action." },
+        { "name": "type", "type": "\"button\" | \"submit\"", "required": false, "description": "Defaults to button so a form action stays explicit." }
+      ],
+      "states": ["hover", "focus", "disabled", "loading"],
+      "a11y": ["A focus ring (2px brand) is visible on every variant.", "A loading button is disabled, not hidden."]
+    },
+    {
+      "name": "Input",
+      "file": "components/ui/input.tsx",
+      "summary": "A single-line field. The error border comes from aria-invalid, so a form sets it once.",
+      "props": [
+        { "name": "aria-invalid", "type": "boolean", "required": false, "description": "Switches the border and the ring to the danger token." },
+        { "name": "disabled", "type": "boolean", "required": false, "description": "Blocks editing." }
+      ],
+      "states": ["focus", "disabled", "error"],
+      "a11y": ["Every input has a label (the Field primitive pairs them).", "aria-invalid is set with the error text, never instead of it."]
+    },
+    {
+      "name": "Field",
+      "file": "components/ui/field.tsx",
+      "summary": "A labelled field with an optional error and help line. The error is absolute, so it never shifts the layout.",
+      "props": [
+        { "name": "label", "type": "string", "required": true, "description": "The visible label." },
+        { "name": "htmlFor", "type": "string", "required": true, "description": "The id of the control." },
+        { "name": "error", "type": "string", "required": false, "description": "The inline error." },
+        { "name": "help", "type": "string", "required": false, "description": "The hint under the label." }
+      ],
+      "states": ["error"],
+      "a11y": ["The error is announced with the control (aria-describedby).", "The label is always visible."]
+    },
+    {
+      "name": "Alert",
+      "file": "components/ui/alert.tsx",
+      "summary": "An inline message about the current state: info, success, warning or danger.",
+      "props": [
+        { "name": "variant", "type": "\"info\" | \"success\" | \"warning\" | \"danger\"", "required": false, "values": ["info", "success", "warning", "danger"], "description": "The tone." },
+        { "name": "title", "type": "string", "required": false, "description": "The headline." }
+      ],
+      "states": [],
+      "a11y": ["The danger variant uses role=alert at the call site."]
+    },
+    {
+      "name": "EmptyState",
+      "file": "components/ui/empty-state.tsx",
+      "summary": "What to do when a list is empty: a title, a reason and one action.",
+      "props": [
+        { "name": "title", "type": "string", "required": true, "description": "The state." },
+        { "name": "description", "type": "string", "required": false, "description": "Why it is empty." },
+        { "name": "action", "type": "ReactNode", "required": false, "description": "The next step." }
+      ],
+      "states": ["empty"],
+      "a11y": ["The action is a real button, not a link-shaped div."]
+    },
+    {
+      "name": "Tabs",
+      "file": "components/ui/tabs.tsx",
+      "summary": "Switches between sibling views. The underline variant is for pages, the pills for panels.",
+      "props": [
+        { "name": "items", "type": "{ id: string; label: string; count?: number }[]", "required": true, "description": "The tabs." },
+        { "name": "value", "type": "string", "required": true, "description": "The selected id." },
+        { "name": "variant", "type": "\"underline\" | \"pills\"", "required": false, "values": ["underline", "pills"], "description": "The shape." },
+        { "name": "ariaLabel", "type": "string", "required": true, "description": "The tablist's name." }
+      ],
+      "states": ["hover", "focus"],
+      "a11y": ["The tablist has an aria-label.", "The selected tab is aria-selected."]
+    },
+    {
+      "name": "Skeleton",
+      "file": "components/ui/skeleton.tsx",
+      "summary": "The loading placeholder; SkeletonText is the multi-line form.",
+      "props": [
+        { "name": "className", "type": "string", "required": false, "description": "The size." }
+      ],
+      "states": ["loading"],
+      "a11y": ["The region marks aria-busy while the skeleton shows."]
+    },
+    {
+      "name": "HelpTip",
+      "file": "components/ui/help-tip.tsx",
+      "summary": "The glossary term with a hover/focus popover.",
+      "props": [
+        { "name": "term", "type": "string", "required": true, "description": "A key of the glossary." }
+      ],
+      "states": ["hover", "focus"],
+      "a11y": ["The trigger is a button with the term as its name.", "Escape closes the popover."]
+    },
+    {
+      "name": "Modal",
+      "file": "components/ui/modal.tsx",
+      "summary": "The small centred dialog; a destructive confirm uses ConfirmDialog instead.",
+      "props": [
+        { "name": "open", "type": "boolean", "required": true, "description": "Controls the dialog." },
+        { "name": "onClose", "type": "() => void", "required": true, "description": "Closes it." },
+        { "name": "title", "type": "string", "required": true, "description": "The dialog's name." }
+      ],
+      "states": [],
+      "a11y": ["role=dialog + aria-modal.", "Escape closes it."]
+    },
+    {
+      "name": "SidePanel",
+      "file": "components/ui/side-panel.tsx",
+      "summary": "The drawer a form opens in. It always has a footer (Close when there is no action) and asks before losing unsaved changes.",
+      "props": [
+        { "name": "title", "type": "string", "required": true, "description": "The drawer's name." },
+        { "name": "onClose", "type": "() => void", "required": true, "description": "Closes it; the dirty guard asks first." },
+        { "name": "size", "type": "\"md\" | \"lg\" | \"xl\"", "required": false, "values": ["md", "lg", "xl"], "description": "The width." },
+        { "name": "dirty", "type": "boolean", "required": false, "description": "Turns on the unsaved-changes guard." }
+      ],
+      "states": ["focus"],
+      "a11y": ["role=dialog + aria-modal + aria-labelledby.", "Escape closes it (after the dirty guard)."]
+    },
+    {
+      "name": "ConfirmDialog",
+      "file": "components/ui/confirm-dialog.tsx",
+      "summary": "The destructive confirmation; never window.confirm.",
+      "props": [
+        { "name": "open", "type": "boolean", "required": true, "description": "Controls the dialog." },
+        { "name": "confirmLabel", "type": "string", "required": false, "description": "The destructive action's name." }
+      ],
+      "states": [],
+      "a11y": ["role=alertdialog.", "The destructive action is never the default focus."]
+    },
+    {
+      "name": "PromptDialog",
+      "file": "components/ui/prompt-dialog.tsx",
+      "summary": "The one-input prompt; never window.prompt.",
+      "props": [
+        { "name": "label", "type": "string", "required": true, "description": "The input's label." },
+        { "name": "required", "type": "boolean", "required": false, "description": "Blocks an empty confirm." }
+      ],
+      "states": ["error"],
+      "a11y": ["The input has a label.", "aria-invalid appears with the error."]
+    }
+  ]
+}
