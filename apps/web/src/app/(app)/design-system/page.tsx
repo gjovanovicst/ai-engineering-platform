@@ -35,6 +35,10 @@ export default function DesignSystemPage() {
           <Link href="/components" className="text-brand hover:underline">
             Components
           </Link>
+          {" · "}
+          <Link href="/design-system/playground" className="text-brand hover:underline">
+            Playground
+          </Link>
         </p>
       </header>
 

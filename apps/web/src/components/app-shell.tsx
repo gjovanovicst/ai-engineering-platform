@@ -24,6 +24,7 @@ const nav: NavItem[] = [
   { label: "Blueprints", href: "/blueprints", icon: "blueprint", group: "BUILD" },
   { label: "Design standards", href: "/design-system", icon: "palette", group: "DEVELOPER TOOLS", developerOnly: true },
   { label: "Component registry", href: "/components", icon: "component", group: "DEVELOPER TOOLS", developerOnly: true },
+  { label: "Playground", href: "/design-system/playground", icon: "component", group: "DEVELOPER TOOLS", developerOnly: true },
   { label: "Analytics", href: "/analytics", icon: "chart", group: "INSIGHTS" },
   { label: "Settings", href: "/settings", icon: "settings", group: "INSIGHTS" },
 ];
