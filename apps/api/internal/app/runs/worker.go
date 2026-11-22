@@ -212,6 +212,9 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 		if run.FixKind == "ci" && len(run.FixContext) > 0 {
 			prompt += "\nThe CI check failed on the existing pull request. Fix the build; " +
 				"do not re-plan and do not rewrite unrelated code. The check log:\n" + string(run.FixContext) + "\n"
+		} else if run.FixKind == "review" && len(run.FixContext) > 0 {
+			prompt += "\nThe human selected these review findings to fix on the existing pull request; " +
+				"do not re-plan and do not rewrite unrelated code:\n" + string(run.FixContext) + "\n"
 		} else if findings, ferr := w.store.LatestReviewForTask(ctx, run.OrgID, run.TaskID); ferr == nil && len(findings) > 0 {
 			prompt += "\nThe review found these issues. Fix every blocker on the existing pull request; " +
 				"do not re-plan and do not rewrite unrelated code:\n" + string(findings) + "\n"

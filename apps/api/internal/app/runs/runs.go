@@ -84,9 +84,11 @@ type Enqueuer interface {
 }
 
 // CheckGate reports whether CI checks block a merge.
-// ReviewBlockerReader counts a task's open review blockers.
+// ReviewBlockerReader reads a task's findings: the merge gate counts the open
+// blockers, the per-finding fix reads the selected ones.
 type ReviewBlockerReader interface {
 	OpenBlockers(ctx context.Context, orgID, taskID string) (int, error)
+	List(ctx context.Context, orgID, taskID string) ([]domain.ReviewFinding, error)
 }
 
 type CheckGate interface {
@@ -661,6 +663,9 @@ type FixReviewInput struct {
 	OrgID string
 	RunID string
 	Actor string
+	// FindingIDs selects the findings to fix. Empty means "every blocker" (the
+	// bulk path); with a selection the blocker requirement does not apply.
+	FindingIDs []string
 }
 
 // FixReview starts a development run that fixes the blockers of a review on
@@ -683,7 +688,28 @@ func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run,
 			Detail: "only a finished review can be fixed",
 		}
 	}
-	if reviewBlockers(review.Review) == 0 {
+	var selected []domain.ReviewFinding
+	if len(in.FindingIDs) > 0 {
+		if s.findings == nil {
+			return domain.Run{}, fmt.Errorf("%w: the findings store is not configured", domain.ErrValidation)
+		}
+		all, lerr := s.findings.List(ctx, in.OrgID, review.TaskID)
+		if lerr != nil {
+			return domain.Run{}, fmt.Errorf("read the review findings: %w", lerr)
+		}
+		wanted := map[string]bool{}
+		for _, id := range in.FindingIDs {
+			wanted[id] = true
+		}
+		for _, finding := range all {
+			if wanted[finding.ID] && finding.Status == domain.ReviewFindingOpen {
+				selected = append(selected, finding)
+			}
+		}
+		if len(selected) == 0 {
+			return domain.Run{}, fmt.Errorf("%w: no open finding matches the selection", domain.ErrValidation)
+		}
+	} else if reviewBlockers(review.Review) == 0 {
 		return domain.Run{}, fmt.Errorf("%w: the review has no blocker findings", domain.ErrValidation)
 	}
 	dev, err := s.store.LatestRun(ctx, in.OrgID, review.TaskID, string(domain.AgentDevelopment))
@@ -717,6 +743,7 @@ func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run,
 		AgentType: string(domain.AgentDevelopment), Status: domain.RunQueued,
 		Model: dev.Model, Budget: dev.Budget, FixOfRunID: dev.ID,
 		FrozenContextHash: dev.FrozenContextHash, FrozenContextSources: dev.FrozenContextSources,
+		FixKind: fixKind(selected), FixContext: fixContext(selected),
 	})
 	if err != nil {
 		return domain.Run{}, err
@@ -735,6 +762,36 @@ func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run,
 	_ = s.store.AppendEvent(ctx, in.OrgID, created.ID, "run.fix_requested", "user",
 		map[string]any{"from_run": dev.ID, "review_run": review.ID, "actor": in.Actor})
 	return created, nil
+}
+
+// fixKind is "review" only for a selected-findings fix; the bulk path keeps the
+// worker's default (it reads the latest review).
+func fixKind(selected []domain.ReviewFinding) string {
+	if len(selected) == 0 {
+		return ""
+	}
+	return "review"
+}
+
+// fixContext carries the selected findings' messages to the prompt.
+func fixContext(selected []domain.ReviewFinding) []byte {
+	if len(selected) == 0 {
+		return nil
+	}
+	var b strings.Builder
+	for _, finding := range selected {
+		b.WriteString("- ")
+		if finding.File != "" {
+			b.WriteString(finding.File)
+			if finding.Line > 0 {
+				fmt.Fprintf(&b, ":%d", finding.Line)
+			}
+			b.WriteString(": ")
+		}
+		b.WriteString(finding.Message)
+		b.WriteString("\n")
+	}
+	return []byte(b.String())
 }
 
 // fixBranch is the branch a run publishes to. A fix run updates the branch of

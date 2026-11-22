@@ -216,6 +216,17 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     }
   }
 
+  async function fixFinding(finding: ReviewFindingRecord) {
+    if (!claims?.org) return;
+    try {
+      const next = await fixReview(claims.org, runId, [finding.id]);
+      setDevelopmentRunID(next.id);
+      await findingsQuery.refetch();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not start the fix run");
+    }
+  }
+
   async function resolveFinding(finding: ReviewFindingRecord, decision: "dismiss" | "reopen", reason = "") {
     if (!claims?.org) return;
     try {
@@ -599,13 +610,22 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                   </span>
                   {claims ? (
                     finding.status === "open" ? (
-                      <Button
-                        variant="ghost"
-                        className="h-7 shrink-0 px-2 text-xs"
-                        onClick={() => setDismissing(finding)}
-                      >
-                        Dismiss
-                      </Button>
+                      <span className="flex shrink-0 gap-1">
+                        <Button
+                          variant="secondary"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => void fixFinding(finding)}
+                        >
+                          Fix
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => setDismissing(finding)}
+                        >
+                          Dismiss
+                        </Button>
+                      </span>
                     ) : (
                       <Button
                         variant="ghost"

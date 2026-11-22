@@ -362,8 +362,11 @@ export function startRun(orgID: string, projectID: string, taskRef: string) {
 }
 
 /** Fix the blocker findings of a review on the existing pull request. */
-export function fixReview(orgID: string, runID: string) {
-  return request<Run>(`/api/v1/orgs/${orgID}/runs/${runID}/fix-review`, { method: "POST" });
+export function fixReview(orgID: string, runID: string, findingIDs: string[] = []) {
+  return request<Run>(`/api/v1/orgs/${orgID}/runs/${runID}/fix-review`, {
+    method: "POST",
+    body: findingIDs.length > 0 ? JSON.stringify({ finding_ids: findingIDs }) : undefined,
+  });
 }
 
 /** Retry a failed development run with its approved plan (no new planning run). */

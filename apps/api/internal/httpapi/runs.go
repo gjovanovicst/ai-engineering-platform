@@ -493,8 +493,16 @@ func (h *runHandlers) fixReview(w http.ResponseWriter, r *http.Request) {
 		writeProblem(w, http.StatusForbidden, "forbidden", "you are not a member of this project")
 		return
 	}
+	var body struct {
+		FindingIDs []string `json:"finding_ids"`
+	}
+	if r.ContentLength > 0 {
+		if !decode(w, r, 1<<20, &body) {
+			return
+		}
+	}
 	run, err := h.svc.FixReview(r.Context(), runs.FixReviewInput{
-		OrgID: claims.OrgID, RunID: r.PathValue("run"), Actor: claims.Subject,
+		OrgID: claims.OrgID, RunID: r.PathValue("run"), Actor: claims.Subject, FindingIDs: body.FindingIDs,
 	})
 	if err != nil {
 		switch {

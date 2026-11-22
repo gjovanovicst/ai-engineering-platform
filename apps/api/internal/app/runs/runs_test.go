@@ -339,6 +339,10 @@ func (f fakeReviewBlockers) OpenBlockers(context.Context, string, string) (int, 
 	return f.n, nil
 }
 
+func (f fakeReviewBlockers) List(context.Context, string, string) ([]domain.ReviewFinding, error) {
+	return nil, nil
+}
+
 func TestDecideBlocksOnAnOpenReviewFinding(t *testing.T) {
 	t.Parallel()
 	store := newFakeStore()
@@ -370,5 +374,23 @@ func TestDecideProceedsWithoutOpenBlockers(t *testing.T) {
 	svc.WithReviewBlockers(fakeReviewBlockers{n: 0})
 	if _, _, err := svc.Decide(context.Background(), "o", "a1", "approved", "", "u1"); err != nil {
 		t.Fatalf("Decide = %v, want the approval to proceed", err)
+	}
+}
+
+func TestFixContextCarriesTheSelectedFindings(t *testing.T) {
+	t.Parallel()
+	got := string(fixContext([]domain.ReviewFinding{
+		{File: "src/main.ts", Line: 3, Message: "the first"},
+		{Message: "the second"},
+	}))
+	want := "- src/main.ts:3: the first\n- the second\n"
+	if got != want {
+		t.Fatalf("fixContext = %q, want %q", got, want)
+	}
+	if kind := fixKind(nil); kind != "" {
+		t.Fatalf("fixKind(nil) = %q, want the bulk path", kind)
+	}
+	if kind := fixKind([]domain.ReviewFinding{{Message: "x"}}); kind != "review" {
+		t.Fatalf("fixKind(selected) = %q, want review", kind)
 	}
 }

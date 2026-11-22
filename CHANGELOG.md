@@ -10,6 +10,9 @@ All notable changes to this project. Dates are 2026.
   migration 0086) with `open` / `fixed` / `dismissed`; a human dismisses a
   blocker with a reason (or reopens it), a later review closes a finding it no
   longer reports, and the merge approval refuses while a blocker is open.
+  Every open finding — nit or blocker — can also be **fixed**: the button starts
+  a development run on the same pull request with that finding in the prompt
+  (`POST .../fix-review {"finding_ids": [...]}`).
 
 - **The component playground and the contract 2.0**: `design/contracts.json`
   records every primitive's props, states and a11y notes; the new
