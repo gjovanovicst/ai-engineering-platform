@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -628,7 +629,7 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 			if perr != nil {
 				detail = perr.Error()
 			} else {
-				checked := acceptance.ValidateProof(proof, criteria, result.Diff)
+				checked := acceptance.ValidateProof(proof, criteria, result.Diff, tarText(result.Workspace))
 				detail = checked.Detail
 				if checked.Passed {
 					status = "passed"
@@ -938,6 +939,34 @@ func buildContextManifest(run domain.Run, files, rules []string, designRef strin
 	m.json = raw
 	m.hash = hex.EncodeToString(sum[:])
 	return m
+}
+
+// tarText concatenates the text files of a workspace (bounded) so the
+// acceptance verifier can find a test outside the diff.
+func tarText(archive []byte) string {
+	var b strings.Builder
+	reader := tar.NewReader(bytes.NewReader(archive))
+	for {
+		header, err := reader.Next()
+		if err != nil {
+			break
+		}
+		if header.Typeflag != tar.TypeReg || header.Size > 512<<10 {
+			continue
+		}
+		if !textExt[strings.ToLower(filepath.Ext(header.Name))] {
+			continue
+		}
+		if b.Len() > 4<<20 {
+			break
+		}
+		// The path is part of the text so the acceptance verifier can match a
+		// cited file as well as a test name.
+		b.WriteString("// " + header.Name + "\n")
+		_, _ = io.Copy(&b, io.LimitReader(reader, 512<<10))
+		b.WriteString("\n")
+	}
+	return b.String()
 }
 
 // tarFiles lists regular file paths in an uncompressed tar workspace.

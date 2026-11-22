@@ -22,6 +22,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **A fix run's acceptance proof**: an automated test that already exists in the
+  repository (the fix changes one line) now proves the criterion; the verifier
+  accepts the test and its file from the workspace, not only from the diff.
+
 - **The sticky "Next" card**: it is opaque (a translucent fill let the page
   scroll visibly through it) and it sticks flush under the top bar — the offset
   now follows the content's top padding instead of stopping inside it.
