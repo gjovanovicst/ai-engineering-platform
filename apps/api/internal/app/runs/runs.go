@@ -747,10 +747,7 @@ func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run,
 		return domain.Run{}, err
 	}
 	if task.Status.Terminal() {
-		return domain.Run{}, &domain.TransitionError{
-			From: task.Status, To: domain.TaskInProgress,
-			Detail: "the task is already closed (the pull request may be merged)",
-		}
+		return domain.Run{}, fmt.Errorf("%w: the task is already closed (the pull request is merged); open a follow-up task for this finding", domain.ErrValidation)
 	}
 	if err := retryTask(ctx, &task); err != nil {
 		return domain.Run{}, err

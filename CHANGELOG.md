@@ -22,6 +22,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **A closed task cannot take a fix**: when the pull request is merged the fix
+  branch is gone, so `fix-review` says "open a follow-up task" instead of a
+  clone failure; the panel turns each open finding into a **Follow-up task**
+  prefilled with the finding, and the clone error names the branch.
+
 - **Retry and fix freeze the context at start**: neither inherits the old frozen
   hash any more, so a retry after the repository moved no longer fails with
   `context_changed`; only a fresh start can be approved.

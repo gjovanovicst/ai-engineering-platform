@@ -1632,3 +1632,7 @@ export function decideReviewFinding(
     { method: "POST", body: JSON.stringify({ decision, reason }) },
   );
 }
+
+export function getTask(orgID: string, projectID: string, taskID: string) {
+  return request<Task>(`/api/v1/orgs/${orgID}/projects/${projectID}/tasks/${taskID}`);
+}

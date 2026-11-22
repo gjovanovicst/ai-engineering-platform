@@ -26,12 +26,15 @@ import {
   fixReview,
   listReviewFindings,
   decideReviewFinding,
+  getTask,
+  createTask,
   streamRunEvents,
   transitionTask,
   type Approval,
   type Run,
   type RunArtifact,
   type ReviewFindingRecord,
+  type Task,
   type RunEvent,
 } from "@/lib/api";
 import type { Claims } from "@/lib/auth";
@@ -76,6 +79,14 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     enabled: Boolean(claims?.org && run?.task_id),
     queryFn: () => listReviewFindings(claims!.org, projectId, run!.task_id!),
   });
+  // A closed task cannot take a fix: its branch is gone with the pull request,
+  // so a finding becomes a follow-up task instead.
+  const taskQuery = useQuery({
+    queryKey: ["task", claims?.org, projectId, run?.task_id],
+    enabled: Boolean(claims?.org && run?.task_id),
+    queryFn: () => getTask(claims!.org, projectId, run!.task_id!),
+  });
+  const taskClosed = taskQuery.data?.status === "done" || taskQuery.data?.status === "canceled";
   const findingRecords = findingsQuery.data?.data ?? [];
   const openBlockers = findingRecords.filter((f) => f.status === "open" && f.severity === "blocker").length;
   const retries = events.filter((event) => event.type === "run.retry" || event.type === "test.flaky_recovered");
@@ -213,6 +224,23 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
       setError(err instanceof ApiError ? err.message : "Could not retry the development run");
     } finally {
       setRetryingDev(false);
+    }
+  }
+
+  async function createFollowUp(finding: ReviewFindingRecord) {
+    if (!claims?.org) return;
+    try {
+      const title = finding.message.split("\n")[0].slice(0, 90);
+      const created = await createTask(claims.org, projectId, {
+        title,
+        description: finding.message + "\n\nFollow-up from the review of " + (taskQuery.data?.ref ?? "the task") + ".",
+        acceptance: [],
+        priority: "low",
+      });
+      setDecisionNote(`Follow-up ${created.ref} created — it carries the finding.`);
+      await router.push(`/projects/${projectId}`);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not create the follow-up task");
     }
   }
 
@@ -625,6 +653,15 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                   {claims ? (
                     finding.status === "open" ? (
                       <span className="flex shrink-0 gap-1">
+                        {taskClosed ? (
+                          <Button
+                            variant="secondary"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => void createFollowUp(finding)}
+                          >
+                            Follow-up task
+                          </Button>
+                        ) : (
                         <Button
                           variant="secondary"
                           className="h-7 px-2 text-xs"
@@ -632,6 +669,8 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                         >
                           Fix
                         </Button>
+                        )}
+                        {taskClosed ? null : (
                         <Button
                           variant="ghost"
                           className="h-7 px-2 text-xs"
@@ -639,6 +678,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                         >
                           Dismiss
                         </Button>
+                        )}
                       </span>
                     ) : (
                       <Button

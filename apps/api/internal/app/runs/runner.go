@@ -322,7 +322,11 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 		}
 		if werr != nil {
 			r.log.Error("runs: clone workspace", slog.Any("err", werr))
-			failed, ferr := r.fail(runCtx, run, "workspace_clone_failed", "could not clone the project repository")
+			detail := "could not clone the project repository"
+			if run.FixOfRunID != "" {
+				detail += " at " + fixBranch(run) + " (the pull request may be merged; open a follow-up task instead)"
+			}
+			failed, ferr := r.fail(runCtx, run, "workspace_clone_failed", detail)
 			if ferr != nil {
 				return run, ferr
 			}
