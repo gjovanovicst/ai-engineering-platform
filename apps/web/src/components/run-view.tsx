@@ -480,6 +480,11 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                 <p className="mt-1 text-xs text-status-warning">
                   {openBlockers} open review blocker{openBlockers === 1 ? "" : "s"} — fix or dismiss them before the merge.
                 </p>
+              ) : openFindings.length > 0 ? (
+                <p className="mt-1 text-xs text-text-muted">
+                  {openFindings.length} open nit{openFindings.length === 1 ? "" : "s"} — advisory; the merge is not
+                  blocked.
+                </p>
               ) : null}
             </div>
             <div className="flex gap-2">

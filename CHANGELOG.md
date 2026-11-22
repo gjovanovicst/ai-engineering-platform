@@ -34,6 +34,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **A major finding gates the merge**: the review's `major` severity became a
+  `nit`, so a merge passed with real issues (weakened assertions, an
+  agent-authored library). Only `minor`/`nit` stay advisory; the merge panel
+  lists the open nits so the decision is visible.
+
 - **The workspace archive keeps symlinks**: `pnpm`'s `node_modules` is a forest
   of symlinks; the archiver opened a symlinked directory as a file
   (`is a directory`) and the run failed to clone. The tar writes the link
