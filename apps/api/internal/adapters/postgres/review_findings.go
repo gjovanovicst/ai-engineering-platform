@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -68,6 +69,12 @@ func (s *ReviewFindingStore) List(ctx context.Context, orgID, taskID string) ([]
 	return out, err
 }
 
+// findingKey matches a finding across reviews. The message is part of the key:
+// one file can carry several findings, so the file alone would merge them.
+func findingKey(file, message string) string {
+	return strings.ToLower(strings.TrimSpace(file)) + "\x00" + strings.ToLower(strings.TrimSpace(message))
+}
+
 // Reconcile records one review's findings against the task's existing ones. A
 // finding that matches an existing row (file + message) keeps its decision: a
 // dismissed nit stays dismissed, a fixed one that re-appears re-opens. A
@@ -83,15 +90,16 @@ func (s *ReviewFindingStore) Reconcile(ctx context.Context, orgID, projectID, ta
 		}
 		byKey := map[string]pgstore.ReviewFinding{}
 		for _, row := range existing {
-			byKey[row.File+"\x00"+row.Message] = row
+			byKey[findingKey(row.File, row.Message)] = row
 		}
 		reported := map[string]bool{}
 		for _, finding := range findings {
-			key := finding.File + "\x00" + finding.Message
+			key := findingKey(finding.File, finding.Message)
 			reported[key] = true
 			if row, ok := byKey[key]; ok {
 				if err := q.TouchReviewFinding(ctx, pgstore.TouchReviewFindingParams{
 					OrgID: toUUID(orgID), ID: row.ID, RunID: toUUID(runID), Severity: string(finding.Severity),
+					File: row.File, Line: row.Line, Message: finding.Message,
 				}); err != nil {
 					return err
 				}

@@ -191,7 +191,7 @@ func (q *Queries) MarkReviewFindingFixed(ctx context.Context, arg MarkReviewFind
 
 const touchReviewFinding = `-- name: TouchReviewFinding :exec
 UPDATE review_findings
-SET run_id = $3, severity = $4, updated_at = now()
+SET run_id = $3, severity = $4, file = $5, line = $6, message = $7, updated_at = now()
 WHERE org_id = $1 AND id = $2
 `
 
@@ -200,6 +200,9 @@ type TouchReviewFindingParams struct {
 	ID       pgtype.UUID
 	RunID    pgtype.UUID
 	Severity string
+	File     string
+	Line     int32
+	Message  string
 }
 
 func (q *Queries) TouchReviewFinding(ctx context.Context, arg TouchReviewFindingParams) error {
@@ -208,6 +211,9 @@ func (q *Queries) TouchReviewFinding(ctx context.Context, arg TouchReviewFinding
 		arg.ID,
 		arg.RunID,
 		arg.Severity,
+		arg.File,
+		arg.Line,
+		arg.Message,
 	)
 	return err
 }

@@ -93,6 +93,8 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
   });
   const taskClosed = taskQuery.data?.status === "done" || taskQuery.data?.status === "canceled";
   const findingRecords = findingsQuery.data?.data ?? [];
+  const openFindings = findingRecords.filter((f) => f.status === "open");
+  const resolvedFindings = findingRecords.filter((f) => f.status !== "open");
   const openBlockers = findingRecords.filter((f) => f.status === "open" && f.severity === "blocker").length;
   const retries = events.filter((event) => event.type === "run.retry" || event.type === "test.flaky_recovered");
   const manifestEvent = events.find((event) => event.type === "context.manifest");
@@ -612,8 +614,8 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
             </div>
           </header>
           <ul className="divide-y divide-border">
-            {[...findingRecords]
-              .sort((a, b) => (b.status === "open" ? 1 : 0) - (a.status === "open" ? 1 : 0) || (b.severity === "blocker" ? 1 : 0) - (a.severity === "blocker" ? 1 : 0))
+            {[...openFindings]
+              .sort((a, b) => (b.severity === "blocker" ? 1 : 0) - (a.severity === "blocker" ? 1 : 0))
               .map((finding) => (
                 <li key={finding.id} className="flex gap-3 px-4 py-2.5 text-sm">
                   <span
@@ -682,7 +684,36 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                   ) : null}
                 </li>
               ))}
+            {openFindings.length === 0 ? (
+              <li className="px-4 py-2.5 text-sm text-text-secondary">
+                Nothing open — every finding is resolved.
+              </li>
+            ) : null}
           </ul>
+          {resolvedFindings.length > 0 ? (
+            <details className="border-t border-border px-4 py-2">
+              <summary className="cursor-pointer text-xs text-text-muted">
+                Resolved ({resolvedFindings.length})
+              </summary>
+              <ul className="mt-2 divide-y divide-border">
+                {resolvedFindings.map((finding) => (
+                  <li key={finding.id} className="flex flex-wrap items-center gap-2 py-1.5 text-xs text-text-muted">
+                    <span className="uppercase">{finding.status}</span>
+                    <span className="min-w-0 flex-1 truncate">{finding.message}</span>
+                    {claims && finding.status === "dismissed" ? (
+                      <Button
+                        variant="ghost"
+                        className="h-6 px-2 text-[11px]"
+                        onClick={() => void resolveFinding(finding, "reopen")}
+                      >
+                        Reopen
+                      </Button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
         </section>
       ) : run?.review?.findings?.length ? (
         <section className="mb-6 rounded-lg border border-border bg-bg-surface">
