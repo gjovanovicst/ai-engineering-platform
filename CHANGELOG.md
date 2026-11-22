@@ -6,6 +6,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **The review findings' lifecycle**: a finding is a row (`review_findings`,
+  migration 0086) with `open` / `fixed` / `dismissed`; a human dismisses a
+  blocker with a reason (or reopens it), a later review closes a finding it no
+  longer reports, and the merge approval refuses while a blocker is open.
+
 - **The component playground and the contract 2.0**: `design/contracts.json`
   records every primitive's props, states and a11y notes; the new
   `/design-system/playground` page renders a live example per component, and

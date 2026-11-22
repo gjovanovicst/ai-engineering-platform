@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DiffViewer } from "@/components/diff-viewer";
 import { NextAction, type NextActionItem } from "@/components/next-action";
 import { HelpTip } from "@/components/ui/help-tip";
+import { PromptDialog } from "@/components/ui/prompt-dialog";
 import { Button } from "@/components/ui/button";
 import {
   ApiError,
@@ -23,11 +24,14 @@ import {
   startRun,
   retryRun,
   fixReview,
+  listReviewFindings,
+  decideReviewFinding,
   streamRunEvents,
   transitionTask,
   type Approval,
   type Run,
   type RunArtifact,
+  type ReviewFindingRecord,
   type RunEvent,
 } from "@/lib/api";
 import type { Claims } from "@/lib/auth";
@@ -65,6 +69,15 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     enabled: Boolean(claims?.org),
     queryFn: () => getRunUsage(claims!.org, runId),
   });
+  // The findings' lifecycle: a blocker stays open until a human dismisses it
+  // or a later review stops reporting it.
+  const findingsQuery = useQuery({
+    queryKey: ["review-findings", claims?.org, projectId, run?.task_id],
+    enabled: Boolean(claims?.org && run?.task_id),
+    queryFn: () => listReviewFindings(claims!.org, projectId, run!.task_id!),
+  });
+  const findingRecords = findingsQuery.data?.data ?? [];
+  const openBlockers = findingRecords.filter((f) => f.status === "open" && f.severity === "blocker").length;
   const retries = events.filter((event) => event.type === "run.retry" || event.type === "test.flaky_recovered");
   const manifestEvent = events.find((event) => event.type === "context.manifest");
   const manifestSources = (manifestEvent?.data.payload?.sources ?? []) as Array<{
@@ -81,6 +94,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     rule_id?: string;
     version?: number;
   }>;
+  const [dismissing, setDismissing] = useState<ReviewFindingRecord | null>(null);
   const [decisionNote, setDecisionNote] = useState<string | null>(null);
   const [developmentRunID, setDevelopmentRunID] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement | null>(null);
@@ -199,6 +213,16 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
       setError(err instanceof ApiError ? err.message : "Could not retry the development run");
     } finally {
       setRetryingDev(false);
+    }
+  }
+
+  async function resolveFinding(finding: ReviewFindingRecord, decision: "dismiss" | "reopen", reason = "") {
+    if (!claims?.org) return;
+    try {
+      await decideReviewFinding(claims.org, projectId, finding.task_id, finding.id, decision, reason);
+      await findingsQuery.refetch();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not update the finding");
     }
   }
 
@@ -390,9 +414,14 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
               <p className="text-xs text-text-secondary">
                 Merge is blocked until a human approves this pull/merge request.
               </p>
+              {openBlockers > 0 ? (
+                <p className="mt-1 text-xs text-status-warning">
+                  {openBlockers} open review blocker{openBlockers === 1 ? "" : "s"} — fix or dismiss them before the merge.
+                </p>
+              ) : null}
             </div>
             <div className="flex gap-2">
-              <Button loading={deciding} onClick={() => decide("approved")}>
+              <Button loading={deciding} disabled={openBlockers > 0} onClick={() => decide("approved")}>
                 Approve merge
               </Button>
               <Button variant="secondary" disabled={deciding} onClick={() => setShowReject((v) => !v)}>
@@ -521,13 +550,18 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
         </section>
       ) : null}
 
-      {run?.review?.findings?.length ? (
+      {findingRecords.length > 0 ? (
         <section className="mb-6 rounded-lg border border-border bg-bg-surface">
           <header className="flex items-center justify-between border-b border-border px-4 py-3">
             <h2 className="text-sm font-semibold">Review findings</h2>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-text-muted">{run.review.findings.length}</span>
-              {claims && run.review.findings.some((finding) => finding.severity === "blocker") ? (
+              {openBlockers > 0 ? (
+                <span className="rounded px-1.5 py-0.5 text-[11px] font-medium text-status-danger">
+                  {openBlockers} open blocker{openBlockers === 1 ? "" : "s"}
+                </span>
+              ) : null}
+              <span className="text-xs text-text-muted">{findingRecords.length}</span>
+              {claims && openBlockers > 0 ? (
                 <Button variant="secondary" loading={fixing} onClick={fixReviewFindings}>
                   Fix review findings
                 </Button>
@@ -535,31 +569,105 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
             </div>
           </header>
           <ul className="divide-y divide-border">
-            {[...run.review.findings]
-              .sort((a, b) => (b.severity === "blocker" ? 1 : 0) - (a.severity === "blocker" ? 1 : 0))
-              .map((finding, index) => (
-              <li key={`${finding.file ?? "general"}-${index}`} className="flex gap-3 px-4 py-2.5 text-sm">
-                <span
-                  className={`h-fit rounded px-1.5 py-0.5 text-[11px] font-medium uppercase ${
-                    finding.severity === "blocker"
-                      ? "bg-status-danger/10 text-status-danger"
-                      : finding.severity === "major"
-                        ? "bg-status-warning/10 text-status-warning"
+            {[...findingRecords]
+              .sort((a, b) => (b.status === "open" ? 1 : 0) - (a.status === "open" ? 1 : 0) || (b.severity === "blocker" ? 1 : 0) - (a.severity === "blocker" ? 1 : 0))
+              .map((finding) => (
+                <li key={finding.id} className="flex gap-3 px-4 py-2.5 text-sm">
+                  <span
+                    className={`h-fit rounded px-1.5 py-0.5 text-[11px] font-medium uppercase ${
+                      finding.severity === "blocker"
+                        ? "bg-status-danger/10 text-status-danger"
                         : "bg-bg-hover text-text-muted"
-                  }`}
-                >
-                  {finding.severity}
-                </span>
-                <span className="text-text-secondary">
-                  {finding.file ? <span className="mr-2 font-mono text-xs text-text-muted">{finding.file}</span> : null}
-                  {finding.body}
-                </span>
-              </li>
-            ))}
+                    }`}
+                  >
+                    {finding.severity}
+                  </span>
+                  <span className="min-w-0 flex-1 text-text-secondary">
+                    {finding.file ? (
+                      <span className="mr-2 font-mono text-xs text-text-muted">
+                        {finding.file}
+                        {finding.line > 0 ? `:${finding.line}` : ""}
+                      </span>
+                    ) : null}
+                    {finding.message}
+                    {finding.status !== "open" ? (
+                      <span className="ml-2 text-[11px] uppercase tracking-wide text-text-muted">
+                        {finding.status}
+                        {finding.reason ? ` — ${finding.reason}` : ""}
+                      </span>
+                    ) : null}
+                  </span>
+                  {claims ? (
+                    finding.status === "open" ? (
+                      <Button
+                        variant="ghost"
+                        className="h-7 shrink-0 px-2 text-xs"
+                        onClick={() => setDismissing(finding)}
+                      >
+                        Dismiss
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        className="h-7 shrink-0 px-2 text-xs"
+                        onClick={() => void resolveFinding(finding, "reopen")}
+                      >
+                        Reopen
+                      </Button>
+                    )
+                  ) : null}
+                </li>
+              ))}
           </ul>
         </section>
       ) : null}
 
+      {/* Fallback: a run whose review predates the findings table (or an older
+          deployment) still shows what the review said, read-only. */}
+      {findingRecords.length === 0 && run?.review?.findings?.length ? (
+        <section className="mb-6 rounded-lg border border-border bg-bg-surface">
+          <header className="flex items-center justify-between border-b border-border px-4 py-3">
+            <h2 className="text-sm font-semibold">Review findings</h2>
+            <span className="text-xs text-text-muted">{run.review.findings.length}</span>
+          </header>
+          <ul className="divide-y divide-border">
+            {[...run.review.findings]
+              .sort((a, b) => (b.severity === "blocker" ? 1 : 0) - (a.severity === "blocker" ? 1 : 0))
+              .map((finding, index) => (
+                <li key={`${finding.file ?? "general"}-${index}`} className="flex gap-3 px-4 py-2.5 text-sm">
+                  <span
+                    className={`h-fit rounded px-1.5 py-0.5 text-[11px] font-medium uppercase ${
+                      finding.severity === "blocker"
+                        ? "bg-status-danger/10 text-status-danger"
+                        : "bg-bg-hover text-text-muted"
+                    }`}
+                  >
+                    {finding.severity}
+                  </span>
+                  <span className="text-text-secondary">
+                    {finding.file ? <span className="mr-2 font-mono text-xs text-text-muted">{finding.file}</span> : null}
+                    {finding.body}
+                  </span>
+                </li>
+              ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <PromptDialog
+        open={dismissing !== null}
+        title="Dismiss the finding"
+        message="A dismissal needs a reason; it stays in the record."
+        label="Reason"
+        placeholder="e.g. not applicable: the file is generated"
+        required
+        confirmLabel="Dismiss"
+        onConfirm={(reason) => {
+          if (dismissing) void resolveFinding(dismissing, "dismiss", reason);
+          setDismissing(null);
+        }}
+        onCancel={() => setDismissing(null)}
+      />
       {retries.length > 0 ? (
         <section className="mb-6 rounded-lg border border-border bg-bg-surface p-4">
           <h2 className="text-sm font-semibold">Retries</h2>

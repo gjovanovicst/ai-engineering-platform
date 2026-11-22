@@ -1594,3 +1594,38 @@ export function createRestoreRequest(orgID: string, targetTime: string) {
     body: JSON.stringify({ target_time: targetTime }),
   });
 }
+
+export type ReviewFindingRecord = {
+  id: string;
+  task_id: string;
+  run_id: string;
+  severity: "blocker" | "nit";
+  file: string;
+  line: number;
+  message: string;
+  status: "open" | "fixed" | "dismissed";
+  decided_by?: string;
+  reason?: string;
+  fixed_by_run?: string;
+  created_at: string;
+};
+
+export function listReviewFindings(orgID: string, projectID: string, taskID: string) {
+  return request<{ data: ReviewFindingRecord[] }>(
+    `/api/v1/orgs/${orgID}/projects/${projectID}/tasks/${taskID}/review-findings`,
+  );
+}
+
+export function decideReviewFinding(
+  orgID: string,
+  projectID: string,
+  taskID: string,
+  findingID: string,
+  decision: "dismiss" | "reopen",
+  reason = "",
+) {
+  return request<ReviewFindingRecord>(
+    `/api/v1/orgs/${orgID}/projects/${projectID}/tasks/${taskID}/review-findings/${findingID}/decide`,
+    { method: "POST", body: JSON.stringify({ decision, reason }) },
+  );
+}

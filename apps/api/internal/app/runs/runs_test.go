@@ -332,3 +332,43 @@ func TestDecideCopiesTheApprovedPlanToTheDevelopmentRun(t *testing.T) {
 		t.Fatalf("enqueued = %v, want the development run", enqueuer.enqueued)
 	}
 }
+
+type fakeReviewBlockers struct{ n int }
+
+func (f fakeReviewBlockers) OpenBlockers(context.Context, string, string) (int, error) {
+	return f.n, nil
+}
+
+func TestDecideBlocksOnAnOpenReviewFinding(t *testing.T) {
+	t.Parallel()
+	store := newFakeStore()
+	store.runs["run-1"] = domain.Run{ID: "run-1", OrgID: "o", ProjectID: "p", TaskID: "t1", Status: domain.RunSucceeded}
+	store.approval = &Approval{ID: "a1", Type: "pr", Status: "pending", RunID: "run-1", OrgID: "o", PullRequestID: "pr1", Number: 7}
+	svc, err := New(store, fakeTasks{task: readyTask()}, &fakeExecutor{}, nil, nil, slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc.WithReviewBlockers(fakeReviewBlockers{n: 1})
+	_, _, err = svc.Decide(context.Background(), "o", "a1", "approved", "", "u1")
+	if err == nil || !strings.Contains(err.Error(), "open review blocker") {
+		t.Fatalf("err = %v, want the open review blocker gate", err)
+	}
+	if store.decided != 0 {
+		t.Fatal("the approval must stay pending while a blocker is open")
+	}
+}
+
+func TestDecideProceedsWithoutOpenBlockers(t *testing.T) {
+	t.Parallel()
+	store := newFakeStore()
+	store.runs["run-1"] = domain.Run{ID: "run-1", OrgID: "o", ProjectID: "p", TaskID: "t1", Status: domain.RunSucceeded}
+	store.approval = &Approval{ID: "a1", Type: "pr", Status: "pending", RunID: "run-1", OrgID: "o", PullRequestID: "pr1", Number: 7}
+	svc, err := New(store, fakeTasks{task: readyTask()}, &fakeExecutor{}, nil, nil, slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+	svc.WithReviewBlockers(fakeReviewBlockers{n: 0})
+	if _, _, err := svc.Decide(context.Background(), "o", "a1", "approved", "", "u1"); err != nil {
+		t.Fatalf("Decide = %v, want the approval to proceed", err)
+	}
+}

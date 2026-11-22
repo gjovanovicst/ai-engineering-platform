@@ -58,12 +58,15 @@ type Runner struct {
 	store             Store
 	enqueuer          Enqueuer
 	publisher         Publisher
-	proofVerifier     ProofVerifier
-	headRunner        HeadRunner
-	testCommand       string
-	visuals           VisualBaselineReader
-	embedder          Embedder
-	log               *slog.Logger
+	// findings records the review findings' lifecycle (optional: a deployment
+	// without it keeps the JSON-only behaviour).
+	findings      ReviewFindings
+	proofVerifier ProofVerifier
+	headRunner    HeadRunner
+	testCommand   string
+	visuals       VisualBaselineReader
+	embedder      Embedder
+	log           *slog.Logger
 }
 
 // WorkspaceProvider clones the project repository into an archive that the
@@ -80,6 +83,11 @@ type TestRecorder interface {
 // UsageRecorder records token usage (implemented in app/usage).
 type UsageRecorder interface {
 	Record(ctx context.Context, run domain.Run, result agent.Result) error
+}
+
+// ReviewFindings records the review findings and their lifecycle.
+type ReviewFindings interface {
+	Reconcile(ctx context.Context, orgID, projectID, taskID, runID string, findings []domain.ReviewFinding) error
 }
 
 // Publisher pushes the branch and opens a PR/MR (implemented in adapters/git).
@@ -106,6 +114,12 @@ type PullRequest struct {
 }
 
 // NewRunner wires the executor.
+// WithReviewFindings wires the findings store; it is optional.
+func (r *Runner) WithReviewFindings(findings ReviewFindings) *Runner {
+	r.findings = findings
+	return r
+}
+
 func NewRunner(backend agent.Backend, store Store, enqueuer Enqueuer, publisher Publisher, testCommand string, log *slog.Logger) *Runner {
 	if log == nil {
 		log = slog.New(slog.DiscardHandler)
@@ -693,6 +707,11 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 		}
 		if err := r.store.SetReview(context.WithoutCancel(ctx), run.OrgID, run.ID, review); err != nil {
 			return r.fail(ctx, run, "artifact_failed", err.Error())
+		}
+		if r.findings != nil {
+			if ferr := r.findings.Reconcile(context.WithoutCancel(ctx), run.OrgID, run.ProjectID, run.TaskID, run.ID, parseReviewFindings(review)); ferr != nil {
+				r.log.Warn("runs: reconcile review findings", slog.Any("err", ferr))
+			}
 		}
 		_ = r.store.AppendEvent(context.WithoutCancel(ctx), run.OrgID, run.ID, "review.completed", "agent",
 			map[string]any{"findings": countFindings(review)})

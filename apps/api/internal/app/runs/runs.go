@@ -84,6 +84,11 @@ type Enqueuer interface {
 }
 
 // CheckGate reports whether CI checks block a merge.
+// ReviewBlockerReader counts a task's open review blockers.
+type ReviewBlockerReader interface {
+	OpenBlockers(ctx context.Context, orgID, taskID string) (int, error)
+}
+
 type CheckGate interface {
 	Blocked(ctx context.Context, orgID, prID string) (bool, string, error)
 }
@@ -100,14 +105,16 @@ type Executor interface {
 
 // Service coordinates runs.
 type Service struct {
-	store         Store
-	tasks         TaskReader
-	executor      Executor
-	enqueuer      Enqueuer
-	merger        Merger
-	mergeQueue    *mergequeue.Service
-	windows       ChangeWindowReader
-	checks        CheckGate
+	store      Store
+	tasks      TaskReader
+	executor   Executor
+	enqueuer   Enqueuer
+	merger     Merger
+	mergeQueue *mergequeue.Service
+	windows    ChangeWindowReader
+	checks     CheckGate
+	// findings gates the merge on the review blockers (optional).
+	findings      ReviewBlockerReader
 	checkList     CheckReader
 	pullRequests  PullRequestReader
 	checkLogs     CheckLogFetcher
@@ -145,6 +152,12 @@ func (s *Service) WithMaxActiveRuns(n int) *Service {
 // WithChecks attaches the CI merge gate.
 func (s *Service) WithChecks(gate CheckGate) *Service {
 	s.checks = gate
+	return s
+}
+
+// WithReviewBlockers gates the merge on the open review blockers.
+func (s *Service) WithReviewBlockers(findings ReviewBlockerReader) *Service {
+	s.findings = findings
 	return s
 }
 
@@ -338,6 +351,13 @@ func (s *Service) Decide(ctx context.Context, orgID, approvalID, decision, reaso
 		if status == "approved" && len(manual) > 0 && strings.TrimSpace(reason) == "" {
 			return domain.Run{}, "", fmt.Errorf("%w: the acceptance proof contains manual evidence; a decision note is required", domain.ErrValidation)
 		}
+		if status == "approved" && s.findings != nil && run.TaskID != "" {
+			if n, ferr := s.findings.OpenBlockers(ctx, orgID, run.TaskID); ferr == nil && n > 0 {
+				detail := fmt.Sprintf("%d open review blocker(s); fix or dismiss them before the merge", n)
+				_ = s.store.AppendEvent(ctx, run.OrgID, run.ID, "merge.blocked", "system", map[string]any{"reason": detail})
+				return domain.Run{}, "", fmt.Errorf("%w: %s", domain.ErrValidation, detail)
+			}
+		}
 		if status == "approved" && approval.PullRequestID != "" {
 			if s.checks != nil {
 				blocked, why, ferr := s.checks.Blocked(ctx, orgID, approval.PullRequestID)
@@ -349,11 +369,16 @@ func (s *Service) Decide(ctx context.Context, orgID, approvalID, decision, reaso
 					return domain.Run{}, "", fmt.Errorf("%w: %s", domain.ErrValidation, why)
 				}
 			}
-			if review, rerr := s.store.LatestReviewForTask(ctx, orgID, run.TaskID); rerr == nil && len(review) > 0 {
-				if why := blockerReason(review); why != "" {
-					_ = s.store.AppendEvent(ctx, run.OrgID, run.ID, "merge.blocked", "system",
-						map[string]any{"reason": why})
-					return domain.Run{}, "", fmt.Errorf("%w: %s", domain.ErrValidation, why)
+			// The findings table supersedes the payload scan: a blocker the human
+			// dismissed must not block the merge. Without the table (an older
+			// deployment) the latest review's payload still gates.
+			if s.findings == nil {
+				if review, rerr := s.store.LatestReviewForTask(ctx, orgID, run.TaskID); rerr == nil && len(review) > 0 {
+					if why := blockerReason(review); why != "" {
+						_ = s.store.AppendEvent(ctx, run.OrgID, run.ID, "merge.blocked", "system",
+							map[string]any{"reason": why})
+						return domain.Run{}, "", fmt.Errorf("%w: %s", domain.ErrValidation, why)
+					}
 				}
 			}
 		}

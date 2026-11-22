@@ -595,6 +595,24 @@ type RestoreRequest struct {
 	UpdatedAt   pgtype.Timestamptz
 }
 
+type ReviewFinding struct {
+	ID         pgtype.UUID
+	OrgID      pgtype.UUID
+	ProjectID  pgtype.UUID
+	TaskID     pgtype.UUID
+	RunID      pgtype.UUID
+	Severity   string
+	File       string
+	Line       int32
+	Message    string
+	Status     string
+	DecidedBy  pgtype.UUID
+	Reason     string
+	FixedByRun pgtype.UUID
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+}
+
 type Rule struct {
 	ID        pgtype.UUID
 	OrgID     pgtype.UUID
