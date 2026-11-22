@@ -6,6 +6,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Fix all open findings**: one button sends every open finding to a single fix
+  run, so one review follows instead of one per finding — the loop shrinks to a
+  single pass.
+
 - **Auto-remediation**: a run that fails on an environment anomaly
   (`context_changed`, `dependency_missing`) is retried **once** automatically
   with the approved plan, recorded as `run.auto_remediated`; a second failure is

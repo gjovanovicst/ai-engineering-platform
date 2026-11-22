@@ -290,6 +290,23 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     }
   }
 
+  async function fixAllOpen() {
+    if (!claims || openFindings.length === 0) return;
+    setFixing(true);
+    setError(null);
+    try {
+      // One run carries every open finding: one review after it, not one per fix.
+      const next = await fixReview(claims.org, openFindings[0].run_id, openFindings.map((f) => f.id));
+      setDevelopmentRunID(next.id);
+      router.push(`/projects/${projectId}/runs/${next.id}`);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Could not start the fix run";
+      setError(message.includes("already active") ? "A run is already active for this task — wait for it to finish." : message);
+    } finally {
+      setFixing(false);
+    }
+  }
+
   async function fixReviewFindings() {
     if (!claims || !run) return;
     setFixing(true);
@@ -606,9 +623,9 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                 </span>
               ) : null}
               <span className="text-xs text-text-muted">{findingRecords.length}</span>
-              {claims && openBlockers > 0 && run?.agent_type === "review" ? (
-                <Button variant="secondary" loading={fixing} onClick={fixReviewFindings}>
-                  Fix review findings
+              {claims && openFindings.length > 0 && !taskClosed ? (
+                <Button variant="secondary" loading={fixing} onClick={fixAllOpen}>
+                  Fix all open ({openFindings.length})
                 </Button>
               ) : null}
             </div>
