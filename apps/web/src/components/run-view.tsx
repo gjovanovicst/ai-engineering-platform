@@ -640,11 +640,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
               ))}
           </ul>
         </section>
-      ) : null}
-
-      {/* Fallback: a run whose review predates the findings table (or an older
-          deployment) still shows what the review said, read-only. */}
-      {findingRecords.length === 0 && run?.review?.findings?.length ? (
+      ) : run?.review?.findings?.length ? (
         <section className="mb-6 rounded-lg border border-border bg-bg-surface">
           <header className="flex items-center justify-between border-b border-border px-4 py-3">
             <h2 className="text-sm font-semibold">Review findings</h2>
