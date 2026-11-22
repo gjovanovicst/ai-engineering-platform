@@ -79,6 +79,9 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     queryKey: ["review-findings", claims?.org, projectId, run?.task_id],
     enabled: Boolean(claims?.org && run?.task_id),
     queryFn: () => listReviewFindings(claims!.org, projectId, run!.task_id!),
+    // A fix run finishes minutes later and the following review marks a finding
+    // fixed; the list must reflect it without a manual refresh.
+    refetchInterval: 8000,
   });
   // A closed task cannot take a fix: its branch is gone with the pull request,
   // so a finding becomes a follow-up task instead.
@@ -86,6 +89,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     queryKey: ["task", claims?.org, projectId, run?.task_id],
     enabled: Boolean(claims?.org && run?.task_id),
     queryFn: () => getTask(claims!.org, projectId, run!.task_id!),
+    refetchInterval: 15000,
   });
   const taskClosed = taskQuery.data?.status === "done" || taskQuery.data?.status === "canceled";
   const findingRecords = findingsQuery.data?.data ?? [];

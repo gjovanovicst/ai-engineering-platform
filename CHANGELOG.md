@@ -30,6 +30,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **The findings list is live**: the run page refetches the findings (8s) and the
+  task (15s) so a fix that finishes later visibly turns the finding `fixed`,
+  instead of leaving it looking unfixed until a manual refresh.
+
 - **A fix or troubleshoot continues the root branch**: the chain is walked to the
   original development run whose branch was published, so a fix of a fix no
   longer targets a branch (`aip/<failed-fix>`) that never existed.

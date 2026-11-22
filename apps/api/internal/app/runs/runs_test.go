@@ -398,10 +398,15 @@ func TestFixContextCarriesTheSelectedFindings(t *testing.T) {
 func TestTroubleshootStartsAnIncidentRun(t *testing.T) {
 	t.Parallel()
 	store := newFakeStore()
+	// The chain: a succeeded development run owns the branch; the fix run failed.
+	store.runs["dev-1"] = domain.Run{
+		ID: "dev-1", OrgID: "o", ProjectID: "p", TaskID: "t1",
+		AgentType: "development", Status: domain.RunSucceeded, Plan: []byte(`{"steps":["x"]}`),
+	}
 	store.runs["failed-1"] = domain.Run{
 		ID: "failed-1", OrgID: "o", ProjectID: "p", TaskID: "t1",
-		AgentType: "development", Status: domain.RunFailed,
-		FailureCode: "test_gate_failed", FailureDetail: "go: not found", Plan: []byte(`{"steps":["x"]}`),
+		AgentType: "development", Status: domain.RunFailed, FixOfRunID: "dev-1",
+		FailureCode: "test_gate_failed", FailureDetail: "go: not found",
 	}
 	svc, err := New(store, fakeTasks{task: readyTask()}, &fakeExecutor{}, nil, nil, slog.New(slog.DiscardHandler))
 	if err != nil {
