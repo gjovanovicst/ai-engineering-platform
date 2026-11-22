@@ -633,7 +633,11 @@ func (s *Service) Retry(ctx context.Context, in RetryInput) (domain.Run, error) 
 func retryTask(_ context.Context, task *domain.Task) error {
 	opt := domain.TransitionOptions{Actor: domain.ActorHuman, Reason: "retry with the approved plan"}
 	switch task.Status {
-	case domain.TaskInProgress, domain.TaskReview:
+	case domain.TaskInProgress, domain.TaskPlanning:
+		// Already running (a run is queued or executing): the fix run starts on
+		// the same branch, no transition needed.
+		return nil
+	case domain.TaskReview:
 		if err := task.Transition(domain.TaskBlocked, opt); err != nil {
 			return err
 		}
