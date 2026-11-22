@@ -30,6 +30,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **A fix cannot pass by editing tests**: the fix prompt forbids weakening or
+  rewording an assertion, and a fix whose diff touches only test files records a
+  `run.test_only` warning; the finding shows the review run it came from.
+
 - **The findings list shows only what is open**: the resolved ones (fixed or
   dismissed) collapse under "Resolved (N)", so a review's re-reported findings
   no longer look like the same five piled up; a dismissed nit can be reopened

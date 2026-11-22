@@ -635,6 +635,10 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                       </span>
                     ) : null}
                     {finding.message}
+                    <span className="mt-1 block font-mono text-[10px] text-text-muted">
+                      from run {finding.run_id.slice(0, 8)}
+                      {finding.created_at ? ` · ${new Date(finding.created_at).toLocaleString()}` : ""}
+                    </span>
                     {finding.status !== "open" ? (
                       <span className="ml-2 text-[11px] uppercase tracking-wide text-text-muted">
                         {finding.status}
