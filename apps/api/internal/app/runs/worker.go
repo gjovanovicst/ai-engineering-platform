@@ -186,6 +186,7 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 		}
 		prompt += "\nFinish with exactly one line mapping every criterion:\n" +
 			"AIP_PROOF: {\"evidence\":[{\"criterion\":\"AC1\",\"kind\":\"automated\",\"test\":\"TestName\",\"files\":[\"path_test.go\"]}]}\n" +
+			"The \"test\" value is the exact test function name (e.g. TestSignInShowsTheEmptyState), never a sentence: the platform looks it up.\n" +
 			"Use kind \"manual\" with a reason only when automation is not practical. " +
 			"Do not weaken tests to make them pass.\n"
 	}

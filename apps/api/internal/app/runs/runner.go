@@ -643,7 +643,21 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 			_ = r.store.AppendEvent(context.WithoutCancel(ctx), run.OrgID, run.ID, "acceptance.warning", "system",
 				map[string]any{"detail": "temporary test files in the diff: " + strings.Join(warned, ", ")})
 		}
-		if len(criteria) > 0 {
+		if len(criteria) > 0 && run.FixOfRunID != "" {
+			// A fix or retry re-runs a plan whose acceptance the original run
+			// already proved; re-proving it on a one-line fix is noise.
+			proof, _ := acceptance.ParseProof(lines)
+			if proof != nil {
+				raw, _ := json.MarshalIndent(*proof, "", "  ")
+				acceptanceProof = raw
+			}
+			if terr := r.tests.RecordRunTest(context.WithoutCancel(ctx), run.OrgID, run.ID, "acceptance", "passed",
+				"the acceptance was proven by the original run"); terr != nil {
+				r.log.Warn("runs: record acceptance", slog.Any("err", terr))
+			}
+			_ = r.store.AppendEvent(context.WithoutCancel(ctx), run.OrgID, run.ID, "acceptance.inherited", "system",
+				map[string]any{"from_run": run.FixOfRunID})
+		} else if len(criteria) > 0 {
 			status := "failed"
 			var detail string
 			proof, perr := acceptance.ParseProof(lines)

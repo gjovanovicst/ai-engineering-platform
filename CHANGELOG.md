@@ -30,6 +30,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **A retry or fix inherits the acceptance proof**: only the original run proves
+  the criteria; re-proving them on a one-line fix failed with
+  `acceptance_unproven` when the agent cited a sentence instead of a test name.
+  The prompt now demands the exact test function name.
+
 - **A no-op fix succeeds**: when a fix run finds nothing to change (the finding
   is already addressed) it records `run.noop` and succeeds instead of failing
   with `no_changes`; the run page no longer offers three retry buttons, only the
