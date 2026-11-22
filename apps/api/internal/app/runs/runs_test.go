@@ -436,3 +436,26 @@ func TestTroubleshootRejectsASucceededRun(t *testing.T) {
 		t.Fatal("expected an error for a succeeded run")
 	}
 }
+
+func TestBranchOwnerWalksAFixChain(t *testing.T) {
+	t.Parallel()
+	store := newFakeStore()
+	store.runs["root"] = domain.Run{ID: "root", OrgID: "o", TaskID: "t1", AgentType: "development", Status: domain.RunSucceeded}
+	store.runs["fix"] = domain.Run{ID: "fix", OrgID: "o", TaskID: "t1", AgentType: "development", Status: domain.RunSucceeded, FixOfRunID: "root"}
+	store.runs["fix2"] = domain.Run{ID: "fix2", OrgID: "o", TaskID: "t1", AgentType: "development", Status: domain.RunFailed, FixOfRunID: "fix"}
+	latest := store.runs["fix"]
+	store.latestDev = &latest
+	svc, err := New(store, fakeTasks{task: readyTask()}, &fakeExecutor{}, nil, nil, slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A review has no FixOfRunID: the latest succeeded dev run is the fix, whose
+	// branch is the root's.
+	owner, err := svc.branchOwner(context.Background(), "o", domain.Run{ID: "review", OrgID: "o", TaskID: "t1", AgentType: "review", Status: domain.RunSucceeded})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if owner.ID != "root" {
+		t.Fatalf("owner = %q, want the root run whose branch was published", owner.ID)
+	}
+}
