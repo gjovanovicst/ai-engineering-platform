@@ -22,6 +22,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **A canceled run can be restarted**: `POST /runs/{run}/retry` accepts a canceled
+  run (the approved plan is still valid) and the run page offers **Retry** on it,
+  so a stopped fix is one click from continuing.
+
 - **The approved plan's context**: the implementation run no longer inherits the
   planning run's frozen context hash — it freezes at start, so a plan approved
   after the repository moved does not fail with `context_changed`.

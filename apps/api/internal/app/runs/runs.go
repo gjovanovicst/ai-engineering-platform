@@ -585,10 +585,12 @@ func (s *Service) Retry(ctx context.Context, in RetryInput) (domain.Run, error) 
 			Detail: "only development runs can be retried",
 		}
 	}
-	if run.Status != domain.RunFailed {
+	// A canceled run is as retryable as a failed one: the human stopped it, the
+	// approved plan is still valid.
+	if run.Status != domain.RunFailed && run.Status != domain.RunCanceled {
 		return domain.Run{}, &domain.TransitionError{
 			From: domain.TaskStatus(run.Status), To: domain.TaskStatus(domain.RunQueued),
-			Detail: "only a failed run can be retried",
+			Detail: "only a failed or canceled run can be retried",
 		}
 	}
 	if len(run.Plan) == 0 {

@@ -294,6 +294,10 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
       nextDescription = "The run failed. Retrying re-queues it and puts the task back in progress.";
       nextActions.push({ label: "Retry development", onClick: () => void retryDevelopment() });
     }
+  } else if (run?.status === "canceled") {
+    nextTitle = run.fix_of_run_id ? "Restart the canceled fix" : "Restart the canceled run";
+    nextDescription = "The run was canceled. Restarting re-queues the same approved plan; nothing is lost.";
+    nextActions.push({ label: "Retry", onClick: () => void retryDevelopment() });
   } else if (run?.status === "succeeded") {
     nextTitle = "The gates passed — review and merge";
     nextDescription = "Open the project's pull requests to review the diff. A human merges; the platform never merges for you.";
