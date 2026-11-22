@@ -4,8 +4,6 @@ All notable changes to this project. Dates are 2026.
 
 ## Unreleased
 
-## [0.2.0] — 2026-11-22
-
 ### Added
 
 - **The component playground and the contract 2.0**: `design/contracts.json`
@@ -13,6 +11,16 @@ All notable changes to this project. Dates are 2026.
   `/design-system/playground` page renders a live example per component, and
   `make web-check` diffs the contract against the last release (a removed or
   renamed prop fails).
+
+### Fixed
+
+- **The backport workflow without a label**: a merged PR that carries no
+  `backport/vX.Y` label no longer fails the job (the `[ -n "$branch" ] && echo`
+  test exits 1 under the runner's `bash -e`); it reports "nothing to do".
+
+## [0.2.0] — 2026-11-22
+
+### Added
 
 - **The assistant reads images**: the panel attaches an image (up to 5, a
   thumbnail with a remove), sends the data URL, and the model reads it with the
@@ -95,10 +103,6 @@ All notable changes to this project. Dates are 2026.
   summary, and an actionable empty state for the agent runs.
 
 ### Fixed
-
-- **The backport workflow without a label**: a merged PR that carries no
-  `backport/vX.Y` label no longer fails the job (the `[ -n "$branch" ] && echo`
-  test exits 1 under the runner's `bash -e`); it reports "nothing to do".
 
 - **The setup friction from the first pilot** (#90): the unknown-field 400 names
   the field; `PUT /test-command` accepts `command` and `test_command`; `PATCH
