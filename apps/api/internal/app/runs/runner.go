@@ -344,7 +344,14 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 			_ = r.store.AppendEvent(runCtx, run.OrgID, run.ID, "context.changed", "system",
 				map[string]any{"frozen": run.FrozenContextHash, "current": manifest.hash, "files": len(files),
 					"changed_sources": sourceDelta(frozenSources, allSources)})
-			return r.fail(runCtx, run, "context_changed", "the context changed after plan approval; request a new approval")
+			// A review fix is a targeted change on an already approved plan: the
+			// repository moving on (the pull request merged, a dependency bump)
+			// must not require a new plan. Every other run still fails.
+			if run.FixKind != "review" {
+				return r.fail(runCtx, run, "context_changed", "the context changed after plan approval; request a new approval")
+			}
+			_ = r.store.AppendEvent(runCtx, run.OrgID, run.ID, "context.changed.allowed", "system",
+				map[string]any{"reason": "a review fix keeps the approved plan"})
 		}
 		_ = r.store.SetContextHash(runCtx, run.OrgID, run.ID, manifest.hash)
 		if aerr := r.artifacts.Upload(runCtx, run.OrgID, run.ID, "context_manifest", manifest.json); aerr != nil {
