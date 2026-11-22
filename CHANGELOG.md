@@ -34,6 +34,11 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **The workspace archive keeps symlinks**: `pnpm`'s `node_modules` is a forest
+  of symlinks; the archiver opened a symlinked directory as a file
+  (`is a directory`) and the run failed to clone. The tar writes the link
+  instead, so a scaffolded project's dependencies reach the sandbox.
+
 - **A fix cannot pass by editing tests**: the fix prompt forbids weakening or
   rewording an assertion, and a fix whose diff touches only test files records a
   `run.test_only` warning; the finding shows the review run it came from.

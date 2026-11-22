@@ -79,3 +79,31 @@ func TestClonerWithoutRepoReturnsNil(t *testing.T) {
 		t.Fatalf("archive=%v err=%v", archive, err)
 	}
 }
+
+func TestTarDirArchivesSymlinks(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("a.txt", filepath.Join(dir, "link")); err != nil {
+		t.Skipf("symlinks are unavailable: %v", err)
+	}
+	archive, err := tarDir(dir)
+	if err != nil {
+		t.Fatalf("tarDir = %v, want the symlink archived", err)
+	}
+	reader := tar.NewReader(bytes.NewReader(archive))
+	for {
+		header, err := reader.Next()
+		if err != nil {
+			t.Fatalf("the link entry is missing: %v", err)
+		}
+		if header.Name == "link" {
+			if header.Typeflag != tar.TypeSymlink || header.Linkname != "a.txt" {
+				t.Fatalf("link header = %+v, want a symlink to a.txt", header)
+			}
+			return
+		}
+	}
+}
