@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -54,7 +55,12 @@ func (s *RunStore) Create(ctx context.Context, r domain.Run) (domain.Run, error)
 			FixKind:    r.FixKind, FixContext: optionalString(r.FixContext),
 		})
 		if err != nil {
-			return mapUnique(err)
+			// The unique index allows one active run per task; name the reason
+			// instead of a bare "conflict".
+			if mapped := mapUnique(err); errors.Is(mapped, domain.ErrConflict) {
+				return fmt.Errorf("%w: a run is already active for the task; wait for it to finish", domain.ErrConflict)
+			}
+			return err
 		}
 		out = runFromRow(row)
 		payload, _ := json.Marshal(map[string]any{"agent_type": r.AgentType, "model": r.Model})

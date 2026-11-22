@@ -225,7 +225,8 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
       setDevelopmentRunID(next.id);
       await findingsQuery.refetch();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not start the fix run");
+      const message = err instanceof ApiError ? err.message : "Could not start the fix run";
+      setError(message.includes("already active") ? "A run is already active for this task — wait for it to finish, then fix the next finding." : message);
     }
   }
 
