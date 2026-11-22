@@ -32,7 +32,10 @@ type sandboxToolbox struct {
 func (t *sandboxToolbox) run(ctx context.Context, script string, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Minute)
 	defer cancel()
-	argv := append([]string{"sh", "-lc", script, "sh"}, args...)
+	// `sh -c`, not `sh -lc`: a login shell sources /etc/profile, which resets
+	// PATH and drops /usr/local/go/bin — `run_tests` then died with
+	// "go: not found" though the sandbox env carried PATH.
+	argv := append([]string{"sh", "-c", script, "sh"}, args...)
 	res, err := t.sandbox.Exec(ctx, t.handle, argv, nil)
 	if err != nil {
 		return "", err
