@@ -1636,3 +1636,11 @@ export function decideReviewFinding(
 export function getTask(orgID: string, projectID: string, taskID: string) {
   return request<Task>(`/api/v1/orgs/${orgID}/projects/${projectID}/tasks/${taskID}`);
 }
+
+/** Start an incident run that diagnoses a failed run. */
+export function troubleshootRun(orgID: string, runID: string, reason = "") {
+  return request<Run>(`/api/v1/orgs/${orgID}/runs/${runID}/troubleshoot`, {
+    method: "POST",
+    body: reason ? JSON.stringify({ reason }) : undefined,
+  });
+}

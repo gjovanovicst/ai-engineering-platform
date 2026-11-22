@@ -380,7 +380,8 @@ func main() {
 		WithDesignStandard(projectStore, designStandardStore).
 		WithComponents(projectStore, designStore).
 		WithAttachments(attachmentStore).
-		WithOrgGate(postgres.NewOrgGate(pool), cfg.OrgMaxConcurrentRuns))
+		WithOrgGate(postgres.NewOrgGate(pool), cfg.OrgMaxConcurrentRuns).
+		WithEnqueuer(queue.Enqueuer{Client: client}))
 	if err := client.Start(ctx); err != nil {
 		logger.Error("queue start", slog.Any("err", err))
 		os.Exit(1)

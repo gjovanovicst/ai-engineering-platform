@@ -957,3 +957,85 @@ func manualEvidence(proof []byte) []string {
 	}
 	return out
 }
+
+// TroubleshootInput identifies the failed run an incident run should diagnose.
+type TroubleshootInput struct {
+	OrgID  string
+	RunID  string
+	Actor  string
+	Reason string
+}
+
+// Troubleshoot starts a development run that diagnoses a failed run: the failure
+// code and its detail (plus the last events) become the prompt, and the run
+// continues on the same branch so any fix lands in the existing pull request.
+func (s *Service) Troubleshoot(ctx context.Context, in TroubleshootInput) (domain.Run, error) {
+	failed, err := s.store.Get(ctx, in.OrgID, in.RunID)
+	if err != nil {
+		return domain.Run{}, err
+	}
+	if failed.Status != domain.RunFailed && failed.Status != domain.RunCanceled {
+		return domain.Run{}, fmt.Errorf("%w: only a failed or canceled run can be troubleshooted", domain.ErrValidation)
+	}
+	task, err := s.tasks.Get(ctx, in.OrgID, failed.ProjectID, failed.TaskID)
+	if err != nil {
+		return domain.Run{}, err
+	}
+	if task.Status.Terminal() {
+		return domain.Run{}, fmt.Errorf("%w: the task is already closed; open a follow-up task instead", domain.ErrValidation)
+	}
+	// The branch: a development run's own branch, or the latest succeeded one.
+	dev := failed
+	if failed.AgentType != string(domain.AgentDevelopment) {
+		latest, lerr := s.store.LatestRun(ctx, in.OrgID, failed.TaskID, string(domain.AgentDevelopment))
+		if lerr != nil {
+			return domain.Run{}, fmt.Errorf("%w: there is no development run to continue", domain.ErrValidation)
+		}
+		dev = latest
+	}
+	if err := retryTask(ctx, &task); err != nil {
+		return domain.Run{}, err
+	}
+	events, _ := s.store.EventsAfter(ctx, in.OrgID, failed.ID, 0)
+	var b strings.Builder
+	fmt.Fprintf(&b, "failure: %s\n", failed.FailureCode)
+	if strings.TrimSpace(failed.FailureDetail) != "" {
+		fmt.Fprintf(&b, "detail: %s\n", failed.FailureDetail)
+	}
+	if in.Reason != "" {
+		fmt.Fprintf(&b, "the human's note: %s\n", in.Reason)
+	}
+	b.WriteString("recent events:\n")
+	for _, event := range events {
+		if b.Len() > 6000 {
+			break
+		}
+		payload, _ := json.Marshal(event.Payload)
+		fmt.Fprintf(&b, "- %s: %s\n", event.Type, truncate(string(payload), 400))
+	}
+	created, err := s.store.Create(ctx, domain.Run{
+		OrgID: failed.OrgID, ProjectID: failed.ProjectID, TaskID: failed.TaskID,
+		AgentType: string(domain.AgentDevelopment), Status: domain.RunQueued,
+		Model: dev.Model, Budget: dev.Budget, FixOfRunID: dev.ID, FixKind: "troubleshoot",
+		FixContext: []byte(b.String()), FrozenContextSources: dev.FrozenContextSources,
+	})
+	if err != nil {
+		return domain.Run{}, err
+	}
+	if len(dev.Plan) > 0 {
+		if perr := s.store.SetPlan(ctx, in.OrgID, created.ID, dev.Plan, ""); perr != nil {
+			s.log.Warn("runs: troubleshoot plan", slog.Any("err", perr))
+		}
+	}
+	if _, serr := s.tasks.UpdateStatus(ctx, task); serr != nil {
+		return domain.Run{}, serr
+	}
+	if s.enqueuer != nil {
+		if err := s.enqueuer.Enqueue(ctx, created.ID, created.OrgID); err != nil {
+			return domain.Run{}, err
+		}
+	}
+	_ = s.store.AppendEvent(ctx, in.OrgID, created.ID, "run.troubleshoot_requested", "user",
+		map[string]any{"from_run": failed.ID, "failure": failed.FailureCode, "actor": in.Actor})
+	return created, nil
+}

@@ -24,6 +24,7 @@ import {
   startRun,
   retryRun,
   fixReview,
+  troubleshootRun,
   listReviewFindings,
   decideReviewFinding,
   getTask,
@@ -55,6 +56,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [retryingDev, setRetryingDev] = useState(false);
+  const [troubleshooting, setTroubleshooting] = useState(false);
   const [fixing, setFixing] = useState(false);
   const [approval, setApproval] = useState<Approval | null>(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -268,6 +270,20 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     }
   }
 
+  async function troubleshoot() {
+    if (!claims || !run) return;
+    setTroubleshooting(true);
+    setError(null);
+    try {
+      const next = await troubleshootRun(claims.org, run.id);
+      router.push(`/projects/${run.project_id}/runs/${next.id}`);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not start the troubleshoot run");
+    } finally {
+      setTroubleshooting(false);
+    }
+  }
+
   async function fixReviewFindings() {
     if (!claims || !run) return;
     setFixing(true);
@@ -299,6 +315,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
       nextTitle = "Retry the development run";
       nextDescription = "The run failed. Retrying re-queues it and puts the task back in progress.";
       nextActions.push({ label: "Retry development", loading: retryingDev, onClick: () => void retryDevelopment() });
+      nextActions.push({ label: "Troubleshoot", variant: "secondary", loading: troubleshooting, onClick: () => void troubleshoot() });
     }
   } else if (run?.status === "canceled") {
     nextTitle = run.fix_of_run_id ? "Restart the canceled fix" : "Restart the canceled run";

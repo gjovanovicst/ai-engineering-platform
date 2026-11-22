@@ -6,6 +6,14 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Auto-remediation**: a run that fails on an environment anomaly
+  (`context_changed`, `dependency_missing`) is retried **once** automatically
+  with the approved plan, recorded as `run.auto_remediated`; a second failure is
+  the human's call (the retried run carries `fix_kind=auto`).
+- **Troubleshoot**: a failed run gains **Troubleshoot** — an incident run that
+  receives the failure code, its detail and the last events, and fixes the root
+  cause on the same branch (`POST /runs/{run}/troubleshoot`).
+
 - **The review findings' lifecycle**: a finding is a row (`review_findings`,
   migration 0086) with `open` / `fixed` / `dismissed`; a human dismisses a
   blocker with a reason (or reopens it), a later review closes a finding it no

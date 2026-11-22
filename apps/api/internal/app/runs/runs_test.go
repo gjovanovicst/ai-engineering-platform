@@ -394,3 +394,40 @@ func TestFixContextCarriesTheSelectedFindings(t *testing.T) {
 		t.Fatalf("fixKind(selected) = %q, want review", kind)
 	}
 }
+
+func TestTroubleshootStartsAnIncidentRun(t *testing.T) {
+	t.Parallel()
+	store := newFakeStore()
+	store.runs["failed-1"] = domain.Run{
+		ID: "failed-1", OrgID: "o", ProjectID: "p", TaskID: "t1",
+		AgentType: "development", Status: domain.RunFailed,
+		FailureCode: "test_gate_failed", FailureDetail: "go: not found", Plan: []byte(`{"steps":["x"]}`),
+	}
+	svc, err := New(store, fakeTasks{task: readyTask()}, &fakeExecutor{}, nil, nil, slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+	created, err := svc.Troubleshoot(context.Background(), TroubleshootInput{OrgID: "o", RunID: "failed-1", Actor: "u1"})
+	if err != nil {
+		t.Fatalf("Troubleshoot = %v", err)
+	}
+	if created.FixKind != "troubleshoot" {
+		t.Fatalf("fix kind = %q, want troubleshoot", created.FixKind)
+	}
+	if !strings.Contains(string(created.FixContext), "go: not found") {
+		t.Fatalf("context misses the failure detail: %s", created.FixContext)
+	}
+}
+
+func TestTroubleshootRejectsASucceededRun(t *testing.T) {
+	t.Parallel()
+	store := newFakeStore()
+	store.runs["ok-1"] = domain.Run{ID: "ok-1", OrgID: "o", ProjectID: "p", TaskID: "t1", AgentType: "development", Status: domain.RunSucceeded}
+	svc, err := New(store, fakeTasks{task: readyTask()}, &fakeExecutor{}, nil, nil, slog.New(slog.DiscardHandler))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Troubleshoot(context.Background(), TroubleshootInput{OrgID: "o", RunID: "ok-1"}); err == nil {
+		t.Fatal("expected an error for a succeeded run")
+	}
+}
