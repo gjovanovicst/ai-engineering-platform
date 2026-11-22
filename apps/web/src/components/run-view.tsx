@@ -219,7 +219,9 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
   async function fixFinding(finding: ReviewFindingRecord) {
     if (!claims?.org) return;
     try {
-      const next = await fixReview(claims.org, runId, [finding.id]);
+      // The finding belongs to the review that reported it, not to the run page
+      // the human happens to be on.
+      const next = await fixReview(claims.org, finding.run_id, [finding.id]);
       setDevelopmentRunID(next.id);
       await findingsQuery.refetch();
     } catch (err) {
@@ -572,7 +574,7 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                 </span>
               ) : null}
               <span className="text-xs text-text-muted">{findingRecords.length}</span>
-              {claims && openBlockers > 0 ? (
+              {claims && openBlockers > 0 && run?.agent_type === "review" ? (
                 <Button variant="secondary" loading={fixing} onClick={fixReviewFindings}>
                   Fix review findings
                 </Button>

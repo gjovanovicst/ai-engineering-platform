@@ -676,11 +676,17 @@ func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run,
 	if err != nil {
 		return domain.Run{}, err
 	}
+	// The caller may point at any run of the task (the development run's page
+	// shows the findings too); resolve the task's latest review in that case.
 	if review.AgentType != string(domain.AgentReview) {
-		return domain.Run{}, &domain.TransitionError{
-			From: domain.TaskStatus(review.AgentType), To: domain.TaskStatus(domain.RunQueued),
-			Detail: "only review runs can be fixed",
+		latest, lerr := s.store.LatestRun(ctx, in.OrgID, review.TaskID, string(domain.AgentReview))
+		if lerr != nil {
+			return domain.Run{}, &domain.TransitionError{
+				From: domain.TaskStatus(review.AgentType), To: domain.TaskStatus(domain.RunQueued),
+				Detail: "only review runs can be fixed",
+			}
 		}
+		review = latest
 	}
 	if review.Status != domain.RunSucceeded {
 		return domain.Run{}, &domain.TransitionError{
