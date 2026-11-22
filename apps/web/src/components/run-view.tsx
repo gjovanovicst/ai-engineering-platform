@@ -223,7 +223,8 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
       // the human happens to be on.
       const next = await fixReview(claims.org, finding.run_id, [finding.id]);
       setDevelopmentRunID(next.id);
-      await findingsQuery.refetch();
+      // Open the new run so the stream and the status are visible immediately.
+      router.push(`/projects/${projectId}/runs/${next.id}`);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Could not start the fix run";
       setError(message.includes("already active") ? "A run is already active for this task — wait for it to finish, then fix the next finding." : message);
@@ -331,6 +332,12 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
 
       {/* The scroll container has a top padding; a sticky card at top-0 stops
           inside it, leaving a visible band. Offset by exactly that padding. */}
+      {run?.status === "queued" ? (
+        <p role="status" className="mb-4 rounded-md border border-brand/40 bg-brand-subtle/40 px-3 py-2 text-xs text-text-secondary">
+          Queued — the worker picks it up in a moment. The log fills as it runs.
+        </p>
+      ) : null}
+
       {nextActions.length > 0 ? (
         <div className="sticky top-[calc(var(--content-pad-top)*-1)] z-20 mb-9">
           <NextAction title={nextTitle} description={nextDescription} actions={nextActions} />
