@@ -26,7 +26,13 @@ jobs:
           branch=$(echo '${{ toJSON(github.event.pull_request.labels) }}' \
             | jq -r '.[].name | select(startswith("backport/"))' | head -1)
           echo "branch=${branch#backport/}" >> "$GITHUB_OUTPUT"
-          [ -n "$branch" ] && echo "found=$branch"
+          # A merged PR without a backport label is a no-op, not a failure: the
+          # test form would exit 1 under the runner's `bash -e`.
+          if [ -n "$branch" ]; then
+            echo "found=$branch"
+          else
+            echo "no backport label; nothing to do"
+          fi
       - name: Open the cherry-pick PR
         if: steps.label.outputs.branch != ''
         env:
