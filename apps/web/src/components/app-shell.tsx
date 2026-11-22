@@ -55,7 +55,13 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
 export function AppShell({ orgName, children }: { orgName: string; children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  // The longest matching prefix wins, so a nested route (/design-system/playground)
+  // lights exactly one item instead of also lighting its parent (/design-system).
+  const activeHref = nav.reduce((best, item) => {
+    const matches = pathname === item.href || pathname.startsWith(`${item.href}/`);
+    return matches && item.href.length > best.length ? item.href : best;
+  }, "");
+  const isActive = (href: string) => href === activeHref;
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [claims, setClaims] = useState<Claims | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
