@@ -516,8 +516,11 @@ func (s *Service) Decide(ctx context.Context, orgID, approvalID, decision, reaso
 			devRun, derr := s.store.Create(ctx, domain.Run{
 				OrgID: run.OrgID, ProjectID: run.ProjectID, TaskID: run.TaskID,
 				AgentType: string(domain.AgentDevelopment), Status: domain.RunQueued, Model: run.Model,
-				Budget:            run.Budget, // the approved plan's budget covers its implementation
-				FrozenContextHash: run.ContextHash, FrozenContextSources: frozenSources,
+				Budget: run.Budget, // the approved plan's budget covers its implementation
+				// Freeze at start, not at plan time: the human approves NOW, and the
+				// repository may have moved since the planning run captured its hash
+				// (that made every freshly approved plan fail with context_changed).
+				FrozenContextSources: frozenSources,
 			})
 			if derr == nil {
 				developmentRunID = devRun.ID

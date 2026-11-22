@@ -22,6 +22,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Fixed
 
+- **The approved plan's context**: the implementation run no longer inherits the
+  planning run's frozen context hash — it freezes at start, so a plan approved
+  after the repository moved does not fail with `context_changed`.
+
 - **A fix run's acceptance proof**: an automated test that already exists in the
   repository (the fix changes one line) now proves the criterion; the verifier
   accepts the test and its file from the workspace, not only from the diff.
