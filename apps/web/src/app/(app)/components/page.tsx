@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -31,7 +32,10 @@ export default function ComponentsPage() {
       <header className="page-hero mb-6">
         <h1 className="text-[22px] font-semibold">Component registry</h1>
         <p className="mt-1 text-[13px] text-text-secondary">
-          Approved, deprecated and forbidden components the projects and agents may use.
+          Approved, deprecated and forbidden components the projects and agents may use.{" "}
+          <Link href="/design-system/playground" className="text-brand hover:underline">
+            Playground
+          </Link>
         </p>
       </header>
 

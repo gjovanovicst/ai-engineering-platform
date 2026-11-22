@@ -5,6 +5,7 @@
 //  3. a SidePanel that holds a form but declares no dirty guard
 //  4. a list render on a possibly-null API field (.data.X.length / .map)
 //  5. a task transition the domain does not allow
+import { execSync } from "node:child_process";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
@@ -62,6 +63,55 @@ for (const [file, text] of source) {
     if (!guarded) {
       warnings.push(`${rel(file)}: .data.${field}.${match[2]} without ?? []`);
     }
+  }
+}
+
+// 6. the component contract: every registered component has an example, and a
+//    contract change since the last release is reported (a removed or renamed
+//    prop is breaking and fails).
+const contractPath = new URL("../src/design/contracts.json", import.meta.url).pathname;
+const contracts = JSON.parse(readFileSync(contractPath, "utf8"));
+const playground = readFileSync(new URL("../src/design/playground.tsx", import.meta.url).pathname, "utf8");
+const exampleKeys = new Set([...playground.matchAll(/^  ([A-Z][A-Za-z]+):/gm)].map((m) => m[1]));
+for (const component of contracts.components) {
+  if (!exampleKeys.has(component.name)) {
+    warnings.push(`design/contracts.json: ${component.name} has no example in design/playground.tsx`);
+  }
+}
+
+function lastRelease() {
+  try {
+    return execSync("git describe --tags --abbrev=0", { cwd: new URL("..", import.meta.url).pathname, encoding: "utf8" }).trim();
+  } catch {
+    return "";
+  }
+}
+
+const tag = lastRelease();
+if (tag) {
+  try {
+    const previous = JSON.parse(execSync(`git show ${tag}:apps/web/src/design/contracts.json`, {
+      cwd: new URL("..", import.meta.url).pathname, encoding: "utf8",
+    }));
+    const before = new Map(previous.components.map((c) => [c.name, c]));
+    const after = new Map(contracts.components.map((c) => [c.name, c]));
+    for (const [name, component] of after) {
+      const old = before.get(name);
+      if (!old) { console.log(`contract: + ${name} (new)`); continue; }
+      const oldProps = new Set(old.props.map((p) => p.name));
+      const newProps = new Set(component.props.map((p) => p.name));
+      for (const prop of newProps) if (!oldProps.has(prop)) console.log(`contract: ${name}.${prop} added`);
+      for (const prop of oldProps) {
+        if (!newProps.has(prop)) problems.push(`design/contracts.json: ${name}.${prop} was removed (breaking) — rename it or keep it deprecated`);
+      }
+      const oldStates = new Set(old.states);
+      for (const state of component.states) if (!oldStates.has(state)) console.log(`contract: ${name}.${state} state added`);
+    }
+    for (const name of before.keys()) {
+      if (!after.has(name)) problems.push(`design/contracts.json: the component ${name} was removed (breaking)`);
+    }
+  } catch {
+    // the tag has no contracts.json yet: the first release records the baseline
   }
 }
 
