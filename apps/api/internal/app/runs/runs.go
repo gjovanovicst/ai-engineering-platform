@@ -729,15 +729,9 @@ func (s *Service) FixReview(ctx context.Context, in FixReviewInput) (domain.Run,
 	} else if reviewBlockers(review.Review) == 0 {
 		return domain.Run{}, fmt.Errorf("%w: the review has no blocker findings", domain.ErrValidation)
 	}
-	dev, err := s.store.LatestRun(ctx, in.OrgID, review.TaskID, string(domain.AgentDevelopment))
+	dev, err := s.branchOwner(ctx, in.OrgID, review)
 	if err != nil {
-		return domain.Run{}, fmt.Errorf("find the development run: %w", err)
-	}
-	if dev.Status != domain.RunSucceeded {
-		return domain.Run{}, &domain.TransitionError{
-			From: domain.TaskStatus(dev.Status), To: domain.TaskStatus(domain.RunQueued),
-			Detail: "the pull request's development run has not finished",
-		}
+		return domain.Run{}, err
 	}
 	if len(dev.Plan) == 0 {
 		return domain.Run{}, fmt.Errorf("%w: the development run has no approved plan", domain.ErrValidation)
@@ -985,13 +979,9 @@ func (s *Service) Troubleshoot(ctx context.Context, in TroubleshootInput) (domai
 		return domain.Run{}, fmt.Errorf("%w: the task is already closed; open a follow-up task instead", domain.ErrValidation)
 	}
 	// The branch: a development run's own branch, or the latest succeeded one.
-	dev := failed
-	if failed.AgentType != string(domain.AgentDevelopment) {
-		latest, lerr := s.store.LatestRun(ctx, in.OrgID, failed.TaskID, string(domain.AgentDevelopment))
-		if lerr != nil {
-			return domain.Run{}, fmt.Errorf("%w: there is no development run to continue", domain.ErrValidation)
-		}
-		dev = latest
+	dev, derr := s.branchOwner(ctx, in.OrgID, failed)
+	if derr != nil {
+		return domain.Run{}, derr
 	}
 	if err := retryTask(ctx, &task); err != nil {
 		return domain.Run{}, err
@@ -1038,4 +1028,34 @@ func (s *Service) Troubleshoot(ctx context.Context, in TroubleshootInput) (domai
 	_ = s.store.AppendEvent(ctx, in.OrgID, created.ID, "run.troubleshoot_requested", "user",
 		map[string]any{"from_run": failed.ID, "failure": failed.FailureCode, "actor": in.Actor})
 	return created, nil
+}
+
+// branchOwner resolves the run whose published branch a fix or troubleshoot
+// continues: the root of the chain (the original development run). A chain run
+// carries its parent in FixOfRunID, but the branch only exists for the root.
+func (s *Service) branchOwner(ctx context.Context, orgID string, run domain.Run) (domain.Run, error) {
+	root := s.walkToRoot(ctx, orgID, run)
+	if root.AgentType == string(domain.AgentDevelopment) && root.Status == domain.RunSucceeded {
+		return root, nil
+	}
+	latest, lerr := s.store.LatestRun(ctx, orgID, run.TaskID, string(domain.AgentDevelopment))
+	if lerr != nil {
+		return domain.Run{}, fmt.Errorf("%w: there is no published development run to continue", domain.ErrValidation)
+	}
+	// The latest succeeded run may itself be a fix or a troubleshoot: its branch
+	// is the root's, not its own — walk it too.
+	return s.walkToRoot(ctx, orgID, latest), nil
+}
+
+// walkToRoot follows FixOfRunID to the run whose id names the published branch.
+func (s *Service) walkToRoot(ctx context.Context, orgID string, run domain.Run) domain.Run {
+	current := run
+	for i := 0; i < 10 && current.FixOfRunID != ""; i++ {
+		parent, err := s.store.Get(ctx, orgID, current.FixOfRunID)
+		if err != nil {
+			break
+		}
+		current = parent
+	}
+	return current
 }

@@ -511,6 +511,12 @@ func (r *Runner) Execute(ctx context.Context, run domain.Run, prompt string, con
 		if aerr := r.artifacts.Upload(ctx, run.OrgID, run.ID, "diff", []byte(result.Diff)); aerr != nil {
 			r.log.Warn("runs: upload diff", slog.Any("err", aerr))
 		}
+		// A fix that only edits tests cannot address a source finding; surface it
+		// (the review will flag it too, but the human should see it early).
+		if run.FixOfRunID != "" && diffOnlyTests(result.Diff) {
+			_ = r.store.AppendEvent(context.WithoutCancel(ctx), run.OrgID, run.ID, "run.test_only", "system",
+				map[string]any{"detail": "the fix changed only test files; it does not address a source finding"})
+		}
 		_ = r.store.AppendEvent(context.WithoutCancel(ctx), run.OrgID, run.ID, "diff.ready", "agent",
 			map[string]any{"sha256": sha, "bytes": len(result.Diff)})
 
@@ -974,6 +980,20 @@ func buildContextManifest(run domain.Run, files, rules []string, designRef strin
 	m.json = raw
 	m.hash = hex.EncodeToString(sum[:])
 	return m
+}
+
+// diffOnlyTests reports a diff whose changed files are all tests.
+func diffOnlyTests(diff string) bool {
+	files := changedFiles(diff)
+	if len(files) == 0 {
+		return false
+	}
+	for _, file := range files {
+		if !strings.Contains(file, "_test.") && !strings.Contains(file, ".test.") && !strings.Contains(file, ".spec.") {
+			return false
+		}
+	}
+	return true
 }
 
 // tarText concatenates the text files of a workspace (bounded) so the

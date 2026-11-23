@@ -224,10 +224,16 @@ func (w *JobWorker) Work(ctx context.Context, job *river.Job[queue.RunArgs]) err
 				"do not re-plan and do not rewrite unrelated code. The check log:\n" + string(run.FixContext) + "\n"
 		} else if run.FixKind == "review" && len(run.FixContext) > 0 {
 			prompt += "\nThe human selected these review findings to fix on the existing pull request; " +
-				"do not re-plan and do not rewrite unrelated code:\n" + string(run.FixContext) + "\n"
+				"do not re-plan and do not rewrite unrelated code:\n" + string(run.FixContext) + "\n" +
+				"Fix the source, never the tests: do not weaken, delete or reword an assertion to make the review pass; " +
+				"a diff that only edits tests does not address a source finding.\n"
+
 		} else if findings, ferr := w.store.LatestReviewForTask(ctx, run.OrgID, run.TaskID); ferr == nil && len(findings) > 0 {
 			prompt += "\nThe review found these issues. Fix every blocker on the existing pull request; " +
-				"do not re-plan and do not rewrite unrelated code:\n" + string(findings) + "\n"
+				"do not re-plan and do not rewrite unrelated code:\n" + string(findings) + "\n" +
+				"Fix the source, never the tests: do not weaken, delete or reword an assertion to make the review pass; " +
+				"a diff that only edits tests does not address a source finding.\n"
+
 		}
 	}
 

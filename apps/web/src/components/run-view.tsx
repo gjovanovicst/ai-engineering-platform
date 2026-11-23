@@ -79,6 +79,9 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     queryKey: ["review-findings", claims?.org, projectId, run?.task_id],
     enabled: Boolean(claims?.org && run?.task_id),
     queryFn: () => listReviewFindings(claims!.org, projectId, run!.task_id!),
+    // A fix run finishes minutes later and the following review marks a finding
+    // fixed; the list must reflect it without a manual refresh.
+    refetchInterval: 8000,
   });
   // A closed task cannot take a fix: its branch is gone with the pull request,
   // so a finding becomes a follow-up task instead.
@@ -86,9 +89,12 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     queryKey: ["task", claims?.org, projectId, run?.task_id],
     enabled: Boolean(claims?.org && run?.task_id),
     queryFn: () => getTask(claims!.org, projectId, run!.task_id!),
+    refetchInterval: 15000,
   });
   const taskClosed = taskQuery.data?.status === "done" || taskQuery.data?.status === "canceled";
   const findingRecords = findingsQuery.data?.data ?? [];
+  const openFindings = findingRecords.filter((f) => f.status === "open");
+  const resolvedFindings = findingRecords.filter((f) => f.status !== "open");
   const openBlockers = findingRecords.filter((f) => f.status === "open" && f.severity === "blocker").length;
   const retries = events.filter((event) => event.type === "run.retry" || event.type === "test.flaky_recovered");
   const manifestEvent = events.find((event) => event.type === "context.manifest");
@@ -284,6 +290,23 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
     }
   }
 
+  async function fixAllOpen() {
+    if (!claims || openFindings.length === 0) return;
+    setFixing(true);
+    setError(null);
+    try {
+      // One run carries every open finding: one review after it, not one per fix.
+      const next = await fixReview(claims.org, openFindings[0].run_id, openFindings.map((f) => f.id));
+      setDevelopmentRunID(next.id);
+      router.push(`/projects/${projectId}/runs/${next.id}`);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Could not start the fix run";
+      setError(message.includes("already active") ? "A run is already active for this task — wait for it to finish." : message);
+    } finally {
+      setFixing(false);
+    }
+  }
+
   async function fixReviewFindings() {
     if (!claims || !run) return;
     setFixing(true);
@@ -457,6 +480,11 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                 <p className="mt-1 text-xs text-status-warning">
                   {openBlockers} open review blocker{openBlockers === 1 ? "" : "s"} — fix or dismiss them before the merge.
                 </p>
+              ) : openFindings.length > 0 ? (
+                <p className="mt-1 text-xs text-text-muted">
+                  {openFindings.length} open nit{openFindings.length === 1 ? "" : "s"} — advisory; the merge is not
+                  blocked.
+                </p>
               ) : null}
             </div>
             <div className="flex gap-2">
@@ -600,16 +628,16 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                 </span>
               ) : null}
               <span className="text-xs text-text-muted">{findingRecords.length}</span>
-              {claims && openBlockers > 0 && run?.agent_type === "review" ? (
-                <Button variant="secondary" loading={fixing} onClick={fixReviewFindings}>
-                  Fix review findings
+              {claims && openFindings.length > 0 && !taskClosed ? (
+                <Button variant="secondary" loading={fixing} onClick={fixAllOpen}>
+                  Fix all open ({openFindings.length})
                 </Button>
               ) : null}
             </div>
           </header>
           <ul className="divide-y divide-border">
-            {[...findingRecords]
-              .sort((a, b) => (b.status === "open" ? 1 : 0) - (a.status === "open" ? 1 : 0) || (b.severity === "blocker" ? 1 : 0) - (a.severity === "blocker" ? 1 : 0))
+            {[...openFindings]
+              .sort((a, b) => (b.severity === "blocker" ? 1 : 0) - (a.severity === "blocker" ? 1 : 0))
               .map((finding) => (
                 <li key={finding.id} className="flex gap-3 px-4 py-2.5 text-sm">
                   <span
@@ -629,6 +657,10 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                       </span>
                     ) : null}
                     {finding.message}
+                    <span className="mt-1 block font-mono text-[10px] text-text-muted">
+                      from run {finding.run_id.slice(0, 8)}
+                      {finding.created_at ? ` · ${new Date(finding.created_at).toLocaleString()}` : ""}
+                    </span>
                     {finding.status !== "open" ? (
                       <span className="ml-2 text-[11px] uppercase tracking-wide text-text-muted">
                         {finding.status}
@@ -678,7 +710,36 @@ export function RunView({ projectId, runId }: { projectId: string; runId: string
                   ) : null}
                 </li>
               ))}
+            {openFindings.length === 0 ? (
+              <li className="px-4 py-2.5 text-sm text-text-secondary">
+                Nothing open — every finding is resolved.
+              </li>
+            ) : null}
           </ul>
+          {resolvedFindings.length > 0 ? (
+            <details className="border-t border-border px-4 py-2">
+              <summary className="cursor-pointer text-xs text-text-muted">
+                Resolved ({resolvedFindings.length})
+              </summary>
+              <ul className="mt-2 divide-y divide-border">
+                {resolvedFindings.map((finding) => (
+                  <li key={finding.id} className="flex flex-wrap items-center gap-2 py-1.5 text-xs text-text-muted">
+                    <span className="uppercase">{finding.status}</span>
+                    <span className="min-w-0 flex-1 truncate">{finding.message}</span>
+                    {claims && finding.status === "dismissed" ? (
+                      <Button
+                        variant="ghost"
+                        className="h-6 px-2 text-[11px]"
+                        onClick={() => void resolveFinding(finding, "reopen")}
+                      >
+                        Reopen
+                      </Button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
         </section>
       ) : run?.review?.findings?.length ? (
         <section className="mb-6 rounded-lg border border-border bg-bg-surface">

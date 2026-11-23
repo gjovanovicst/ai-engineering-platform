@@ -13,7 +13,7 @@ RETURNING id, org_id, project_id, task_id, run_id, severity, file, line, message
 
 -- name: TouchReviewFinding :exec
 UPDATE review_findings
-SET run_id = $3, severity = $4, updated_at = now()
+SET run_id = $3, severity = $4, file = $5, line = $6, message = $7, updated_at = now()
 WHERE org_id = $1 AND id = $2;
 
 -- name: MarkReviewFindingFixed :exec

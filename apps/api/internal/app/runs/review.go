@@ -76,8 +76,12 @@ func parseReviewFindings(raw []byte) []domain.ReviewFinding {
 		if message == "" {
 			continue
 		}
+		// "blocker" and "major" gate the merge; "minor"/"nit"/anything else is
+		// advisory. Treating a major as a nit let a merge pass with a real issue
+		// (weakened assertions, an agent-authored library).
 		severity := domain.ReviewFindingNit
-		if strings.EqualFold(strings.TrimSpace(f.Severity), string(domain.ReviewFindingBlocker)) {
+		switch strings.ToLower(strings.TrimSpace(f.Severity)) {
+		case string(domain.ReviewFindingBlocker), "major":
 			severity = domain.ReviewFindingBlocker
 		}
 		out = append(out, domain.ReviewFinding{

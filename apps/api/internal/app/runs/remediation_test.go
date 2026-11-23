@@ -20,3 +20,18 @@ func TestRemediable(t *testing.T) {
 		t.Errorf("action = %q, want refreeze", action)
 	}
 }
+
+func TestDiffOnlyTests(t *testing.T) {
+	t.Parallel()
+	only := "diff --git a/src/a.test.ts b/src/a.test.ts\n+it('x', () => {})\n"
+	if !diffOnlyTests(only) {
+		t.Fatal("a test-only diff must be flagged")
+	}
+	mixed := only + "diff --git a/src/a.ts b/src/a.ts\n+export const x = 1\n"
+	if diffOnlyTests(mixed) {
+		t.Fatal("a diff with source must not be flagged")
+	}
+	if diffOnlyTests("") {
+		t.Fatal("an empty diff is not a test-only change")
+	}
+}

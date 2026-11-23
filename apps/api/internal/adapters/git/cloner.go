@@ -153,7 +153,17 @@ func tarDir(dir string) ([]byte, error) {
 		if rel == "." {
 			return nil
 		}
-		header, err := tar.FileInfoHeader(info, "")
+		// pnpm's node_modules is a forest of symlinks: archive the link, not the
+		// target (opening a symlinked directory as a file is "is a directory").
+		link := ""
+		if info.Mode()&os.ModeSymlink != 0 {
+			target, lerr := os.Readlink(path)
+			if lerr != nil {
+				return lerr
+			}
+			link = target
+		}
+		header, err := tar.FileInfoHeader(info, link)
 		if err != nil {
 			return err
 		}
@@ -164,7 +174,7 @@ func tarDir(dir string) ([]byte, error) {
 		if err := tw.WriteHeader(header); err != nil {
 			return err
 		}
-		if info.IsDir() {
+		if info.IsDir() || link != "" {
 			return nil
 		}
 		file, err := os.Open(path) //nolint:gosec // path comes from Walk inside our temp dir

@@ -64,7 +64,7 @@ func TestParseReviewFindingsAcceptsBothFields(t *testing.T) {
 	raw := []byte(`{"findings":[
 		{"severity":"blocker","file":"a.go","line":3,"message":"the message"},
 		{"severity":"nit","file":"b.go","body":"the body"},
-		{"severity":"major","body":"an unknown severity is a nit"}
+		{"severity":"weird","body":"an unknown severity is a nit"}
 	]}`)
 	got := parseReviewFindings(raw)
 	if len(got) != 3 {
@@ -78,5 +78,27 @@ func TestParseReviewFindingsAcceptsBothFields(t *testing.T) {
 	}
 	if got[2].Severity != domain.ReviewFindingNit {
 		t.Errorf("finding 2 severity = %q, want nit: only blocker gates the merge", got[2].Severity)
+	}
+}
+
+func TestParseReviewFindingsMajorGates(t *testing.T) {
+	t.Parallel()
+	raw := []byte(`{"findings":[
+		{"severity":"major","body":"the tests were weakened"},
+		{"severity":"minor","body":"a style nit"},
+		{"severity":"Blocker","body":"a real blocker"}
+	]}`)
+	got := parseReviewFindings(raw)
+	if len(got) != 3 {
+		t.Fatalf("findings = %d, want 3", len(got))
+	}
+	if got[0].Severity != domain.ReviewFindingBlocker {
+		t.Errorf("a major must gate the merge, got %q", got[0].Severity)
+	}
+	if got[1].Severity != domain.ReviewFindingNit {
+		t.Errorf("a minor stays advisory, got %q", got[1].Severity)
+	}
+	if got[2].Severity != domain.ReviewFindingBlocker {
+		t.Errorf("a case-insensitive blocker must gate, got %q", got[2].Severity)
 	}
 }

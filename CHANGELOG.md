@@ -6,6 +6,10 @@ All notable changes to this project. Dates are 2026.
 
 ### Added
 
+- **Fix all open findings**: one button sends every open finding to a single fix
+  run, so one review follows instead of one per finding — the loop shrinks to a
+  single pass.
+
 - **Auto-remediation**: a run that fails on an environment anomaly
   (`context_changed`, `dependency_missing`) is retried **once** automatically
   with the approved plan, recorded as `run.auto_remediated`; a second failure is
@@ -29,6 +33,33 @@ All notable changes to this project. Dates are 2026.
   renamed prop fails).
 
 ### Fixed
+
+- **A major finding gates the merge**: the review's `major` severity became a
+  `nit`, so a merge passed with real issues (weakened assertions, an
+  agent-authored library). Only `minor`/`nit` stay advisory; the merge panel
+  lists the open nits so the decision is visible.
+
+- **The workspace archive keeps symlinks**: `pnpm`'s `node_modules` is a forest
+  of symlinks; the archiver opened a symlinked directory as a file
+  (`is a directory`) and the run failed to clone. The tar writes the link
+  instead, so a scaffolded project's dependencies reach the sandbox.
+
+- **A fix cannot pass by editing tests**: the fix prompt forbids weakening or
+  rewording an assertion, and a fix whose diff touches only test files records a
+  `run.test_only` warning; the finding shows the review run it came from.
+
+- **The findings list shows only what is open**: the resolved ones (fixed or
+  dismissed) collapse under "Resolved (N)", so a review's re-reported findings
+  no longer look like the same five piled up; a dismissed nit can be reopened
+  from the history.
+
+- **The findings list is live**: the run page refetches the findings (8s) and the
+  task (15s) so a fix that finishes later visibly turns the finding `fixed`,
+  instead of leaving it looking unfixed until a manual refresh.
+
+- **A fix or troubleshoot continues the root branch**: the chain is walked to the
+  original development run whose branch was published, so a fix of a fix no
+  longer targets a branch (`aip/<failed-fix>`) that never existed.
 
 - **A retry or fix inherits the acceptance proof**: only the original run proves
   the criteria; re-proving them on a one-line fix failed with
